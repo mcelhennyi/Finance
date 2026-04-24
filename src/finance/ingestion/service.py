@@ -51,6 +51,31 @@ DEFAULT_CATEGORY_MAP: dict[str, str] = {
     "Insurance": "Insurance",
 }
 
+# Fingerprint substrings for H-E-B / HEB fuel (H-E-B, HEB, H E B, etc. collapse to same letters).
+# Checked before generic "HEB" → Groceries so fuel stays Gas.
+_HEB_GAS_FP_MARKERS: tuple[str, ...] = (
+    "HEBGAS",
+    "HEBGASOLINE",
+    "HEBFUEL",
+    "HEBFUELCENTER",
+    "HEBPROPANE",
+    "HEBPUMP",
+    "HEBCNG",
+    "HEBDIESEL",
+)
+
+# Fingerprint hints for HEB grocery when "HEB" is not at a clear word boundary (e.g. after POS).
+_HEB_GROCERY_FP_HINTS: tuple[str, ...] = (
+    "POSHEB",
+    "TSTHEB",
+    "PURCHASEHEB",
+    "DEBITHEB",
+    "HEBGROCERY",
+    "HEBONLINE",
+    "HEBCURBSIDE",
+)
+
+
 DEFAULT_MERCHANT_OVERRIDES: dict[str, str] = {
     "P. TERRY": "Dining",
     "WHATABURGER": "Dining",
@@ -58,7 +83,7 @@ DEFAULT_MERCHANT_OVERRIDES: dict[str, str] = {
     "MCDONALD": "Dining",
     "CHICK-FIL-A": "Dining",
     "STARBUCKS": "Coffee & Bars",
-    "H-E-B": "Groceries",
+    # H-E-B, H E B, HEB, etc. fuzzy-match via merchant_name_fingerprint
     "HEB": "Groceries",
     "COSTCO": "Groceries",
     "WALMART": "Groceries",
@@ -82,11 +107,51 @@ class IngestionResult:
     duration_seconds: float = 0.0
 
 
+def _heb_line_is_gas(desc_fp: str) -> bool:
+    """True when the line looks like H-E-B / HEB fuel, not the grocery store."""
+    return any(marker in desc_fp for marker in _HEB_GAS_FP_MARKERS)
+
+
+def _fingerprint_has_isolated_heb(desc_fp: str) -> bool:
+    """HEB as its own token (not a substring like THEBEST → …THEB…HEB…)."""
+    for i in range(len(desc_fp) - 2):
+        if desc_fp[i : i + 3] != "HEB":
+            continue
+        if i > 0 and "A" <= desc_fp[i - 1] <= "Z":
+            continue
+        return True
+    return False
+
+
+def _heb_grocery_fingerprint_match(desc_fp: str) -> bool:
+    """True when this line should get the HEB grocery override (gas already ruled out)."""
+    if "HEB" not in desc_fp:
+        return False
+    if _fingerprint_has_isolated_heb(desc_fp):
+        return True
+    if any(hint in desc_fp for hint in _HEB_GROCERY_FP_HINTS):
+        return True
+    # e.g. "POS TRANSACTION H-E-B #12" → POSTRANSACTIONHEB12 (no POSHEB substring)
+    if "HEB" in desc_fp and any(
+        tok in desc_fp for tok in ("TRANSACTION", "PURCHASE", "DEBIT", "CREDIT", "CHECKCARD")
+    ):
+        return True
+    return False
+
+
 def _resolve_category(category_raw: str, description: str) -> str:
     desc_fp = merchant_name_fingerprint(description)
+    if _heb_line_is_gas(desc_fp):
+        return "Gas"
     for merchant, cat in DEFAULT_MERCHANT_OVERRIDES.items():
         needle = merchant_name_fingerprint(merchant)
-        if needle and needle in desc_fp:
+        if not needle:
+            continue
+        if merchant == "HEB" and needle == "HEB":
+            if _heb_grocery_fingerprint_match(desc_fp):
+                return cat
+            continue
+        if needle in desc_fp:
             return cat
     if category_raw:
         if category_raw in DEFAULT_CATEGORY_MAP:
