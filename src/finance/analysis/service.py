@@ -8,10 +8,11 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import and_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from finance.db.models import Transaction
+from finance.matching import merchant_fingerprint_sql_expr, merchant_name_fingerprint
 
 
 @dataclass
@@ -51,7 +52,13 @@ def get_transactions(
     if category:
         q = q.filter(Transaction.category.ilike(f"%{category}%"))
     if merchant:
-        q = q.filter(Transaction.description_normalized.ilike(f"%{merchant}%"))
+        needle = merchant_name_fingerprint(merchant)
+        if len(needle) >= 3:
+            fp_n = merchant_fingerprint_sql_expr(Transaction.description_normalized)
+            fp_r = merchant_fingerprint_sql_expr(Transaction.description_raw)
+            q = q.filter(or_(fp_n.like(f"%{needle}%"), fp_r.like(f"%{needle}%")))
+        else:
+            q = q.filter(Transaction.description_normalized.ilike(f"%{merchant}%"))
     if source_type:
         q = q.filter(Transaction.source_type == source_type)
     if not include_credits:
@@ -84,10 +91,20 @@ def compute_metrics(transactions: list[Transaction]) -> SpendMetrics:
         by_category_count[t.category] += 1
 
     by_merchant: dict[str, float] = defaultdict(float)
+    label_for_fp: dict[str, str] = {}
     for t in charges:
-        key = t.description_normalized[:40].strip() or t.description_raw[:40].strip()
-        by_merchant[key] += float(t.amount)
-    top_merchants = sorted(by_merchant.items(), key=lambda x: x[1], reverse=True)[:10]
+        raw_label = (t.description_normalized[:40] if t.description_normalized else "").strip()
+        if not raw_label:
+            raw_label = (t.description_raw[:40] if t.description_raw else "").strip()
+        fp = merchant_name_fingerprint(raw_label) or raw_label
+        by_merchant[fp] += float(t.amount)
+        if fp not in label_for_fp or len(raw_label) < len(label_for_fp[fp]):
+            label_for_fp[fp] = raw_label
+    top_merchants = sorted(
+        ((label_for_fp[k], v) for k, v in by_merchant.items()),
+        key=lambda x: x[1],
+        reverse=True,
+    )[:10]
 
     by_date: dict[str, float] = defaultdict(float)
     for t in charges:

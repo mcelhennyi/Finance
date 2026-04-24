@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from finance.db.models import Account, IngestionLog, Transaction
 from finance.ingestion.parsers import ALL_PARSERS
+from finance.matching import merchant_name_fingerprint
 from finance.ingestion.parsers.base import RawTransaction, StatementParser
 
 # Default category maps (overridable via config.toml)
@@ -82,9 +83,10 @@ class IngestionResult:
 
 
 def _resolve_category(category_raw: str, description: str) -> str:
-    desc_upper = description.upper()
+    desc_fp = merchant_name_fingerprint(description)
     for merchant, cat in DEFAULT_MERCHANT_OVERRIDES.items():
-        if merchant.upper() in desc_upper:
+        needle = merchant_name_fingerprint(merchant)
+        if needle and needle in desc_fp:
             return cat
     if category_raw:
         if category_raw in DEFAULT_CATEGORY_MAP:
