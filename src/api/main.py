@@ -28,7 +28,7 @@ app = FastAPI(
 
 _origins = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://localhost:80",
+    "http://localhost:3501,http://localhost:3502,http://localhost:3503",
 ).split(",")
 
 app.add_middleware(
@@ -54,7 +54,7 @@ def serve() -> None:
     """Entry point for the `finance-api` CLI command."""
     import uvicorn
 
-    port = int(os.environ.get("FINANCE_PORT", 8000))
+    port = int(os.environ.get("FINANCE_PORT", 3500))
     debug = os.environ.get("FINANCE_DEBUG", "false").lower() == "true"
     uvicorn.run(
         "api.main:app",

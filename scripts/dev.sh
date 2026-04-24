@@ -10,8 +10,8 @@
 #   ./scripts/dev.sh --clean     # stop and remove containers + db volume
 #
 # Services:
-#   api  — FastAPI backend on http://localhost:8000  (uvicorn --reload)
-#   web  — React/Vite frontend on http://localhost:5173 (vite --host)
+#   api  — FastAPI backend on http://localhost:3500  (uvicorn --reload); see docs/PORTS.md
+#   web  — React/Vite frontend on http://localhost:3501 (vite --host)
 
 set -euo pipefail
 
@@ -37,8 +37,8 @@ case "${1:-}" in
     ;;
   *)
     echo "→ Starting Finance Hub dev stack…"
-    echo "   API  → http://localhost:8000   (FastAPI, auto-reload on src/ changes)"
-    echo "   UI   → http://localhost:5173   (React/Vite, HMR enabled)"
+    echo "   API  → http://localhost:3500   (FastAPI, auto-reload on src/ changes)"
+    echo "   UI   → http://localhost:3501   (React/Vite, HMR enabled)"
     echo "   Press Ctrl+C to stop"
     echo ""
     $COMPOSE up --build

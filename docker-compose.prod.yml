@@ -4,14 +4,14 @@ services:
       context: .
       target: prod
     ports:
-      - "8000:8000"
+      - "3500:8000" # see docs/PORTS.md
     volumes:
       - finance-db:/root/.finance
     environment:
       FINANCE_DEBUG: "false"
       FINANCE_PORT: "8000"
       FINANCE_DB_URL: ""
-      CORS_ORIGINS: "http://localhost"
+      CORS_ORIGINS: "http://localhost:3502"
     restart: always
 
   web:
@@ -19,7 +19,7 @@ services:
       context: ./frontend
       target: prod
     ports:
-      - "80:80"
+      - "3502:80" # see docs/PORTS.md
     depends_on:
       - api
     restart: always

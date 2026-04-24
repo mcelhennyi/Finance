@@ -4,9 +4,9 @@ FROM node:20-slim AS dev
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-EXPOSE 5173
+EXPOSE 3501
 
 ENV VITE_API_TARGET=http://api:8000
 
@@ -18,7 +18,7 @@ FROM node:20-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY . .
 RUN npm run build

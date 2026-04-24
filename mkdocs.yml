@@ -2,6 +2,9 @@ site_name: Finance Hub
 site_description: Personal finance management system — ingest, analyze, project, and optimize your financial life
 site_author: Ian McElhenny
 
+# Local dev server — see docs/PORTS.md
+dev_addr: 127.0.0.1:3504
+
 docs_dir: docs
 
 theme:
@@ -56,6 +59,7 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started: GETTING_STARTED.md
+  - Port registry: PORTS.md
   - Research:
     - User Stories: research/user-stories.md
     - Requirements: research/requirements.md

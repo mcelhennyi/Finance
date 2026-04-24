@@ -4,15 +4,19 @@ services:
       context: .
       target: dev
     ports:
-      - "8000:8000"
+      - "3500:8000" # host port → see docs/PORTS.md
     volumes:
-      - ./src:/app/src          # hot-reload Python changes
+      - .:/app                  # full repo — edit anything on host, reload picks up src/
       - finance-db:/root/.finance
     environment:
       FINANCE_DEBUG: "true"
       FINANCE_PORT: "8000"
       FINANCE_DB_URL: ""        # override for PostgreSQL: postgresql://user:pass@db:5432/finance
-      CORS_ORIGINS: "http://localhost:5173,http://localhost:80"
+      CORS_ORIGINS: "http://localhost:3501,http://localhost:3502"
+    # Re-link editable install to mounted tree (fast when unchanged); uvicorn watches /app/src
+    command: >
+      sh -c "pip install -e /app --no-cache-dir -q &&
+             python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src"
     restart: unless-stopped
 
   web:
@@ -20,10 +24,10 @@ services:
       context: ./frontend
       target: dev
     ports:
-      - "5173:5173"
+      - "3501:3501" # Vite dev server; see docs/PORTS.md
     volumes:
-      - ./frontend/src:/app/src         # hot-reload React changes
-      - ./frontend/public:/app/public
+      - ./frontend:/app
+      - /app/node_modules                 # keep image deps; bind mount hides them otherwise
     environment:
       VITE_API_TARGET: "http://api:8000"
     depends_on:

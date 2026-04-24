@@ -3,7 +3,7 @@
 
 Usage:
   python run.py
-  FINANCE_PORT=8080 python run.py
+  FINANCE_PORT=9000 python run.py  # arbitrary override; default 3503 — docs/PORTS.md
   FINANCE_DB_URL=sqlite:///./finance.db python run.py
 """
 

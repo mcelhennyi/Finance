@@ -29,23 +29,21 @@ Starts the Finance Hub development server via Docker Compose with live reload.
 
 ### What it does
 
-1. Builds the Docker image using the `dev` stage of `Dockerfile` (Werkzeug reloader + watchdog)
-2. Mounts `src/` and `run.py` as volumes — Python edits are reflected without rebuilding
-3. Flask debug mode is on: server restarts automatically when `.py` files change
-4. Template and static file changes take effect on next browser refresh
-5. SQLite database is persisted in a named Docker volume (`finance-db`)
+1. Builds and starts the **api** and **web** services from `docker-compose.yml` (FastAPI + Vite, with reload)
+2. Persists SQLite in a named Docker volume (`finance-db`)
+
+Host ports are defined in **[docs/PORTS.md](../docs/PORTS.md)**.
 
 ### Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `FINANCE_PORT` | `5000` | Host port mapped to the container |
-| `FINANCE_DB_URL` | *(auto)* | SQLite path inside container, or PostgreSQL URL |
-| `FINANCE_DEBUG` | `true` | Enable Flask debug mode and reloader |
+Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, see `docker compose` documentation.
 
 ### Access
 
-App runs at **http://localhost:5000** (or `FINANCE_PORT` if overridden).
+- API: **http://localhost:3500**
+- UI: **http://localhost:3501**
+
+(Exact ports are listed in [docs/PORTS.md](../docs/PORTS.md).)
 
 ---
 

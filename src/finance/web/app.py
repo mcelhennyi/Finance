@@ -208,7 +208,7 @@ def create_app() -> Flask:
 
 def main() -> None:
     import os
-    port = int(os.environ.get("FINANCE_PORT", 5000))
+    port = int(os.environ.get("FINANCE_PORT", 3503))
     debug = os.environ.get("FINANCE_DEBUG", "true").lower() == "true"
     print(f"Finance Hub starting on http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=debug)

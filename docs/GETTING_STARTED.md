@@ -94,7 +94,7 @@ pytest -v -m integration  # integration tests (requires DB)
 mkdocs serve
 ```
 
-Then open [http://localhost:8000](http://localhost:8000).
+Then open [http://localhost:3504](http://localhost:3504) (see [Port registry](PORTS.md)).
 
 ## Environment Variables
 
