@@ -1,0 +1,51 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from './api/client'
+import { Layout } from './components/Layout'
+import { UploadZone } from './components/UploadZone'
+import { FilterBar } from './components/FilterBar'
+import { StatCards } from './components/StatCards'
+import { Charts } from './components/Charts'
+import { TransactionTable } from './components/TransactionTable'
+import type { FilterState } from './types'
+
+const DEFAULT_FILTER: FilterState = { from: '', to: '', category: '', source: '' }
+
+export function App() {
+  const [pending, setPending] = useState<FilterState>(DEFAULT_FILTER)
+  const [applied, setApplied] = useState<FilterState>(DEFAULT_FILTER)
+
+  const metricsQuery = useQuery({
+    queryKey: ['metrics', applied],
+    queryFn: () => api.metrics(applied),
+  })
+
+  const txQuery = useQuery({
+    queryKey: ['transactions', applied],
+    queryFn: () => api.transactions(applied),
+  })
+
+  const handleApply = () => setApplied({ ...pending })
+  const handleReset = () => { setPending(DEFAULT_FILTER); setApplied(DEFAULT_FILTER) }
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <UploadZone />
+
+        <FilterBar
+          filter={pending}
+          onChange={setPending}
+          onApply={handleApply}
+          onReset={handleReset}
+        />
+
+        <StatCards metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
+
+        <Charts metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
+
+        <TransactionTable transactions={txQuery.data} loading={txQuery.isLoading} />
+      </div>
+    </Layout>
+  )
+}

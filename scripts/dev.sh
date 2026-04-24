@@ -1,34 +1,34 @@
 #!/bin/bash
-# scripts/dev.sh — Start the Finance Hub development server via Docker
+# scripts/dev.sh — Start the Finance Hub development stack via Docker
 #
 # Usage:
-#   ./scripts/dev.sh             # start (or restart) the dev server
-#   ./scripts/dev.sh --build     # force-rebuild the image before starting
-#   ./scripts/dev.sh --logs      # attach to logs of an already-running server
-#   ./scripts/dev.sh --stop      # stop the dev server
-#   ./scripts/dev.sh --clean     # stop and remove the container + db volume
+#   ./scripts/dev.sh             # start (or restart) both services
+#   ./scripts/dev.sh --build     # force-rebuild images before starting
+#   ./scripts/dev.sh --logs      # attach to logs of running services
+#   ./scripts/dev.sh --logs api  # logs for a specific service (api | web)
+#   ./scripts/dev.sh --stop      # stop the dev stack
+#   ./scripts/dev.sh --clean     # stop and remove containers + db volume
 #
-# The server auto-reloads when Python source files under src/ change.
-# Template and static file changes are reflected immediately on next request.
-# Access the app at http://localhost:5000
+# Services:
+#   api  — FastAPI backend on http://localhost:8000  (uvicorn --reload)
+#   web  — React/Vite frontend on http://localhost:5173 (vite --host)
 
 set -euo pipefail
 
 COMPOSE="docker compose"
-SERVICE="web"
 
 case "${1:-}" in
   --build)
-    echo "→ Rebuilding dev image…"
+    echo "→ Rebuilding dev images…"
     $COMPOSE build --no-cache
-    echo "→ Starting dev server…"
+    echo "→ Starting dev stack…"
     $COMPOSE up
     ;;
   --logs)
-    $COMPOSE logs -f $SERVICE
+    $COMPOSE logs -f ${2:-}
     ;;
   --stop)
-    echo "→ Stopping dev server…"
+    echo "→ Stopping dev stack…"
     $COMPOSE stop
     ;;
   --clean)
@@ -36,12 +36,11 @@ case "${1:-}" in
     $COMPOSE down -v
     ;;
   *)
-    echo "→ Starting Finance Hub dev server…"
-    echo "   App will be available at http://localhost:${FINANCE_PORT:-5000}"
-    echo "   Source changes in src/ auto-reload the server"
+    echo "→ Starting Finance Hub dev stack…"
+    echo "   API  → http://localhost:8000   (FastAPI, auto-reload on src/ changes)"
+    echo "   UI   → http://localhost:5173   (React/Vite, HMR enabled)"
     echo "   Press Ctrl+C to stop"
     echo ""
-    # Build if image doesn't exist, otherwise use existing
     $COMPOSE up --build
     ;;
 esac

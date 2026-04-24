@@ -1,16 +1,27 @@
 services:
-  web:
+  api:
     build:
       context: .
-      target: prod         # gunicorn, no reloader, no debugger
+      target: prod
     ports:
-      - "${FINANCE_PORT:-5000}:5000"
+      - "8000:8000"
     volumes:
       - finance-db:/root/.finance
     environment:
       FINANCE_DEBUG: "false"
-      FINANCE_PORT: "5000"
-      FINANCE_DB_URL: ""   # set to postgresql://... for Postgres
+      FINANCE_PORT: "8000"
+      FINANCE_DB_URL: ""
+      CORS_ORIGINS: "http://localhost"
+    restart: always
+
+  web:
+    build:
+      context: ./frontend
+      target: prod
+    ports:
+      - "80:80"
+    depends_on:
+      - api
     restart: always
 
 volumes:
