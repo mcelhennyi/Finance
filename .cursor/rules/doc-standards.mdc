@@ -1,0 +1,34 @@
+---
+description: Python docstrings and links to design docs
+alwaysApply: true
+---
+
+# Documentation in code
+
+Authoritative design lives in `docs/design/`. This rule adds **how** to write comments and **tie backs** to design docs.
+
+## Python — Docstrings (Google guide + design ties)
+
+Follow [Comments and Docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) in the **Google Python Style Guide** for tone, structure, and `Args:` / `Returns:` / `Raises:` sections where applicable.
+
+Add project-specific **`See Also:`** lines with repo-relative paths to design docs, e.g.:
+
+```
+See Also: docs/design/services/ingestion-service/overview.md
+```
+
+## Diagrams
+
+- ALL diagrams in markdown files MUST use Mermaid format
+- Never use ASCII art or PlantUML
+- Sequence diagrams for complex multi-step flows
+- Class diagrams for module structure
+- ER diagrams for schema documentation
+
+## Tie backs to docs
+
+When implementing or changing behavior:
+
+1. Cite the relevant `docs/design/*.md` section in `See Also:` (Python).
+2. If behavior is driven by a requirements document, reference that doc.
+3. On `DESIGN-GAP` / `DESIGN-FLAW` / `CODE-DEFECT`, document in code only enough to point to the issue and the relevant design doc.

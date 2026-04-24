@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface2: #f8f9fa;
+  --border: #e0e4ea;
+  --text: #1a1d23;
+  --text2: #6b7280;
+  --accent: #0d9488;
+  --accent-light: #ccfbf1;
+  --red: #ef4444;
+  --green: #22c55e;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+       background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+a { color: var(--accent); text-decoration: none; }
+
+/* ─── Layout ────────────────────────────────────────────────────────────── */
+.app { display: grid; grid-template-rows: 56px 1fr; min-height: 100vh; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); letter-spacing: -.02em; }
+.topbar .logo span { color: var(--text2); font-weight: 400; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.main { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+/* ─── Cards ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+}
+.card h2 { font-size: .85rem; font-weight: 600; text-transform: uppercase;
+           letter-spacing: .06em; color: var(--text2); margin-bottom: 14px; }
+
+/* ─── Stat Cards ─────────────────────────────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+             padding: 16px 20px; }
+.stat-card .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+                    color: var(--text2); margin-bottom: 6px; }
+.stat-card .value { font-size: 1.45rem; font-weight: 700; }
+.stat-card.red .value { color: var(--red); }
+.stat-card.green .value { color: var(--green); }
+.stat-card.teal .value { color: var(--accent); }
+
+/* ─── Upload Zone ────────────────────────────────────────────────────────── */
+.upload-section { margin-bottom: 20px; }
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.drop-zone .icon { font-size: 2.5rem; margin-bottom: 12px; }
+.drop-zone .hint { color: var(--text2); font-size: .9rem; margin-top: 8px; }
+.drop-zone strong { color: var(--accent); }
+
+.source-row { display: flex; gap: 12px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.source-row label { font-size: .85rem; font-weight: 500; }
+.source-row select, .source-row button {
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); font-size: .875rem;
+  background: var(--surface); cursor: pointer;
+}
+.source-row button.primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  font-weight: 600;
+}
+.source-row button.primary:hover { opacity: .9; }
+
+.upload-feedback {
+  margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm);
+  font-size: .875rem; display: none;
+}
+.upload-feedback.success { background: #dcfce7; color: #166534; }
+.upload-feedback.error { background: #fee2e2; color: #991b1b; }
+.upload-feedback.loading { background: #e0f2fe; color: #075985; }
+
+/* ─── Filter Bar ─────────────────────────────────────────────────────────── */
+.filter-bar {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 20px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.filter-bar label { font-size: .8rem; font-weight: 600; color: var(--text2); }
+.filter-bar input, .filter-bar select {
+  padding: 6px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .85rem;
+  background: var(--surface); min-width: 120px;
+}
+.filter-bar input:focus, .filter-bar select:focus {
+  outline: none; border-color: var(--accent);
+}
+.filter-bar .btn-filter {
+  padding: 7px 16px; border-radius: var(--radius-sm);
+  background: var(--accent); color: #fff; border: none;
+  font-size: .85rem; font-weight: 600; cursor: pointer;
+}
+.filter-bar .btn-reset {
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border); font-size: .85rem; cursor: pointer;
+}
+
+/* ─── Charts Grid ────────────────────────────────────────────────────────── */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+.chart-card h2 { font-size: .85rem; font-weight: 600; text-transform: uppercase;
+                 letter-spacing: .06em; color: var(--text2); margin-bottom: 14px; }
+.chart-wrap { position: relative; }
+canvas { max-height: 300px; }
+
+/* ─── Transaction Table ──────────────────────────────────────────────────── */
+.tx-section { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+.tx-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.tx-header h2 { font-size: .85rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: .06em; color: var(--text2); }
+.tx-search input {
+  padding: 7px 12px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .85rem; width: 260px;
+}
+.tx-search input:focus { outline: none; border-color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+thead th {
+  padding: 10px 16px; text-align: left;
+  border-bottom: 2px solid var(--border);
+  color: var(--text2); font-weight: 600; font-size: .75rem; text-transform: uppercase;
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 9px 16px; }
+td.amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+td.amount.credit { color: var(--green); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 99px;
+  font-size: .72rem; font-weight: 600; background: var(--accent-light);
+  color: var(--accent);
+}
+.empty-state {
+  padding: 48px 24px; text-align: center; color: var(--text2);
+}
+.empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
+
+/* ─── Category Summary ───────────────────────────────────────────────────── */
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.cat-table-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+/* ─── Loading overlay ────────────────────────────────────────────────────── */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(255,255,255,.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 999; font-weight: 600; color: var(--accent);
+  flex-direction: column; gap: 12px;
+}
+.spinner {
+  width: 40px; height: 40px; border: 4px solid var(--accent-light);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .cat-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .main { padding: 12px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .tx-search input { width: 160px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ─── Top Bar ──────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="logo">Finance <span>Hub</span></div>
+  <div class="topbar-actions">
+    <span id="db-status" style="font-size:.8rem;color:var(--text2)">Loading…</span>
+  </div>
+</header>
+
+<!-- ─── Main Content ─────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Upload Section -->
+  <div class="upload-section">
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📂</div>
+      <div><strong>Drop your statement here</strong> or click to browse</div>
+      <div class="hint">Supports CSV exports from Chase, Amex, Wells Fargo, Frost Bank, PNC, and more</div>
+      <input type="file" id="fileInput" accept=".csv" style="display:none">
+    </div>
+    <div class="source-row">
+      <label for="sourceSelect">Bank:</label>
+      <select id="sourceSelect">
+        <option value="auto">Auto-detect</option>
+      </select>
+      <button class="primary" id="uploadBtn" disabled>Upload Statement</button>
+      <div id="selectedFile" style="font-size:.85rem;color:var(--text2)"></div>
+    </div>
+    <div class="upload-feedback" id="uploadFeedback"></div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div>
+      <label>From</label><br>
+      <input type="date" id="filterFrom">
+    </div>
+    <div>
+      <label>To</label><br>
+      <input type="date" id="filterTo">
+    </div>
+    <div>
+      <label>Category</label><br>
+      <select id="filterCategory"><option value="">All categories</option></select>
+    </div>
+    <div>
+      <label>Source</label><br>
+      <select id="filterSource"><option value="">All banks</option></select>
+    </div>
+    <div>
+      <label>Search</label><br>
+      <input type="text" id="filterMerchant" placeholder="Merchant or description…" style="min-width:200px">
+    </div>
+    <div style="align-self:flex-end;display:flex;gap:8px">
+      <button class="btn-filter" id="applyFilter">Apply</button>
+      <button class="btn-reset" id="resetFilter">Reset</button>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card red"><div class="label">Total Spent</div><div class="value" id="totalSpent">—</div></div>
+    <div class="stat-card green"><div class="label">Credits / Refunds</div><div class="value" id="totalCredits">—</div></div>
+    <div class="stat-card"><div class="label">Net Charged</div><div class="value" id="netSpent">—</div></div>
+    <div class="stat-card teal"><div class="label">Transactions</div><div class="value" id="txCount">—</div></div>
+    <div class="stat-card"><div class="label">Avg / Transaction</div><div class="value" id="avgTx">—</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>Spending by Category</h2>
+      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Top 10 Merchants</h2>
+      <div class="chart-wrap"><canvas id="merchantChart"></canvas></div>
+    </div>
+    <div class="chart-card" style="grid-column: span 2">
+      <h2>Daily Spend Trend</h2>
+      <div class="chart-wrap"><canvas id="lineChart" style="max-height:180px"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Category Table -->
+  <div class="cat-grid">
+    <div class="cat-table-wrap card">
+      <h2>Category Breakdown</h2>
+      <table id="catTable">
+        <thead><tr><th>Category</th><th>#</th><th>Total</th><th>%</th></tr></thead>
+        <tbody id="catTableBody"></tbody>
+      </table>
+    </div>
+    <div class="cat-table-wrap card">
+      <h2>Category — Bar</h2>
+      <div class="chart-wrap"><canvas id="barChart" style="max-height:340px"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Transaction Table -->
+  <div class="tx-section">
+    <div class="tx-header">
+      <h2>All Transactions</h2>
+      <div class="tx-search">
+        <input type="text" id="txSearch" placeholder="Search transactions…">
+      </div>
+    </div>
+    <div id="txTableWrap">
+      <div class="empty-state">
+        <div class="icon">💳</div>
+        <div>Upload a statement to get started</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingMsg">Loading…</div>
+</div>
+
+<script>
+/* =========================================================================
+   Finance Hub — Frontend JavaScript
+   ========================================================================= */
+
+const COLORS = [
+  "#0d9488","#f59e0b","#ef4444","#3b82f6","#8b5cf6",
+  "#10b981","#f97316","#06b6d4","#ec4899","#84cc16",
+  "#a78bfa","#fb923c","#34d399","#60a5fa","#f472b6",
+  "#facc15","#4ade80","#38bdf8",
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let pieChartInst = null;
+let barChartInst = null;
+let lineChartInst = null;
+let merchantChartInst = null;
+let allTransactions = [];
+let currentFilter = {};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+function showLoading(msg = 'Loading…') {
+  $('loadingOverlay').style.display = 'flex';
+  $('loadingMsg').textContent = msg;
+}
+function hideLoading() { $('loadingOverlay').style.display = 'none'; }
+
+function showFeedback(type, msg) {
+  const el = $('uploadFeedback');
+  el.className = 'upload-feedback ' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (type !== 'loading') setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+// ── Source Options ─────────────────────────────────────────────────────────
+async function loadSources() {
+  try {
+    const res = await fetch('/api/sources');
+    const sources = await res.json();
+    const sel = $('sourceSelect');
+    sel.innerHTML = '<option value="auto">Auto-detect</option>';
+    sources.forEach(s => {
+      if (s.key !== 'auto') {
+        const opt = document.createElement('option');
+        opt.value = s.key;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      }
+    });
+  } catch (e) { console.warn('Could not load sources', e); }
+}
+
+// ── Filter Options ─────────────────────────────────────────────────────────
+async function loadFilterOptions() {
+  try {
+    const res = await fetch('/api/filters');
+    const data = await res.json();
+
+    const catSel = $('filterCategory');
+    catSel.innerHTML = '<option value="">All categories</option>';
+    (data.categories || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      catSel.appendChild(opt);
+    });
+
+    const srcSel = $('filterSource');
+    srcSel.innerHTML = '<option value="">All banks</option>';
+    (data.sources || []).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      srcSel.appendChild(opt);
+    });
+
+    if (data.date_min) $('filterFrom').value = data.date_min;
+    if (data.date_max) $('filterTo').value = data.date_max;
+
+    $('db-status').textContent = data.date_min
+      ? `Data: ${data.date_min} → ${data.date_max}`
+      : 'No data yet';
+  } catch (e) { console.warn('Could not load filters', e); }
+}
+
+// ── Dashboard Data ─────────────────────────────────────────────────────────
+async function refreshDashboard() {
+  showLoading('Refreshing dashboard…');
+  try {
+    const params = new URLSearchParams();
+    if (currentFilter.from)     params.set('from', currentFilter.from);
+    if (currentFilter.to)       params.set('to', currentFilter.to);
+    if (currentFilter.category) params.set('category', currentFilter.category);
+    if (currentFilter.source)   params.set('source', currentFilter.source);
+
+    const [metricsRes, txRes] = await Promise.all([
+      fetch('/api/metrics?' + params),
+      fetch('/api/transactions?' + params + '&limit=1000'),
+    ]);
+
+    const metrics = await metricsRes.json();
+    allTransactions = await txRes.json();
+
+    updateStats(metrics);
+    updateCharts(metrics);
+    updateCategoryTable(metrics);
+    renderTransactionTable(allTransactions);
+    await loadFilterOptions();
+  } catch (e) {
+    console.error('Dashboard refresh error', e);
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function updateStats(m) {
+  $('totalSpent').textContent = fmt(m.total_spent);
+  $('totalCredits').textContent = fmt(m.total_credits);
+  $('netSpent').textContent = fmt(m.net_spent);
+  $('txCount').textContent = m.transaction_count.toLocaleString();
+  $('avgTx').textContent = fmt(m.avg_per_transaction);
+}
+
+// ── Charts ─────────────────────────────────────────────────────────────────
+function destroyChart(inst) { if (inst) { inst.destroy(); } }
+
+function updateCharts(m) {
+  const cats = m.by_category || {};
+  const catLabels = Object.keys(cats);
+  const catValues = Object.values(cats);
+  const colors = catLabels.map((_, i) => COLORS[i % COLORS.length]);
+
+  // Pie
+  destroyChart(pieChartInst);
+  pieChartInst = new Chart($('pieChart'), {
+    type: 'doughnut',
+    data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: colors, borderWidth: 1 }] },
+    options: {
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } },
+      cutout: '55%',
+    }
+  });
+
+  // Bar (category)
+  destroyChart(barChartInst);
+  barChartInst = new Chart($('barChart'), {
+    type: 'bar',
+    data: { labels: catLabels, datasets: [{ label: 'Amount ($)', data: catValues, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { callback: v => '$' + v.toLocaleString() } } },
+    }
+  });
+
+  // Line (daily trend)
+  destroyChart(lineChartInst);
+  const dates = (m.daily_trend || []).map(d => d[0]);
+  const dailyAmt = (m.daily_trend || []).map(d => d[1]);
+  lineChartInst = new Chart($('lineChart'), {
+    type: 'line',
+    data: { labels: dates, datasets: [{ label: 'Daily Spend', data: dailyAmt,
+      fill: true, tension: 0.3,
+      borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,.1)', pointRadius: 2 }] },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12, maxRotation: 45 } },
+        y: { ticks: { callback: v => '$' + v.toLocaleString() } }
+      }
+    }
+  });
+
+  // Merchant chart
+  destroyChart(merchantChartInst);
+  const mLabels = (m.top_merchants || []).map(x => x[0]);
+  const mValues = (m.top_merchants || []).map(x => x[1]);
+  merchantChartInst = new Chart($('merchantChart'), {
+    type: 'bar',
+    data: { labels: mLabels, datasets: [{ label: 'Amount ($)', data: mValues, backgroundColor: '#0d9488', borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { callback: v => '$' + v.toLocaleString() } } }
+    }
+  });
+}
+
+// ── Category Table ─────────────────────────────────────────────────────────
+function updateCategoryTable(m) {
+  const cats = m.by_category || {};
+  const total = m.total_spent || 0;
+  const tbody = $('catTableBody');
+  tbody.innerHTML = '';
+
+  Object.entries(cats).forEach(([cat, amt]) => {
+    const pct = total ? (amt / total * 100).toFixed(1) : '0.0';
+    const count = (m.by_category_count || {})[cat] || 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${cat}</td>
+      <td>${count}</td>
+      <td class="amount">$${amt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>${pct}%</td>`;
+    tbody.appendChild(tr);
+  });
+
+  if (!Object.keys(cats).length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:24px">No data</td></tr>';
+  }
+}
+
+// ── Transaction Table ──────────────────────────────────────────────────────
+function renderTransactionTable(transactions) {
+  const wrap = $('txTableWrap');
+
+  if (!transactions.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">💳</div><div>No transactions found. Try adjusting filters or uploading a statement.</div></div>';
+    return;
+  }
+
+  const searchVal = ($('txSearch').value || '').toLowerCase();
+  const filtered = searchVal
+    ? transactions.filter(t =>
+        (t.description || '').toLowerCase().includes(searchVal) ||
+        (t.category || '').toLowerCase().includes(searchVal) ||
+        String(t.amount).includes(searchVal))
+    : transactions;
+
+  const rows = filtered.map(t => {
+    const isCredit = t.is_credit || t.amount < 0;
+    const amtStr = isCredit
+      ? `-$${Math.abs(t.amount).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`
+      : `$${t.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    return `<tr>
+      <td>${t.date}</td>
+      <td>${(t.description || '').substring(0,55)}</td>
+      <td><span class="badge">${t.category || 'Uncategorized'}</span></td>
+      <td class="amount ${isCredit ? 'credit' : ''}">${amtStr}</td>
+      <td style="color:var(--text2);font-size:.8rem">${t.source_type || ''}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right">Amount</th><th>Bank</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:10px 16px;font-size:.8rem;color:var(--text2)">
+      Showing ${filtered.length.toLocaleString()} of ${transactions.length.toLocaleString()} transactions
+    </div>`;
+}
+
+// ── File Upload ────────────────────────────────────────────────────────────
+let selectedFile = null;
+
+function handleFileSelect(file) {
+  if (!file) return;
+  selectedFile = file;
+  $('selectedFile').textContent = file.name;
+  $('uploadBtn').disabled = false;
+}
+
+$('dropZone').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', e => handleFileSelect(e.target.files[0]));
+
+$('dropZone').addEventListener('dragover', e => {
+  e.preventDefault();
+  $('dropZone').classList.add('dragover');
+});
+$('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove('dragover'));
+$('dropZone').addEventListener('drop', e => {
+  e.preventDefault();
+  $('dropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFileSelect(file);
+});
+
+$('uploadBtn').addEventListener('click', async () => {
+  if (!selectedFile) return;
+  const source = $('sourceSelect').value;
+
+  showFeedback('loading', `Uploading ${selectedFile.name}…`);
+  $('uploadBtn').disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  formData.append('source', source === 'auto' ? '' : source);
+
+  try {
+    const res = await fetch('/api/ingest', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.error) {
+      showFeedback('error', `Error: ${data.error}`);
+    } else if (data.errors && data.errors.length) {
+      showFeedback('error', `Partial ingest — ${data.records_inserted} inserted. Errors: ${data.errors.join('; ')}`);
+    } else {
+      showFeedback('success',
+        `✓ ${data.source_type}: ${data.records_inserted} transactions inserted, ${data.records_skipped} skipped (${data.duration_seconds}s)`);
+      selectedFile = null;
+      $('selectedFile').textContent = '';
+      $('fileInput').value = '';
+      await refreshDashboard();
+    }
+  } catch (e) {
+    showFeedback('error', `Network error: ${e.message}`);
+  } finally {
+    $('uploadBtn').disabled = false;
+  }
+});
+
+// ── Filters ────────────────────────────────────────────────────────────────
+$('applyFilter').addEventListener('click', async () => {
+  currentFilter = {
+    from: $('filterFrom').value || '',
+    to: $('filterTo').value || '',
+    category: $('filterCategory').value || '',
+    source: $('filterSource').value || '',
+  };
+  await refreshDashboard();
+});
+
+$('resetFilter').addEventListener('click', async () => {
+  currentFilter = {};
+  $('filterFrom').value = '';
+  $('filterTo').value = '';
+  $('filterCategory').value = '';
+  $('filterSource').value = '';
+  $('filterMerchant').value = '';
+  await refreshDashboard();
+});
+
+$('txSearch').addEventListener('input', () => renderTransactionTable(allTransactions));
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(async () => {
+  await loadSources();
+  await refreshDashboard();
+})();
+</script>
+</body>
+</html>

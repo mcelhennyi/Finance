@@ -1,0 +1,245 @@
+# Cursor Rules for Finance Hub Project
+
+## Markdown Formatting
+
+- **MANDATORY**: Always put a blank line between any non-blank line and a line that starts a bulleted or numbered list item
+- **Rule Details**:
+  - If a line contains text (not blank/whitespace only) and is immediately followed by a line starting with `-`, `*`, or a number followed by `.` or `)`, there MUST be a blank line between them
+  - This applies to ALL markdown files (`.md` files) in the project
+  - This ensures proper markdown rendering, prevents formatting issues, and improves readability
+- **Examples**:
+  - ✅ **Correct**:
+    ```
+    Some text here
+
+    - Bullet item 1
+    - Bullet item 2
+    ```
+  - ❌ **Incorrect**:
+    ```
+    Some text here
+    - Bullet item 1
+    - Bullet item 2
+    ```
+- **Enforcement**: This rule is automatically checked and violations are fixed during code reviews and documentation updates
+
+## MkDocs Configuration
+
+- **CRITICAL**: Only update `mkdocs.yml` in the ROOT directory
+- **NEVER** create or modify `docs/mkdocs.yml` - this file should not exist
+- The `docs_dir` in `mkdocs.yml` is set to `docs`, so all markdown files are in `docs/` but the config file is in the root
+
+## File Locations
+
+- MkDocs config: `mkdocs.yml` (root only)
+- Documentation source: `docs/` directory
+- Scripts: `scripts/` directory
+- Source code: `src/` directory
+
+## Scripts Directory Requirements
+
+- **MANDATORY**: When adding a new script to the `scripts/` directory, you MUST update `scripts/README.md` with complete documentation
+- The README entry must include:
+  - Purpose and description
+  - Usage examples with command-line syntax
+  - Complete API documentation:
+    - Input parameters and options
+    - Output files or results
+    - Dependencies (system and Python packages)
+    - Exit codes and error conditions
+  - What the script does (step-by-step or summary)
+- Follow existing script patterns:
+  - Shell scripts: `.sh` extension with shebang `#!/bin/bash`
+  - Python scripts: `.py` extension with shebang `#!/usr/bin/env python3`
+  - Make scripts executable: `chmod +x scripts/script-name.sh`
+  - Include header comments with purpose and usage
+  - Include error handling and clear error messages
+
+## Workflow Orchestration and Task Management
+
+### Workflow Orchestration
+
+#### 1. Plan Mode Default
+
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
+#### 2. Subagent Strategy
+
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
+#### 3. Self-Improvement Loop
+
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
+#### 4. Verification Before Done
+
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Write and run tests, check logs, demonstrate correctness
+
+#### 5. Demand Elegance (Balanced)
+
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+#### 6. Autonomous Bug Fixing
+
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+### Task Management
+
+1. **Plan First**: Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan**: Check in before starting implementation
+3. **Track Progress**: Mark items complete as you go
+4. **Explain Changes**: High-level summary at each step
+5. **Document Results**: Add review section to `tasks/todo.md`
+6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
+
+### Core Principles
+
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
+## Maximize Reuse and Abstraction
+
+### General Principle
+
+- **MANDATORY**: Always prioritize reuse over custom implementations
+- Before writing new code, check if similar functionality already exists in `scripts/` or `src/common/`
+- Abstract functionality to be reusable across multiple contexts, not just a single custom use case
+- When functionality is used in 2+ places, it MUST be moved to a shared location
+
+### Scripts Directory (`scripts/`)
+
+- **MANDATORY**: Before creating a new script, check `scripts/` for existing scripts that could be extended or reused
+- Scripts should be designed to handle multiple scenarios through:
+  - Command-line arguments
+  - Configuration files
+  - Environment variables
+  - Parameterized functions that can be imported
+- **Example**: Instead of `scripts/ingest-chase.sh`, create `scripts/ingest-statement.sh --bank chase` that works for any source
+
+### Common Directory (`src/common/`)
+
+- **MANDATORY**: Before implementing any utility, validation, or shared logic, check `src/common/` for existing implementations
+- When moving code to `src/common/`, ensure it's properly abstracted:
+  - Accept configuration parameters instead of hardcoded values
+  - Use dependency injection for external dependencies
+  - Provide clear interfaces that can be extended
+  - Document how to extend or customize the functionality
+- **Abstraction Guidelines**:
+  - Replace source-specific constants with configurable parameters
+  - Replace hardcoded category maps with pluggable strategies
+  - Make parsers generic enough to handle multiple statement formats
+
+### When to Abstract
+
+- **Always abstract when**:
+  - Code is duplicated in 2+ places (even if slightly different)
+  - A script or utility could be useful for multiple data sources
+  - Functionality follows a common pattern that could be generalized
+- **Don't over-abstract**:
+  - If abstraction makes code significantly more complex without clear benefit, keep it specific
+  - Balance: Prefer abstraction, but maintain clarity and simplicity
+
+## Product Development Philosophy: Generative Development
+
+### REQUIRED: A Paradigm Shift in How We Build Products
+
+This project uses **generative development** — a documentation-driven, self-evolving architecture approach. Instead of manually updating code cells that become obsolete, we grow the **organism** (the system architecture) through structured documentation and strict architectural rules.
+
+### The Approach
+
+**1. User-Driven Foundation**
+
+- Start with real financial needs and pain points
+- Capture actual workflows and desired outcomes
+- These needs become the foundation for all system design decisions
+
+**2. System-Level Design Before Implementation**
+
+- Define each module completely at the architectural level before writing code
+- Document: operational goals, system boundaries, integration points, phased plans
+- Create detailed designs for each phase to understand complexity and change impact
+
+**3. Phased Evolution**
+
+- Design and document each phase in depth before building
+- Phase 1 (MVP): Ingest statements, store in DB, query and categorize
+- Phase 2: Goals, budgets, unified financial view (income + expenses + liabilities)
+- Phase 3: Trend analysis, projections, scenario modeling
+- Each phase is fully designed before implementation begins
+
+**4. Generative Development Through Architectural Rules**
+
+- Strict architectural rules (enforced via these cursor rules) enable generative development
+- AI assistants follow these rules to generate consistent, well-structured code
+- Common patterns are extracted and reused automatically
+
+**5. User Feedback as Evolutionary Force**
+
+- User feedback drives system changes at the architectural level
+- Changes are documented first, then implemented through generative development
+
+### Key Principles for Developers
+
+1. **Documentation is the source of truth** — All system behavior is defined in design docs
+2. **Design before implementation** — Never write code without a complete design document
+3. **User feedback drives evolution** — Changes start at the design level, not the code level
+
+**Workflow**:
+
+1. Capture financial need or pain point
+2. Design the system response (document in `docs/design/`)
+3. Define phases and complexity
+4. Use generative development to create code following architectural rules
+5. Test and gather feedback
+6. Evolve design based on feedback
+7. Repeat
+
+## Code Documentation Standards
+
+### Python — Docstrings (Google style)
+
+Follow Google Python Style Guide for tone, structure, and `Args:` / `Returns:` / `Raises:` sections.
+
+Add `See Also:` lines with repo-relative paths to design docs, e.g., `See Also: docs/design/services/ingestion-service/overview.md`.
+
+### Diagrams
+
+- **CRITICAL**: ALL diagrams in README files MUST use Mermaid format
+- Never use ASCII art or PlantUML in markdown files — always use Mermaid
+
+### Testing Requirements
+
+- Overall Coverage: Minimum 80% code coverage
+- Unit Tests: 90% coverage of business logic
+- Integration Tests: 80% coverage of ingestion pipelines
+- Run coverage: `pytest --cov=src --cov-report=html --cov-report=term-missing`
+- Use pytest markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
+
+### Service Phase Awareness
+
+Services are developed in phases:
+
+- **Phase 1 (MVP)**: Ingestion + storage + basic querying
+- **Phase 2**: Goals, budgets, unified view, web dashboard
+- **Phase 3**: Trend analysis, projections, scenario modeling
+
+Document which phase the service is in within the README.

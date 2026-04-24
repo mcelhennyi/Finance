@@ -1,0 +1,29 @@
+---
+description: Unified formatting and style (Google guides + repo conventions)
+alwaysApply: true
+---
+
+# Unified code style
+
+**Baseline:** Start from Google's published Python Style Guide and default to their conventions unless this document or repo tooling overrides them.
+
+- **Python:** [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+
+## Project overrides (take precedence over the guide when they conflict)
+
+- Repository root **`.editorconfig`** — charset UTF-8, LF, trim whitespace, **4-space** indent for `.py`.
+- **Python formatting:** **`black`** + **`isort`** per **`pyproject.toml`** — line length **100**, `isort` profile **black** (overrides Google's historical line-length defaults; **black** output wins).
+
+## Python (Google guide + above)
+
+- Type hints on all public function signatures and exported APIs (per Google guide).
+- Import grouping and ordering: follow Google's spirit; **isort** enforces the concrete order.
+- Prefer explicit names; reserve short names for well-known locals in tight loops only.
+- Pydantic models for all data crossing module boundaries (parsed transactions, query filters, results).
+- SQLAlchemy models use `DeclarativeBase` with typed columns (`Mapped[...]`).
+
+## Cross-module
+
+- No committed secrets, credentials, or raw financial files.
+- Validate inputs at CLI and file-read boundaries; trust internal module contracts.
+- Privacy: never log transaction descriptions or amounts at DEBUG level in production paths.

@@ -1,0 +1,78 @@
+site_name: Finance Hub
+site_description: Personal finance management system — ingest, analyze, project, and optimize your financial life
+site_author: Ian McElhenny
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started: GETTING_STARTED.md
+  - Research:
+    - User Stories: research/user-stories.md
+    - Requirements: research/requirements.md
+  - Design:
+    - Philosophy: design/philosophy.md
+    - System Overview: design/system-overview.md
+    - Technology Decisions: design/technology-decisions.md
+    - Services:
+      - Ingestion Service:
+        - Overview: design/services/ingestion-service/overview.md
+        - Data Model: design/services/ingestion-service/uml.md
+        - CLI API: design/services/ingestion-service/api.md
+      - Analysis Service:
+        - Overview: design/services/analysis-service/overview.md
+        - Data Model: design/services/analysis-service/uml.md
+        - Query API: design/services/analysis-service/api.md
+      - Goals Service (Phase 2):
+        - Overview: design/services/goals-service/overview.md
+      - Projection Service (Phase 3):
+        - Overview: design/services/projection-service/overview.md
