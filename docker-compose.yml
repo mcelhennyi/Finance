@@ -1,0 +1,23 @@
+services:
+  web:
+    build:
+      context: .
+      target: dev          # uses the dev stage — Werkzeug reloader enabled
+    ports:
+      - "${FINANCE_PORT:-5000}:5000"
+    volumes:
+      # Mount source code so edits are reflected without rebuilding
+      - ./src:/app/src
+      - ./run.py:/app/run.py
+      # Persist the SQLite database across container restarts
+      - finance-db:/root/.finance
+    environment:
+      FINANCE_DEBUG: "true"
+      FINANCE_PORT: "5000"
+      # Override to use PostgreSQL: postgresql://user:pass@db:5432/finance
+      FINANCE_DB_URL: ""
+    # Werkzeug reloader polls on Linux/Mac Docker Desktop via watchdog
+    restart: unless-stopped
+
+volumes:
+  finance-db:

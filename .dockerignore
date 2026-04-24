@@ -1,0 +1,43 @@
+# Development artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Docs build output
+site/
+
+# Sensitive data — never in Docker image
+data/raw/
+data/uploads/
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docs source (not needed at runtime)
+docs/
+mkdocs.yml
+requirements.txt
+
+# Scripts (not needed at runtime)
+scripts/
+
+# Tasks
+tasks/
