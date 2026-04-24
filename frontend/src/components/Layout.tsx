@@ -10,16 +10,34 @@ interface Props {
 }
 
 export function Layout({ dateRange, children, activePage = 'dashboard', onNavigate }: Props) {
+  const brandClass = 'flex items-center gap-2.5 shrink-0'
+  const brandMark = (
+    <>
+      <img src="/logo.png" alt="" className="h-9 w-9 rounded-lg" width={36} height={36} />
+      <span className="text-lg font-bold text-teal-600 tracking-tight">
+        Finance <span className="text-slate-400 font-normal">Hub</span>
+      </span>
+    </>
+  )
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center gap-6">
-          <a href="#" className="flex items-center gap-2.5 shrink-0" aria-label="Finance Hub home">
-            <img src="/logo.png" alt="" className="h-9 w-9 rounded-lg" width={36} height={36} />
-            <span className="text-lg font-bold text-teal-600 tracking-tight">
-              Finance <span className="text-slate-400 font-normal">Hub</span>
-            </span>
-          </a>
+          {onNavigate ? (
+            <button
+              type="button"
+              onClick={() => onNavigate('dashboard')}
+              className={`${brandClass} rounded-lg hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2`}
+              aria-label="Finance Hub, go to dashboard"
+            >
+              {brandMark}
+            </button>
+          ) : (
+            <div className={brandClass}>
+              {brandMark}
+            </div>
+          )}
           {onNavigate && (
             <nav className="flex items-center gap-1 text-sm">
               <button

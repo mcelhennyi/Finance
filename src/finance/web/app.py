@@ -144,6 +144,14 @@ def api_metrics():
             "by_category_count": metrics.by_category_count,
             "top_merchants": [[m, round(a, 2)] for m, a in metrics.top_merchants],
             "daily_trend": metrics.daily_trend,
+            "category_weekly_trend": {
+                cat: [[p, round(amt, 2)] for p, amt in series]
+                for cat, series in metrics.category_weekly_trend.items()
+            },
+            "category_monthly_trend": {
+                cat: [[p, round(amt, 2)] for p, amt in series]
+                for cat, series in metrics.category_monthly_trend.items()
+            },
         }
     )
 

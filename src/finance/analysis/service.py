@@ -26,6 +26,8 @@ class SpendMetrics:
     by_category_count: dict[str, int] = field(default_factory=dict)
     top_merchants: list[tuple[str, float]] = field(default_factory=list)
     daily_trend: list[tuple[str, float]] = field(default_factory=list)
+    category_weekly_trend: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
+    category_monthly_trend: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
     all_transactions: list[dict] = field(default_factory=list)
 
 
@@ -107,10 +109,27 @@ def compute_metrics(transactions: list[Transaction]) -> SpendMetrics:
     )[:10]
 
     by_date: dict[str, float] = defaultdict(float)
+    weekly_by_cat: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    monthly_by_cat: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     for t in charges:
-        key = t.transaction_date.isoformat()
+        d = t.transaction_date
+        key = d.isoformat()
         by_date[key] += float(t.amount)
+        y, w, _ = d.isocalendar()
+        wk = f"{y}-W{w:02d}"
+        mo = f"{d.year}-{d.month:02d}"
+        weekly_by_cat[t.category][wk] += float(t.amount)
+        monthly_by_cat[t.category][mo] += float(t.amount)
     daily_trend = sorted(by_date.items())
+
+    category_weekly_trend = {
+        cat: sorted(((p, round(amt, 2)) for p, amt in buckets.items()), key=lambda x: x[0])
+        for cat, buckets in weekly_by_cat.items()
+    }
+    category_monthly_trend = {
+        cat: sorted(((p, round(amt, 2)) for p, amt in buckets.items()), key=lambda x: x[0])
+        for cat, buckets in monthly_by_cat.items()
+    }
 
     avg = total_spent / len(charges) if charges else 0.0
 
@@ -124,6 +143,8 @@ def compute_metrics(transactions: list[Transaction]) -> SpendMetrics:
         by_category_count=dict(by_category_count),
         top_merchants=top_merchants,
         daily_trend=daily_trend,
+        category_weekly_trend=category_weekly_trend,
+        category_monthly_trend=category_monthly_trend,
         all_transactions=[t.to_dict() for t in transactions],
     )
 

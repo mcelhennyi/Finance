@@ -36,6 +36,8 @@ class MetricsResponse(BaseModel):
     by_category_count: dict[str, int]
     top_merchants: list[list]
     daily_trend: list[list]
+    category_weekly_trend: dict[str, list[list]]
+    category_monthly_trend: dict[str, list[list]]
 
 
 class FiltersResponse(BaseModel):

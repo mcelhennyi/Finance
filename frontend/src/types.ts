@@ -46,6 +46,8 @@ export interface Metrics {
   by_category_count: Record<string, number>
   top_merchants: [string, number][]
   daily_trend: [string, number][]
+  category_weekly_trend: Record<string, [string, number][]>
+  category_monthly_trend: Record<string, [string, number][]>
 }
 
 export interface Filters {

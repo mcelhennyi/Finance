@@ -42,4 +42,12 @@ def get_metrics(
         by_category_count=m.by_category_count,
         top_merchants=[[name, round(amt, 2)] for name, amt in m.top_merchants],
         daily_trend=[[d, round(a, 2)] for d, a in m.daily_trend],
+        category_weekly_trend={
+            cat: [[p, amt] for p, amt in series]
+            for cat, series in m.category_weekly_trend.items()
+        },
+        category_monthly_trend={
+            cat: [[p, amt] for p, amt in series]
+            for cat, series in m.category_monthly_trend.items()
+        },
     )
