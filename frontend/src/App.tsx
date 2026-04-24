@@ -28,6 +28,18 @@ export function App() {
   const handleApply = () => setApplied({ ...pending })
   const handleReset = () => { setPending(DEFAULT_FILTER); setApplied(DEFAULT_FILTER) }
 
+  const handleApplyDateRange = (from: string, to: string) => {
+    const next = { ...pending, from, to }
+    setPending(next)
+    setApplied(next)
+  }
+
+  const handleClearDates = () => {
+    const next = { ...pending, from: '', to: '' }
+    setPending(next)
+    setApplied(next)
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -38,6 +50,8 @@ export function App() {
           onChange={setPending}
           onApply={handleApply}
           onReset={handleReset}
+          onApplyDateRange={handleApplyDateRange}
+          onClearDates={handleClearDates}
         />
 
         <StatCards metrics={metricsQuery.data} loading={metricsQuery.isLoading} />

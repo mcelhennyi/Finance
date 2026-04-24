@@ -1,15 +1,35 @@
 import { useQuery } from '@tanstack/react-query'
 import type { FilterState } from '../types'
 import { api } from '../api/client'
+import {
+  calendarMonthBounds,
+  previousMonthYm,
+  thisMonthYm,
+  ymFromFullMonthRange,
+} from '../lib/monthRange'
 
 interface Props {
   filter: FilterState
   onChange: (f: FilterState) => void
   onApply: () => void
   onReset: () => void
+  /** Replace date range and fetch immediately (keeps category / bank). */
+  onApplyDateRange: (from: string, to: string) => void
+  /** Clear date filters and fetch immediately. */
+  onClearDates: () => void
 }
 
-export function FilterBar({ filter, onChange, onApply, onReset }: Props) {
+const chip =
+  'rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors'
+
+export function FilterBar({
+  filter,
+  onChange,
+  onApply,
+  onReset,
+  onApplyDateRange,
+  onClearDates,
+}: Props) {
   const { data: filters } = useQuery({
     queryKey: ['filters'],
     queryFn: api.filters,
@@ -18,8 +38,43 @@ export function FilterBar({ filter, onChange, onApply, onReset }: Props) {
   const set = (key: keyof FilterState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ ...filter, [key]: e.target.value })
 
+  const monthMin = filters?.date_min?.slice(0, 7)
+  const monthMax = filters?.date_max?.slice(0, 7)
+  const monthValue = ymFromFullMonthRange(filter.from, filter.to)
+
+  const applyYm = (ym: string) => {
+    const { from, to } = calendarMonthBounds(ym)
+    if (!from || !to) return
+    onApplyDateRange(from, to)
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 px-5 py-4 flex flex-wrap items-end gap-4">
+      <Field label="Month">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="month"
+            value={monthValue}
+            min={monthMin ?? undefined}
+            max={monthMax ?? undefined}
+            onChange={e => {
+              const v = e.target.value
+              if (v) applyYm(v)
+            }}
+            className={`${input} min-w-[150px]`}
+          />
+          <button type="button" className={chip} onClick={() => applyYm(thisMonthYm())}>
+            This month
+          </button>
+          <button type="button" className={chip} onClick={() => applyYm(previousMonthYm())}>
+            Last month
+          </button>
+          <button type="button" className={chip} onClick={onClearDates}>
+            All dates
+          </button>
+        </div>
+      </Field>
+
       <Field label="From">
         <input
           type="date"
