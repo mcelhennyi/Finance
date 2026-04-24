@@ -2,6 +2,9 @@ import type {
   FilterState,
   Filters,
   IngestionResult,
+  MerchantDeleteResponse,
+  MerchantNameListResponse,
+  MerchantOverrideSaveResponse,
   Metrics,
   SourceOption,
   Transaction,
@@ -25,6 +28,28 @@ async function get<T>(path: string, params?: URLSearchParams): Promise<T> {
   return res.json() as Promise<T>
 }
 
+async function putJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error((err as { detail?: string }).detail ?? res.statusText)
+  }
+  return res.json() as Promise<T>
+}
+
+async function deleteQuery<T>(path: string, params: URLSearchParams): Promise<T> {
+  const res = await fetch(`${BASE}${path}?${params}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error((err as { detail?: string }).detail ?? res.statusText)
+  }
+  return res.json() as Promise<T>
+}
+
 export const api = {
   metrics: (filter: Partial<FilterState>) =>
     get<Metrics>('/metrics', buildParams(filter)),
@@ -38,6 +63,14 @@ export const api = {
   filters: () => get<Filters>('/filters'),
 
   sources: () => get<SourceOption[]>('/sources'),
+
+  merchantNames: () => get<MerchantNameListResponse>('/merchant-names'),
+
+  putMerchantDisplay: (merchant_key: string, display_name: string) =>
+    putJson<MerchantOverrideSaveResponse>('/merchant-names', { merchant_key, display_name }),
+
+  deleteMerchantDisplayOverride: (merchant_key: string) =>
+    deleteQuery<MerchantDeleteResponse>('/merchant-names', new URLSearchParams({ merchant_key })),
 
   ingest: async (file: File, source: string): Promise<IngestionResult> => {
     const form = new FormData()

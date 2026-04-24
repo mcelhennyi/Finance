@@ -23,6 +23,8 @@ export function TransactionTable({ transactions, loading }: Props) {
       t.description.toLowerCase().includes(q) ||
       t.category.toLowerCase().includes(q) ||
       t.source_type.toLowerCase().includes(q) ||
+      (t.merchant_display && t.merchant_display.toLowerCase().includes(q)) ||
+      (t.merchant && t.merchant.toLowerCase().includes(q)) ||
       String(t.amount).includes(q)
     )
   })
@@ -68,6 +70,7 @@ export function TransactionTable({ transactions, loading }: Props) {
               <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100">
                 <th className="px-5 py-3">Date</th>
                 <th className="px-5 py-3">Description</th>
+                <th className="px-5 py-3">Merchant</th>
                 <th className="px-5 py-3">Category</th>
                 <th className="px-5 py-3 text-right">Amount</th>
                 <th className="px-5 py-3">Bank</th>
@@ -78,6 +81,9 @@ export function TransactionTable({ transactions, loading }: Props) {
                 <tr key={t.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-2.5 text-slate-500 tabular-nums whitespace-nowrap">{t.date}</td>
                   <td className="px-5 py-2.5 text-slate-700 max-w-xs truncate">{t.description}</td>
+                  <td className="px-5 py-2.5 text-slate-600 max-w-[10rem] truncate text-xs" title={t.merchant || undefined}>
+                    {t.merchant_display || t.merchant || '—'}
+                  </td>
                   <td className="px-5 py-2.5">
                     <span className="inline-block rounded-full bg-teal-50 text-teal-700 px-2.5 py-0.5 text-[11px] font-semibold">
                       {t.category}

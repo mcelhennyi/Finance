@@ -5,8 +5,35 @@ export interface Transaction {
   amount: number
   category: string
   merchant: string
+  merchant_display: string
   is_credit: boolean
   source_type: string
+}
+
+export interface MerchantNameRow {
+  merchant_key: string
+  transaction_count: number
+  auto_pretty: string
+  override_display: string | null
+  effective_display: string
+  needs_review: boolean
+}
+
+/** Response from PUT /merchant-names (Save) — includes seed file sync status. */
+export interface MerchantOverrideSaveResponse extends MerchantNameRow {
+  seed_file_synced: boolean
+  seed_file_error: string | null
+}
+
+export interface MerchantDeleteResponse {
+  ok: boolean
+  merchant_key: string
+  seed_file_synced: boolean
+  seed_file_error: string | null
+}
+
+export interface MerchantNameListResponse {
+  rows: MerchantNameRow[]
 }
 
 export interface Metrics {

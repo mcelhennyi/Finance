@@ -21,6 +21,7 @@ class TransactionOut(BaseModel):
     amount: float
     category: str
     merchant: str
+    merchant_display: str
     is_credit: bool
     source_type: str
 

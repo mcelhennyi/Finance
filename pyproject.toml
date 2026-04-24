@@ -21,6 +21,7 @@ dependencies = [
 
 [project.scripts]
 finance-api = "api.main:serve"
+finance-seed = "finance.dev_seed:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

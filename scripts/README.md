@@ -17,15 +17,38 @@ Starts the Finance Hub development server via Docker Compose with live reload.
 # Force-rebuild the image, then start
 ./scripts/dev.sh --build
 
+# Wipe the dev database volume, then start (empty DB)
+./scripts/dev.sh --fresh
+
+# Ingest every CSV in data/seed-statements/ (additive), then start
+./scripts/dev.sh --seed
+
+# Wipe DB, re-import seed CSVs, then start (typical after schema/category logic changes)
+./scripts/dev.sh --fresh --seed
+
 # Attach to logs of an already-running server
 ./scripts/dev.sh --logs
 
 # Stop the server
 ./scripts/dev.sh --stop
 
-# Stop and destroy all containers + database volume
+# Stop and destroy all containers + database volume (does not start)
 ./scripts/dev.sh --clean
 ```
+
+Place statement CSVs in **`data/seed-statements/`** (contents are gitignored; only `.gitkeep` is tracked). You can also run **`PYTHONPATH=src python -m finance.dev_seed`** from the repo root against your local DB.
+
+**Merchant display overrides** (pretty names from the Parameters page) are stored in **`data/seed-merchant-displays.json`** (tracked in git). After each successful Save or Clear in the UI, the API rewrites that file from the database so mappings survive `./scripts/dev.sh --fresh --seed`. Seeding applies that JSON after CSV ingest (or alone if there are no CSVs).
+
+To dump the current DB overrides to the JSON file without running full seed:
+
+```bash
+PYTHONPATH=src python -m finance.dev_seed --export-merchant-displays
+```
+
+In Docker: `docker compose run --rm api python -m finance.dev_seed --export-merchant-displays`
+
+Override the path with **`FINANCE_SEED_MERCHANT_DISPLAYS`** (see `docker-compose.yml`).
 
 ### What it does
 

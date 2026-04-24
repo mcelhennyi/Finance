@@ -77,6 +77,17 @@ class Transaction(Base):
         }
 
 
+class MerchantDisplayOverride(Base):
+    """User-defined display label for a stored merchant string (exact key match)."""
+
+    __tablename__ = "merchant_display_overrides"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    merchant_key: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class CategoryOverride(Base):
     """Merchant-pattern-based category override rule."""
 

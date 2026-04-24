@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from './api/client'
-import { Layout } from './components/Layout'
+import { Layout, type AppPage } from './components/Layout'
 import { UploadZone } from './components/UploadZone'
 import { FilterBar } from './components/FilterBar'
 import { StatCards } from './components/StatCards'
 import { Charts } from './components/Charts'
 import { TransactionTable } from './components/TransactionTable'
+import { ParametersPage } from './pages/ParametersPage'
 import type { FilterState } from './types'
 
 const DEFAULT_FILTER: FilterState = { from: '', to: '', category: '', source: '' }
 
 export function App() {
+  const [page, setPage] = useState<AppPage>('dashboard')
   const [pending, setPending] = useState<FilterState>(DEFAULT_FILTER)
   const [applied, setApplied] = useState<FilterState>(DEFAULT_FILTER)
 
@@ -41,25 +43,29 @@ export function App() {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        <UploadZone />
+    <Layout activePage={page} onNavigate={setPage}>
+      {page === 'parameters' ? (
+        <ParametersPage />
+      ) : (
+        <div className="space-y-6">
+          <UploadZone />
 
-        <FilterBar
-          filter={pending}
-          onChange={setPending}
-          onApply={handleApply}
-          onReset={handleReset}
-          onApplyDateRange={handleApplyDateRange}
-          onClearDates={handleClearDates}
-        />
+          <FilterBar
+            filter={pending}
+            onChange={setPending}
+            onApply={handleApply}
+            onReset={handleReset}
+            onApplyDateRange={handleApplyDateRange}
+            onClearDates={handleClearDates}
+          />
 
-        <StatCards metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
+          <StatCards metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
 
-        <Charts metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
+          <Charts metrics={metricsQuery.data} loading={metricsQuery.isLoading} />
 
-        <TransactionTable transactions={txQuery.data} loading={txQuery.isLoading} />
-      </div>
+          <TransactionTable transactions={txQuery.data} loading={txQuery.isLoading} />
+        </div>
+      )}
     </Layout>
   )
 }
