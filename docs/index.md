@@ -19,6 +19,7 @@ It ingests credit card statements, receipts, mortgage statements, tax documents,
 | **Phase 1** | Ingest statements → DB → query & categorize | 🚧 In Design |
 | **Phase 2** | Goals, budgets, unified financial view | 📋 Planned |
 | **Phase 3** | Trends, projections, scenario modeling | 📋 Planned |
+| **Phase 4** | Crypto portfolio tracking (wallets + Coinbase) | 📋 Planned |
 
 ---
 

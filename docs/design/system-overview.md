@@ -213,6 +213,25 @@ erDiagram
 - Can model "what if I get a $10k raise starting in July" and see 12-month cash flow impact
 - Year-over-year dining spend trend chart matches manual calculation
 
+### Phase 4 — Crypto Portfolio Tracking (Planned)
+
+**Goal**: Include cryptocurrency holdings in the unified financial picture.
+
+**Deliverables**:
+
+- Add self-custodied wallets by public address (BTC, ETH, SOL, and others)
+- Coinbase API integration (read-only) for exchange-held balances
+- Live USD valuation via CoinGecko price feed
+- Portfolio value trend (historical snapshots over time)
+- Unrealized gain/loss vs. cost basis
+- Crypto section integrated into the net worth dashboard
+
+**Success Criteria**:
+
+- Can see total crypto portfolio value updated on demand
+- Historical portfolio value chart shows 12-month trend
+- Coinbase and self-custodied wallets shown in a single unified view
+
 ## Technology Stack Summary
 
 See [Technology Decisions](technology-decisions.md) for detailed rationale.

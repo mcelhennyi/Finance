@@ -76,3 +76,5 @@ nav:
         - Overview: design/services/goals-service/overview.md
       - Projection Service (Phase 3):
         - Overview: design/services/projection-service/overview.md
+      - Crypto Portfolio Service (Phase 4):
+        - Overview: design/services/crypto-service/overview.md
