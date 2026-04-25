@@ -14,6 +14,18 @@ Orchestrates a **markdown-first** feature lifecycle that feeds the repo’s
 **parallel ticket frontier** tools. Composes with existing project commands —
 does **not** replace them.
 
+## User-facing close (required)
+
+Every time work on this workflow **pauses for the human**—after a **stage**, a **checkpoint**, **ticket or design work**, **develop / finish** steps, **`/feature-request-continue`**, or **closeout**—end the reply with a compact block (template in **`reference-templates.md` → User-facing session close**):
+
+1. **Executive summary** — what happened (decisions, files and tickets touched, branch or registry state). Use **ticket titles** with linked **`T-FR-NNNN-xx`** ids per **Human-readable names vs ticket ids** below.
+2. **Suggested next step** — one primary recommendation (concrete command, ticket to open, or owner action).
+3. **Options (when applicable)** — if more than one reasonable path exists, list them (**A**, **B**, …) with a short differentiator ( deps, risk, or time). If only one path is sensible, state that briefly or omit this part.
+
+**Repo alignment:** when you write **`handoffs/`**, **`serial-diary.md`**, **`parallel/…`**, or **`90-closeout.md`**, include the same three elements so the **chat** and the **tree** do not disagree.
+
+**Scope:** skip the full block only for **non-FR** one-offs (e.g. a one-line fix unrelated to the feature); any work under **`FR-NNNN`** still gets at least a one-line summary + next step.
+
 ## Related local commands (compose, do not fork)
 
 | Step | Command / skill | Role |
@@ -90,7 +102,7 @@ tasks/feature-history/FR-NNNN-<slug>/
 - **Serial runs:** append stages to **`serial-diary.md`** (and/or per-stage files). One narrative chain.
 - **Parallel design or implementation subagents:** each stream writes **`parallel/<stream>.md`** (e.g. `parallel/T-FR-0007-01-scaffold-api.md` — include a **title slug** from the ticket so folder listings stay human-readable). Do **not** overwrite **`serial-diary.md`** from parallel streams.
 - **Continue / resume handoffs:** write under **`handoffs/`** (e.g. **`handoffs/2026-04-25-continue.md`**) — this is the **canonical** place for “what the next agent should do” **for this `FR-NNNN`**. A short pointer in **`tasks/handoffs/`** is optional, not a substitute.
-- **Git (implementation):** create **`feat/FR-NNNN-<slug>`** from **`main`** when starting build-out and check it out at **`.worktrees/FR-NNNN-<slug>/feature/`**. Create every ticket/stage branch from that feature branch, name it with both feature and ticket/stage (for example **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`**), place its worktree under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`**, merge it **into** the feature branch, then use **`/finish-feature`** to open the **PR → `main`**.
+- **Git (implementation):** create **`feat/FR-NNNN-<slug>`** from **`main`** when starting build-out and check it out at **`.worktrees/FR-NNNN-<slug>/feature/`**. Create every ticket/stage branch from that feature branch, name it with both feature and ticket/stage (for example **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`**), place its worktree under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`**, merge it **into** the feature branch, then use **`/finish-feature`** to open the **PR → `main`** for human review. Maintain repo-root **`CURRENT.md`** on those **`feat/*`** branches per **Branch state (`CURRENT.md`)** below.
 
 If you need a one-off “prompt log”, add `prompts/prompts-log.md` and link it from the README.
 
@@ -105,11 +117,43 @@ At meaningful milestones or **closeout**:
 
 ---
 
+## Branch state (`CURRENT.md`)
+
+**Repo-root** **`CURRENT.md`** answers: *on **this git branch**, what is true right now, and what happens next?* It complements **`tasks/feature-history/FR-NNNN-<slug>/`** (deep history) with a **branch-local** beacon at the checkout root.
+
+### When the file exists
+
+| Situation | Policy |
+|-----------|--------|
+| **`feat/FR-NNNN-<slug>`** (feature integration branch) | **Required** once the branch exists: add **`CURRENT.md`** on the first meaningful commit (template in **`reference-templates.md` → Branch state**). **Keep it updated** through merges, identify/develop cycles, and blockers until the **PR to `main`** is merged or abandoned. |
+| **`feat/FR-NNNN-<slug>/T-…`** (ticket/stage branches) | **Required:** each ticket branch carries **`CURRENT.md`** scoped to that ticket; refresh after **TEST / DEV / VAL** transitions and before pushing or opening PRs **into the feature branch**. |
+| **`main`** (intake / design / registry only) | **Do not** use a long-lived repo-root **`CURRENT.md`** for per-feature state when **several** **`FR-NNNN`** streams may touch **`main`** in parallel (one file would collide). Use **`tasks/feature-history/FR-NNNN-<slug>/README.md`** and **`handoffs/`** until **`feat/FR-NNNN-<slug>`** exists. A single-stream team *may* add a short root pointer—prefer updating the feature **`README.md`**. |
+| **`main`** after feature or frontier integration | **Delete** **`CURRENT.md`** in the merge to **`main`** (or in the next commit) so **`main`** does not keep stale branch-local prose, unless the repo documents a repo-wide **`CURRENT.md`** convention. |
+
+### What to write (keep it short)
+
+- **`FR-NNNN`**, **`<slug>`**, **this branch name** and role (feature integration vs ticket).
+- **What landed** on this branch (ticket ids optional), **what is in flight**, **blockers**.
+- **Next action** (command or human step), links to **`tasks/ticket-progress.md`**, **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`**, and **`tickets.md`**.
+
+### When to refresh (minimum)
+
+- First commit on **`feat/FR-NNNN-<slug>`**; creating each ticket branch; after every **merge** into the feature branch (on **`CURRENT.md`** conflicts, **consolidate** one truthful rollup on **`feat/FR-NNNN-<slug>`**).
+- After **`/identify-frontier`** changes the parallel set — orchestrator updates **`CURRENT.md`** on each affected **`feat/FR-NNNN-<slug>`** when implementation is in scope.
+- End of each **TEST / DEV / VAL** phase on a ticket branch; before **`/finish-feature`** push and PR; on **block** / **unblock**; when resuming implementation via **`/feature-request-continue`**.
+
+### Rollup vs ticket scope
+
+The **feature** branch **`CURRENT.md`** is the **integrated** picture after ticket merges. Each **ticket** branch file may stay narrower until merge; the merger updates the feature branch file.
+
+---
+
 ## Stage 0 — Intake
 
 1. Allocate **`FR-NNNN`** in **`REGISTRY.md`**; create the directory tree; add **`README.md`** stub. **Immediately** commit and **push to `main`** (registry + stub) so concurrent feature work can deconflict on the shared **`REGISTRY.md`**.
 2. Fill **`00-intake.md`** from **`reference-templates.md`** (title, timeline, success criteria, out of scope, raw prose).
 3. Append **`serial-diary.md`**: one paragraph recap of intake.
+4. **Branch state:** while work stays on **`main`** for intake, follow **`CURRENT.md`** policy (**do not** add a per-feature competing root file unless the single-stream exception in **Branch state (`CURRENT.md`)** applies); keep **`README.md`** in the feature folder current.
 
 **Stop and ask** only if the request is empty or success criteria are impossible to state.
 
@@ -152,6 +196,7 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 2. **Ask the user:** “Do you want to start implementation now (parallel frontier) or stop after design?”
 3. If **no** → finalize **`90-closeout.md`**, handoff, done (design-only delivery).
 4. If **yes** → continue to **develop**.
+5. **User-facing close** — end with **Executive summary**, **Suggested next step**, and **Options** (implement vs design-only is an options case) per **User-facing close (required)** above.
 
 ---
 
@@ -164,6 +209,7 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 3. Run **`/develop-frontier`** (or the skill) to launch **one subagent per parallel-capable ticket**, each in a child worktree under **`.worktrees/FR-NNNN-<slug>/`** on a feature-prefixed ticket/stage branch, **TEST→DEV→VAL** in order **inside** each ticket.
 4. For each parallel subagent, ensure **`parallel/…-diary.md`** gets an entry when that stream starts and when it ends.
 5. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
+6. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
 
 ---
 
@@ -171,8 +217,10 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 
 After each develop chunk or when the user returns:
 
+- If the checkout is on **`feat/*`**, read repo-root **`CURRENT.md`** first, then **`handoffs/`** and **`serial-diary.md`**.
 - **Ask:** “Continue with the next work (**title**, linked ticket) / another parallel batch, or pause?” — name **titles** from **`tickets.md`**, link ids for detail.
 - If the queue or deps changed, re-run **`/identify-frontier`**.
+- **User-facing close** — end with **Executive summary**, **Suggested next step**, and **Options** when the user can reasonably choose paths (per **User-facing close (required)**).
 
 ---
 
@@ -181,17 +229,20 @@ After each develop chunk or when the user returns:
 1. **Ask:** “All targeted tickets for this **`FR-NNNN`** are VAL-done. Merge via **`/finish-feature`** (feature branch → **PR to `main`**) or **`/finish-frontier`** (direct **`main`** integration)?”
 2. **Default for `FR-NNNN` product work:** run **`/finish-feature`** — merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, opens **PR** for human review. **Do not** push **`main`** from automation here.
 3. **Alternate:** **`/finish-frontier`** when the team explicitly integrates parallel tickets straight into **`main`**. Follow that skill’s **revalidation** / **`broken-main`** gate.
-4. After merge: run **Diary consolidation** → update **`DIARY.md`** (newest-first stack); **do not delete** remote **`feat/*`** branches.
+4. **CURRENT.md:** before **`/finish-feature`**, ensure **`feat/FR-NNNN-<slug>`**’s **`CURRENT.md`** reflects all merged tickets. The **PR to `main`** (or the human merge) should **remove** **`CURRENT.md`** on **`main`** per **Branch state (`CURRENT.md`)**.
+5. After merge: run **Diary consolidation** → update **`DIARY.md`** (newest-first stack); **do not delete** remote **`feat/*`** branches.
 
 ---
 
 ## Stage — Closeout, handoff, and index
 
 1. Write **`90-closeout.md`**:
-   - What shipped vs deferred;
+   - **Executive summary** (what shipped vs deferred, in plain language);
    - **Links to all files** in `FR-NNNN-<slug>/` (including **`handoffs/`** and **`DIARY.md`**);
+   - If implementation ran: one line on repo-root **`CURRENT.md`** (maintained on **`feat/*`**; removed on **`main`** when merged) per **Branch state (`CURRENT.md`)**;
    - **Mapping** `FR-NNNN` → tickets: for each **`T-FR-NNNN-xx`**, give **title** and a **link** to its **`###`** section in **`tickets.md`** (not ids-only bullets); **PR** link if **`finish-feature`** ran;
-   - Suggested next steps (follow-ups, new `DESIGN-GAP` items).
+   - **Suggested next step** for the team (one primary);
+   - **Options** for follow-up work (new tickets, `DESIGN-GAP` items, or alternative owners) when more than one path exists; otherwise state there is a single obvious follow-up or none.
 2. Write **`handoffs/YYYY-MM-DD-closeout.md`** in **this feature folder** with the same anchor content (primary handoff). Optionally add **`tasks/handoffs/FR-NNNN-<slug>-closeout.md`** as a **short pointer** (“see feature `handoffs/…`”) — never let the global file replace the feature-local handoff.
 3. Final **Diary consolidation:** ensure **`DIARY.md`** exists with **newest-first** merged entries from **`serial-diary.md`** + **`parallel/`**; commit on a surviving branch for traceability.
 4. Update **`REGISTRY.md`**: set status **complete** (or `design-only`, `in-progress` as appropriate).
@@ -219,6 +270,8 @@ per **`.cursor/rules/cursor-claude-doc-sync.mdc`**. Otherwise, **no** doc churn.
 - [ ] `90-closeout.md` links to **every** artifact in the feature folder.
 - [ ] If implementation ran: `develop-frontier` preconditions were satisfied; **`finish-feature`** or **`finish-frontier`** was chosen consistently with **§2d**; **VAL** per **`docs/ai-context.md`** (Docker / Dev Container). **Doc changes:** if **`docs/`** or **`mkdocs.yml`** changed, doc **VAL** used **`./develop build`** or equivalent Docker-based check when **`./develop`** exists.
 - [ ] If multiple streams are active: **`tasks/ticket-progress.md` → Parallel streams** (or a dated **`tasks/handoffs/`** note) lists each ticket (**title** + **`T-FR-NNNN-xx`** + link to **`tickets.md`** where helpful), **`FR-NNNN`** (if any), and worktree path per **`docs/ai-context.md` §2c**.
+- [ ] **CURRENT.md:** every active **`feat/FR-NNNN-<slug>`** and **`feat/FR-NNNN-<slug>/T-…`** implementation branch has an accurate repo-root **`CURRENT.md`** (see **Branch state (`CURRENT.md`)**); after integration to **`main`**, **`CURRENT.md`** is removed or neutralized per policy.
+- [ ] **User-facing close:** the last user-visible reply for the chunk (and matching **`handoffs/`** or **`90-closeout.md`**) includes **Executive summary**, **Suggested next step**, and **Options** when several paths are reasonable (**User-facing close (required)**).
 
 ## Known process tensions (surface to the user if unclear)
 

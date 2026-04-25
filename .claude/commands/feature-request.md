@@ -9,6 +9,10 @@ description: >-
 
 Follow the Cursor project skill **`.cursor/skills/feature-request/SKILL.md`**.
 
+## End every turn for the user
+
+End each response with **Executive summary**, **Suggested next step**, and **Options** when more than one reasonable path exists — see **User-facing close (required)** and **`reference-templates.md` → User-facing session close** in that skill.
+
 ## What this is
 
 - **Not** a replacement for `identify-frontier` / `develop-frontier` / `finish-feature` / `finish-frontier`.
@@ -35,5 +39,6 @@ Follow the Cursor project skill **`.cursor/skills/feature-request/SKILL.md`**.
 
 - Allocate **`FR-NNNN`** in **`tasks/feature-history/REGISTRY.md`**; never reuse an id. **Push that registry change (and minimal feature stub) to `main` immediately** so concurrent features deconflict on a single source of truth.
 - All stage notes in **`tasks/feature-history/FR-NNNN-<slug>/`**: `serial-diary.md` (serial), **`parallel/*.md`** (per parallel subagent), **`handoffs/*.md`** (continue / milestone / closeout — **canonical** for this feature), optional **`DIARY.md`** (merged newest-first stack). Closeout recap in **`90-closeout.md`**; optional short pointer in **`tasks/handoffs/`** only.
+- **Repo-root `CURRENT.md`:** on **`feat/FR-NNNN-<slug>`** and ticket branches under that feature, maintain **`CURRENT.md`** at the repository root as the branch-local “where we are” file; refresh through the lifecycle; remove it when merging to **`main`** (see **`.cursor/skills/feature-request/SKILL.md` → Branch state (`CURRENT.md`)**). On **`main`** during design-only work, prefer the feature **`README.md`** instead of a competing per-feature root file.
 
 **Templates:** `.cursor/skills/feature-request/reference-templates.md`

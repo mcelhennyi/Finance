@@ -43,13 +43,14 @@ On **`main`**:
 2. For each branch: `git merge --no-ff <branch> -m "merge: <short title> (finish frontier)"` — branches may come from **different** product features (`FR-NNNN`); merge order is still **dependency-safe** over ticket ids **`T-FR-NNNN-xx`**, not per-feature isolation (`docs/ai-context.md` §2c).
 3. **Conflicts in `docs/design/tickets-initial.md`** (global DAG / **`triadDone`**): keep a **union** of completed **`triadDone`** `class` lines for all finished tickets. If conflicts touch a feature’s **`tasks/feature-history/.../tickets.md`**, resolve without dropping **`###`** sections — prefer merging both sides’ intent.
 4. Resolve any other conflicts (shared config, lockfiles) deliberately — prefer mainline + both features’ intent.
-5. Do not push yet.
+5. **Repo-root `CURRENT.md`:** if present after merges, **remove** it on **`main`** (or replace with a single neutral line only if the repo documents that pattern) so **`main`** does not carry stale branch-local state — **`feature-request`** skill **Branch state (`CURRENT.md`)**.
+6. Do not push yet.
 
 ## 4 — Post-merge revalidation gate (mandatory)
 
 After the union conflict resolution is complete, run full validation in the integration checkout:
 
-1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per `docs/ai-context.md`).
+1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per `docs/ai-context.md`). Confirm repo-root **`CURRENT.md`** is not left as branch-local prose on **`main`** (see merge step 5 in §3).
 2. If **all checks pass**, `git push origin main`.
 3. If **any check fails** or a requirement is unmet:
    - Create a new blocker task as the **primary ticket** (new **`T-FR-NNNN-xx`** id following **`docs/design/documentation-style.md` §Ticket IDs**, e.g. append a repair sequence number for that `FR`) with explicit failing checks/requirements.

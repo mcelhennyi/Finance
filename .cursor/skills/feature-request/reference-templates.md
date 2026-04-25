@@ -4,6 +4,54 @@ Used by **`.cursor/skills/feature-request/SKILL.md`**. Keep templates in **markd
 
 ---
 
+## User-facing session close (chat reply or handoff stub)
+
+Use at the **end** of every reply that stops **`FR-NNNN`** work for the user. Copy the structure into **`handoffs/*.md`** when you also persist a handoff.
+
+```markdown
+### Executive summary
+- … (outcomes, artifacts, decisions; lead with ticket **titles** + links to `tickets.md`)
+
+### Suggested next step
+… (one primary action)
+
+### Options *(omit if only one reasonable path)*
+- **A.** …
+- **B.** …
+```
+
+For **closeout**, fold the same content into **`90-closeout.md`** as sections or lead paragraphs (see **Closeout (`90-closeout.md`)** below).
+
+---
+
+## Closeout (`90-closeout.md`)
+
+Narrative sections for **`90-closeout.md`** should cover the same three ideas in order — **executive summary**, **primary next step for the team**, **optional multiple follow-up paths** — plus links to every artifact in the feature folder.
+
+```markdown
+# FR-NNNN — Closeout
+
+## Executive summary
+…
+
+## What shipped vs deferred
+…
+
+## Artifact index
+- … (link every file under `tasks/feature-history/FR-NNNN-<slug>/`)
+
+## Tickets
+- … (title + link to each `###` in `tickets.md`)
+
+## Suggested next step
+…
+
+## Options / follow-ups *(if applicable)*
+- …
+```
+
+---
+
 ## Intake (append to `00-intake.md`)
 
 ```markdown
@@ -171,6 +219,36 @@ Newest block at **top**. Each block keeps the **raw** sources (**`serial-diary.m
 ## YYYY-MM-DD — from `serial-diary.md` @ `def5678`
 
 **Recap:** …
+```
+
+---
+
+## Branch state (repo-root `CURRENT.md`)
+
+Use on **`feat/FR-NNNN-<slug>`** and **`feat/FR-NNNN-<slug>/T-…`** branches only; see **`.cursor/skills/feature-request/SKILL.md` → Branch state (`CURRENT.md`)** for **`main`** policy. Replace placeholders; keep under ~40 lines.
+
+```markdown
+# Current branch state
+
+| Field | Value |
+|------|--------|
+| **FR** | FR-NNNN |
+| **Feature folder** | `tasks/feature-history/FR-NNNN-<slug>/` |
+| **This branch** | `…` (feature integration or ticket) |
+| **Parent branch** | `feat/FR-NNNN-<slug>` (if this is a ticket branch) |
+| **Last meaningful update** | YYYY-MM-DD |
+
+## What is on this branch
+
+- …
+
+## In flight / blockers
+
+- …
+
+## Next
+
+1. … (e.g. run VAL, merge to feature branch, open PR — link `tasks/ticket-progress.md` and `handoffs/` as needed)
 ```
 
 ---

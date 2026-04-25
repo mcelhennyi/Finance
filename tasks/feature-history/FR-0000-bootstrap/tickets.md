@@ -25,4 +25,3 @@ Select languages, build tooling, and baseline project layout. Record decisions i
 #### Notes
 
 - Do not invent product requirements in this ticket; keep scope to **tooling and structure**.
-- **Status (2026-04-25):** Stack and layout are in place (FastAPI, SQLAlchemy, React/Vite, MkDocs). **`.skeleton`** submodule and **`sync-skeleton`** alignment completed; see **`tasks/ticket-progress.md`**.

@@ -9,8 +9,9 @@ Conventions for **documentation** and **traceability**. **Stack-specific** rules
 
 ## Traceability
 
-- Non-trivial units (services, modules, handlers) carry **`@FH-<AREA>-<NUMBER>`** in a short comment or docstring **for stacks where inline tags make sense** (**`FH`** = Finance Hub).
-- **Areas:** e.g. `API`, `ING` (ingestion), `WEB`, `DATA`, `AN` (analysis), `AUTH`, `UI`, `JOB` — extend this list when you introduce a new one.
+- Non-trivial units (services, modules, handlers) carry **`@PROJ-<AREA>-<NUMBER>`** in a short comment or docstring **for stacks where inline tags make sense**.
+- Replace **`PROJ`** with your project prefix (set during **`init-project`**).
+- **Areas:** define a small set for your product (examples: `API`, `AUTH`, `DATA`, `UI`, `JOB`).
 
 ## Ticket IDs (map to `FR-NNNN`)
 

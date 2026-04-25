@@ -37,6 +37,8 @@ Use with **`docs/ai-context.md`**. This file mirrors Cursor-facing rules for Cla
 ## Feature request and frontier (compose)
 
 - **`/feature-request`** / **`.cursor/skills/feature-request/SKILL.md`** — **`FR-NNNN`** design and **`tickets.md`**; does **not** replace **`/identify-frontier`** / **`/develop-frontier`** / **`/finish-feature`** / **`/finish-frontier`**.
+- **Repo-root `CURRENT.md`:** on **`feat/*`** implementation branches, keep **`CURRENT.md`** current per that skill; remove on **`main`** when integrated.
+- **User-facing close (FR work):** end substantive replies with **Executive summary**, **Suggested next step**, and **Options** when multiple paths apply — **`feature-request`** skill **User-facing close (required)**.
 - **Spoken “identify (FR)”** = registry + intake; **`/identify-frontier`** = parallel **tickets** only **after** canonical **`### T-FR-NNNN-xx`** sections exist.
 - **Registry races:** push **`REGISTRY.md`** + minimal stub to **`main` immediately** after allocating **`FR-NNNN`** (**`docs/ai-context.md` §2b**).
 

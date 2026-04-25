@@ -1,0 +1,20 @@
+---
+description: Runtime policy - Docker only for app execution
+alwaysApply: true
+---
+
+# App runtime policy
+
+Do **not** run the Finance Hub app directly on the host (no local `uvicorn`, no local `vite`, no host-level app runtime for normal development).
+
+Use Docker workflows only:
+
+- **Instant / one-shot:** `docker compose` commands using root `docker-compose.yml` for quick checks and ephemeral runs.
+- **Long-lived with live editing:** `./scripts/dev.sh` (or equivalent `docker compose up`) for persistent containers with reload and iterative development.
+
+When validating behavior, prefer:
+
+- `docker compose up` / `docker compose run` for runtime checks.
+- Service logs and health checks from containerized services.
+
+If a host-only run is ever required for a narrow diagnostic, treat it as an explicit exception and document why in the session notes.

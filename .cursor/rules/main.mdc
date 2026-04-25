@@ -9,7 +9,7 @@ All **process** standards for this project live in **`docs/ai-context.md`**. Loa
 
 **Covers:** session bootstrap, **git worktrees** under `.worktrees/FR-NNNN-<slug>/` (feature worktree plus feature-prefixed ticket/stage branch worktrees), **`tasks/ticket-progress.md`** beacon, per-feature **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, global DAG index **`docs/design/tickets-initial.md`**, documentation authority and escalation tags, **subagents ahead of large work**, ticket phases (**TEST / DEV / VAL**), and git hygiene (commit, push, PR) per team policy.
 
-**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design → **`tickets.md`**), then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. **`/commit-with-metrics`** is optional for commits.
+**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design → **`tickets.md`**), then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. **`/commit-with-metrics`** is optional for commits.
 
 **Doc sync:** When you change Cursor rules, skills, or Claude commands together, follow **`.cursor/rules/cursor-claude-doc-sync.mdc`**.
 

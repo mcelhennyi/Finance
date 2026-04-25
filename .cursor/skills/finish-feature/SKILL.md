@@ -25,6 +25,7 @@ In the feature worktree checkout of **`feat/FR-NNNN-<slug>`** (normally **`.work
 2. `git checkout feat/FR-NNNN-<slug>` and `git pull --ff-only` (or merge) as appropriate.
 3. For each feature-prefixed ticket/stage branch (for example **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`**) in **dependency-safe** order, `git merge --no-ff <branch> -m "merge: T-FR-NNNN-xx (finish feature FR-NNNN)"`.
 4. Resolve conflicts; prefer preserving both intents. Do **not** delete the source ticket/stage branches locally or on the remote.
+5. **CURRENT.md:** consolidate repo-root **`CURRENT.md`** on **`feat/FR-NNNN-<slug>`** so it matches merged reality (resolve conflicts by merging prose, not deleting the file). See **`feature-request`** skill **Branch state (`CURRENT.md`)**.
 
 ## 2 — Validation on the feature branch
 
@@ -35,10 +36,11 @@ Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets (Do
 1. `git push -u origin feat/FR-NNNN-<slug>`
 2. Prefer **`gh pr create`** (base **`main`**, head **`feat/FR-NNNN-<slug>`**) with a summary linking **`tasks/feature-history/FR-NNNN-<slug>/`** and ticket ids.
 3. If a PR already exists, push branch updates and ensure the PR description lists merged tickets.
+4. **PR to `main`:** ensure the description reminds the merger to **delete** repo-root **`CURRENT.md`** when the PR lands on **`main`** (unless the repo documents otherwise) — **`feature-request`** skill **Branch state (`CURRENT.md`)**.
 
 ## 4 — Feature history bookkeeping
 
-1. Append or create **`tasks/feature-history/FR-NNNN-<slug>/handoffs/YYYY-MM-DD-finish-feature.md`** with: merged branches (names + SHAs), PR link, validation summary, and **suggested next steps** for the human reviewer.
+1. Append or create **`tasks/feature-history/FR-NNNN-<slug>/handoffs/YYYY-MM-DD-finish-feature.md`** with: merged branches (names + SHAs), PR link, validation summary, **executive summary** of what was integrated, a **suggested next step** for the reviewer, and **options** (e.g. merge vs. request changes) if applicable — same structure as **`feature-request`** **User-facing close (required)**.
 2. Update **`tasks/feature-history/FR-NNNN-<slug>/README.md`** with PR link and status.
 3. Run **diary consolidation** per **`feature-request`** skill (**`DIARY.md`**, newest-first stack) if not already done for this milestone.
 

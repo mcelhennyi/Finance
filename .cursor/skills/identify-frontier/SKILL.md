@@ -33,6 +33,8 @@ Produce a **next-step parallel frontier** handoff: queue snapshot, **dependency-
 
 **Default:** Write `tasks/handoffs/YYYY-MM-DD-parallel-frontier.md` (today’s date from the session). If the file exists, append `-b` or similar.
 
+**User-facing response:** when the handoff is also delivered in chat, end with **Executive summary**, **Suggested next step**, and **Options** (parallel tickets often qualify) per **`feature-request`** skill **User-facing close (required)**.
+
 ### Document template (fill every section)
 
 ```markdown
@@ -96,6 +98,7 @@ Full **Deps:** edges: scan all **`tasks/feature-history/**/tickets.md`**; global
 1. …
 2. …
 3. …
+4. If **`feat/*`** implementation branches are in scope, refresh repo-root **`CURRENT.md`** on each affected **`feat/FR-NNNN-<slug>`** so the parallel set and next actions match this handoff (**`feature-request`** skill **Branch state (`CURRENT.md`)**).
 
 ---
 
@@ -113,6 +116,7 @@ Full **Deps:** edges: scan all **`tasks/feature-history/**/tickets.md`**; global
 - [ ] **Deps** column matches **`**Deps:**`** in the owning feature’s **`tickets.md`** for each ticket row.
 - [ ] **N** equals the parallel table row count unless exclusions are explained.
 - [ ] If the table mixes tickets from **different product features**, the handoff **says so** (or maps each **`T-FR-NNNN-xx`** to **`FR-NNNN`** — trivially parsed from the id) so implementers see **§2c** context.
+- [ ] When implementation worktrees exist, **`CURRENT.md`** on relevant **`feat/FR-NNNN-<slug>`** branches is updated or explicitly deferred with reason (**`feature-request`** skill).
 
 ## See also
 

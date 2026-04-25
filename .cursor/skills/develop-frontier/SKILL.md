@@ -41,6 +41,7 @@ Each subagent prompt must include:
 | **Validation** | Run ticket verification per **`docs/ai-context.md`** (Dev Container when configured). |
 | **Progress** | Update **only** that ticket’s row in **`tasks/ticket-progress.md`**. |
 | **Completion** | VAL done → update DAG in **`docs/design/tickets-initial.md`** → commit → push → open **PR** whose **base** is **`feat/FR-NNNN-<slug>`** when using the **feature-branch workflow** (§2d), otherwise base **`main`** per **`docs/ai-context.md` §7**. |
+| **Branch state** | Create or refresh repo-root **`CURRENT.md`** on the ticket branch at stream start, after each phase (**TEST / DEV / VAL**), and before push/PR; parent updates **`feat/FR-NNNN-<slug>`**’s **`CURRENT.md`** after merges — **`feature-request`** skill **Branch state (`CURRENT.md`)**. |
 
 ## 3 — Wait and verify
 
@@ -61,6 +62,7 @@ Important gate from **`finish-frontier`**: after merge conflict resolution (incl
 - Clear or advance **Current focus**.
 - **Remote branches:** do **not** auto-delete **`feat/*`** ticket or feature branches — audit trail (**`finish-frontier`** / **`finish-feature`**).
 - **Local worktrees:** optional remove only when remotes remain and paths are obsolete.
+- **User-facing response:** the orchestrator’s reply to the user ends with **Executive summary**, **Suggested next step**, and **Options** if several paths are reasonable — **`feature-request`** skill **User-facing close (required)**.
 
 ## See also
 

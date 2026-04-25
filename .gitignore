@@ -1,14 +1,13 @@
-# --- Baseline (skeleton; keep in sync with template intent) ---
-
-# Dependencies
+# Dependencies (add patterns when you choose a stack)
 node_modules/
 .venv/
 .venv-*/
 
-# Build / cache
+# Build / cache (extend per stack)
 dist/
 build/
 .cache/
+__pycache__/
 
 # Environment
 .env
@@ -26,53 +25,3 @@ build/
 
 # Logs
 *.log
-
-# --- Finance Hub (project-specific) ---
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-.eggs/
-venv/
-env/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-
-# MkDocs
-site/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Sensitive financial data — never commit raw statements
-data/raw/
-data/uploads/
-# Dev seed statements (drop CSVs here; tracked dir, ignored contents)
-data/seed-statements/*
-!data/seed-statements/.gitkeep
-*.csv
-*.pdf
-!scripts/*.csv
-
-# Environment (overrides and local files)
-.env.local
-.env.*.local
-
-# IDE
-.vscode/settings.json
-
-# Reports (generated output) — exclude generated HTML but keep templates
-reports/output/
-*.html
-!docs/**/*.html
-!src/**/*.html

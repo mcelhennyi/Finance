@@ -8,7 +8,11 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from api.schemas import MetricsResponse
-from finance.analysis.service import compute_metrics, get_transactions
+from finance.analysis.service import (
+    compute_metrics,
+    get_merchant_display_overrides,
+    get_transactions,
+)
 from finance.db.session import get_session
 
 router = APIRouter(tags=["metrics"])
@@ -30,7 +34,7 @@ def get_metrics(
             source_type=source,
             include_credits=True,
         )
-        m = compute_metrics(txns)
+        m = compute_metrics(txns, merchant_display_overrides=get_merchant_display_overrides(session))
 
     return MetricsResponse(
         total_spent=round(m.total_spent, 2),

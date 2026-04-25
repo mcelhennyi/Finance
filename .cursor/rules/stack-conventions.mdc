@@ -1,23 +1,17 @@
 ---
-description: Finance Hub — Python API, SQLAlchemy, React/Vite frontend
-alwaysApply: true
+description: Language and framework conventions (fill after stack is chosen)
+alwaysApply: false
 ---
 
-## Stack
+## When to enable
 
-- **Backend:** Python 3, FastAPI, Pydantic v2, SQLAlchemy 2 (`Mapped[...]`, `DeclarativeBase`), SQLite in dev
-- **Frontend:** TypeScript, React 18, Vite, Tailwind CSS (see `frontend/`)
-- **Docs:** MkDocs from root `mkdocs.yml` (`docs/`)
+After the team selects a stack (see **`T-FR-0000-01`**), replace this stub with real rules and set **`alwaysApply: true`** in the frontmatter, **or** split into multiple rule files per technology.
 
-## Authoritative style rules
+## Placeholder
 
-- **`.cursor/rules/code-style.mdc`** — formatting (Black, isort), types, privacy, Pydantic at boundaries
-- **`.cursor/rules/doc-standards.mdc`** — docstrings, Mermaid, tie-backs to `docs/design/`
-- **`.editorconfig`** and **`pyproject.toml`** — line length, indent
+- **Languages / versions:** *(not set)*
+- **Format / lint:** *(not set)*
+- **Tests:** *(not set)*
+- **Build / run:** *(not set)*
 
-## Tests and quality
-
-- pytest; coverage targets in **`.cursorrules`** (≥80% overall; stricter for business logic)
-- Run from repo root per `pyproject.toml` / CI
-
-Keep this file **free of product domain** except pointers to design docs as in **doc-standards**.
+Keep this file **free of product domain** unless documenting how code style relates to design docs.

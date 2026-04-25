@@ -16,6 +16,7 @@ from finance.analysis.service import (
     compute_metrics,
     get_categories,
     get_date_range,
+    get_merchant_display_overrides,
     get_source_types,
     get_transactions,
 )
@@ -131,7 +132,10 @@ def api_metrics():
             source_type=source_type,
             include_credits=True,
         )
-        metrics = compute_metrics(transactions)
+        metrics = compute_metrics(
+            transactions,
+            merchant_display_overrides=get_merchant_display_overrides(session),
+        )
 
     return jsonify(
         {

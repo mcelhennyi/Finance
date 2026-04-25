@@ -11,8 +11,9 @@ from decimal import Decimal
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from finance.db.models import Transaction
+from finance.db.models import MerchantDisplayOverride, Transaction
 from finance.matching import merchant_fingerprint_sql_expr, merchant_name_fingerprint
+from finance.merchant_display import effective_display_name
 
 
 @dataclass
@@ -74,7 +75,16 @@ def get_transactions(
     return q.all()
 
 
-def compute_metrics(transactions: list[Transaction]) -> SpendMetrics:
+def get_merchant_display_overrides(session: Session) -> dict[str, str]:
+    """Return merchant_key -> display_name overrides."""
+    rows = session.query(MerchantDisplayOverride).all()
+    return {r.merchant_key: r.display_name for r in rows}
+
+
+def compute_metrics(
+    transactions: list[Transaction],
+    merchant_display_overrides: dict[str, str] | None = None,
+) -> SpendMetrics:
     """Compute spending metrics from a list of transactions.
 
     See Also: docs/design/services/analysis-service/overview.md
@@ -93,17 +103,20 @@ def compute_metrics(transactions: list[Transaction]) -> SpendMetrics:
         by_category_count[t.category] += 1
 
     by_merchant: dict[str, float] = defaultdict(float)
-    label_for_fp: dict[str, str] = {}
+    merchant_display_overrides = merchant_display_overrides or {}
     for t in charges:
-        raw_label = (t.description_normalized[:40] if t.description_normalized else "").strip()
-        if not raw_label:
-            raw_label = (t.description_raw[:40] if t.description_raw else "").strip()
-        fp = merchant_name_fingerprint(raw_label) or raw_label
-        by_merchant[fp] += float(t.amount)
-        if fp not in label_for_fp or len(raw_label) < len(label_for_fp[fp]):
-            label_for_fp[fp] = raw_label
+        merchant_key = (t.merchant or "").strip()
+        if not merchant_key:
+            fallback = (t.description_normalized if t.description_normalized else t.description_raw).strip()
+            merchant_key = fallback[:200]
+        if not merchant_key:
+            continue
+        by_merchant[merchant_key] += float(t.amount)
     top_merchants = sorted(
-        ((label_for_fp[k], v) for k, v in by_merchant.items()),
+        (
+            (effective_display_name(merchant_key, merchant_display_overrides.get(merchant_key)), amount)
+            for merchant_key, amount in by_merchant.items()
+        ),
         key=lambda x: x[1],
         reverse=True,
     )[:10]

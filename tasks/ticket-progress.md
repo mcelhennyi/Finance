@@ -24,7 +24,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Ticket | Title | TEST | DEV | VAL | Notes |
 |--------|-------|------|-----|-----|-------|
-| T-FR-0000-01 | Choose stack and scaffold repository | `done` | `done` | `done` | `FR-0000` — stack: FastAPI + SQLAlchemy + React/Vite; `.skeleton` submodule + `sync-skeleton` applied |
+| T-FR-0000-01 | Choose stack and scaffold repository | — | — | — | `FR-0000` |
 
 ---
 
