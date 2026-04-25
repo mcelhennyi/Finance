@@ -25,6 +25,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | Ticket | Title | TEST | DEV | VAL | Notes |
 |--------|-------|------|-----|-----|-------|
 | T-FR-0000-01 | Choose stack and scaffold repository | — | — | — | `FR-0000` |
+| T-FR-0001-01 | Define goals and budgets data contracts | done | done | done | `FR-0001` |
 
 ---
 

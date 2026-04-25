@@ -1,7 +1,7 @@
-"""Pydantic response schemas for the Finance Hub API."""
+"""Pydantic schemas for the Finance Hub API."""
 
-from datetime import date
-from pydantic import BaseModel
+from datetime import date, datetime
+from pydantic import BaseModel, Field
 
 
 class IngestionResponse(BaseModel):
@@ -50,3 +50,45 @@ class FiltersResponse(BaseModel):
 class SourceOption(BaseModel):
     key: str
     name: str
+
+
+class BudgetCreate(BaseModel):
+    category: str = Field(min_length=1, max_length=100)
+    period_month: date
+    amount_limit: float = Field(gt=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+
+
+class BudgetOut(BaseModel):
+    id: int
+    category: str
+    period_month: date
+    amount_limit: float
+    currency: str
+    created_at: datetime
+
+
+class BudgetListResponse(BaseModel):
+    items: list[BudgetOut]
+
+
+class GoalCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    goal_type: str = Field(min_length=1, max_length=50)
+    target_amount: float = Field(gt=0)
+    period_month: date
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+
+
+class GoalOut(BaseModel):
+    id: int
+    name: str
+    goal_type: str
+    target_amount: float
+    period_month: date
+    currency: str
+    created_at: datetime
+
+
+class GoalListResponse(BaseModel):
+    items: list[GoalOut]
