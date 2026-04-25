@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | — |
-| **Active phase** | — |
-| **Branch / worktree** | — |
-| **Session status** | `starting` |
-| **Next agent should** | Read `docs/ai-context.md`, `README.md`, and `docs/design/architecture/overview.md`. Pick the smallest eligible ticket per **Deps:** in the owning `tickets.md` file. |
+| **Active ticket** | `T-FR-0001-02`, `T-FR-0001-03` |
+| **Active phase** | `TEST` |
+| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` + child worktrees for `T-FR-0001-02` and `T-FR-0001-03` |
+| **Session status** | `planning` |
+| **Next agent should** | Start the next frontier pair in parallel: **Build goals and budget actuals engine** (`T-FR-0001-02`) and **Add income and liabilities ingestion contracts** (`T-FR-0001-03`), then progress TEST → DEV → VAL. |
 
 ### Parallel streams (optional)
 
@@ -24,7 +24,12 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Ticket | Title | TEST | DEV | VAL | Notes |
 |--------|-------|------|-----|-----|-------|
-| T-FR-0000-01 | Choose stack and scaffold repository | — | — | — | `FR-0000` |
+| T-FR-0000-01 | Choose stack and scaffold repository | done | done | done | `FR-0000` (manually completed outside ticket workflow) |
+| T-FR-0001-01 | Define goals and budgets data contracts | done | done | done | `FR-0001` |
+| T-FR-0001-02 | Build goals and budget actuals engine | — | — | — | `FR-0001` |
+| T-FR-0001-03 | Add income and liabilities ingestion contracts | — | — | — | `FR-0001` |
+| T-FR-0001-04 | Expose unified monthly financial summary API | — | — | — | `FR-0001` |
+| T-FR-0001-05 | Deliver Phase 2 unified dashboard view | — | — | — | `FR-0001` |
 
 ---
 

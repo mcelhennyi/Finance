@@ -6,8 +6,9 @@
 
 | FR id | Slug (directory) | Status | Tickets (when known) | Notes |
 |-------|------------------|--------|------------------------|-------|
-| FR-0000 | `FR-0000-bootstrap/` | `active` | **`T-FR-0000-01`** in [`FR-0000-bootstrap/tickets.md`](FR-0000-bootstrap/tickets.md) | Core / repo bootstrap. |
+| FR-0000 | `FR-0000-bootstrap/` | `complete` | **`T-FR-0000-01`** in [`FR-0000-bootstrap/tickets.md`](FR-0000-bootstrap/tickets.md) | Core / repo bootstrap completed manually. |
+| FR-0001 | `FR-0001-phase2-goals-unified-view/` | `in-progress` | **`T-FR-0001-01`** through **`T-FR-0001-05`** in [`FR-0001-phase2-goals-unified-view/tickets.md`](FR-0001-phase2-goals-unified-view/tickets.md) | Phase 2 goals, budgets, and unified view planning and implementation. |
 
-**next_id:** `1`
+**next_id:** `2`
 
 **Allocating a new `FR-NNNN`:** Create directory **`tasks/feature-history/FR-NNNN-<slug>/`**, add a row to the table, set **`next_id`** to **NNNN+1**, and add the ticket file path to **`TICKET-SOURCES.md`**.
