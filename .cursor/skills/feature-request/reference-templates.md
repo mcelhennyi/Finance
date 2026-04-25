@@ -255,4 +255,4 @@ Use on **`feat/FR-NNNN-<slug>`** and **`feat/FR-NNNN-<slug>/T-…`** branches on
 
 ## Dev environment (MkDocs / Docker)
 
-Repositories that ship **`./develop`**, **`compose.yaml`**, and **`scripts/serve-docs.sh`**: during design or before doc **VAL**, run **`./develop up`** or **`./develop local`**; for a static build in Docker, **`./develop build`**. See **`.cursor/skills/feature-request/SKILL.md`** (local dev section) and root **`README.md`**.
+Repositories that ship **`./develop`**, **`compose.yaml`**, and **`scripts/serve-docs.sh`**: run development-specific commands in Docker / Docker Compose / Dev Container where possible. During design or before doc **VAL**, run **`./develop up`**; for a static build in Docker, **`./develop build`**. Use **`./develop local`** only as a documented host fallback. See **`.cursor/skills/feature-request/SKILL.md`** (local dev section) and root **`README.md`**.

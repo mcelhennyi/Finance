@@ -48,7 +48,7 @@ On **`main`**:
 
 After union conflict resolution, run full integrated validation:
 
-1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per **`docs/ai-context.md`**).
+1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per **`docs/ai-context.md`**) inside Docker / Docker Compose / Dev Container / CI images where possible; document any host-local exception.
 2. If **all checks pass**, `git push origin main`.
 3. If **any check fails** or a requirement is unmet:
    - Create a blocker task as the **primary ticket** (repair ticket id) with explicit failing checks/requirements.

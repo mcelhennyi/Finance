@@ -11,6 +11,8 @@ All **process** standards for this project live in **`docs/ai-context.md`**. Loa
 
 **Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design → **`tickets.md`**), then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. **`/commit-with-metrics`** is optional for commits.
 
+**Development commands:** Run build/test/lint/format/package-manager/dev-server/doc-build commands inside Docker / Docker Compose / Dev Container / CI images where possible. Prefer **`./develop`**, `docker compose run`, or the configured Dev Container; document host-local exceptions in ticket diaries or handoffs.
+
 **Doc sync:** When you change Cursor rules, skills, or Claude commands together, follow **`.cursor/rules/cursor-claude-doc-sync.mdc`**.
 
 **Stack-specific code style:** enable **`.cursor/rules/stack-conventions.mdc`** when you have chosen a stack (set `alwaysApply: true` in that file).

@@ -50,7 +50,7 @@ On **`main`**:
 
 After the union conflict resolution is complete, run full validation in the integration checkout:
 
-1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per `docs/ai-context.md`). Confirm repo-root **`CURRENT.md`** is not left as branch-local prose on **`main`** (see merge step 5 in §3).
+1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per `docs/ai-context.md`) inside Docker / Docker Compose / Dev Container / CI images where possible; document any host-local exception. Confirm repo-root **`CURRENT.md`** is not left as branch-local prose on **`main`** (see merge step 5 in §3).
 2. If **all checks pass**, `git push origin main`.
 3. If **any check fails** or a requirement is unmet:
    - Create a new blocker task as the **primary ticket** (new **`T-FR-NNNN-xx`** id following **`docs/design/documentation-style.md` §Ticket IDs**, e.g. append a repair sequence number for that `FR`) with explicit failing checks/requirements.

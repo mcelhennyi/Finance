@@ -71,7 +71,12 @@ Skim **`tasks/handoffs/`** and **`tasks/feature-history/REGISTRY.md`** for recen
 ## Implementation standards (fill when stack is chosen)
 
 - **Languages and frameworks:** Record versions, build commands, and lint/format rules in **`README.md`** and **`.cursor/rules/stack-conventions.mdc`** (set `alwaysApply: true` there when ready).
-- **Testing:** Prefer **tests before behavior** when your ticket template uses phased work. Run **VAL** (verification) in the environment your tickets specify (often a Dev Container or CI image once defined).
+- **Development command environment:** Run development-specific commands (**build**, **test**, **lint**, **format**, generators, package-manager scripts, doc builds, and dev servers) **inside Docker / Docker Compose / Dev Container / CI images where possible**. Use checked-in wrappers such as **`./develop`**, `docker compose run`, or the configured Dev Container before host-local execution. If no container path exists for a command, run it on the host only as a documented exception in the ticket diary / handoff, and prefer adding a containerized path as follow-up.
+- **Testing:** Prefer **tests before behavior** when your ticket template uses phased work. Run **VAL** (verification) in the containerized environment your tickets specify (Docker / Docker Compose / Dev Container / CI image where possible).
+- **Unit tests as default:** Add or update unit tests for new behavior and bug fixes unless the change is docs-only or pure scaffolding. Prefer fast, deterministic tests that isolate one behavior per case.
+- **Simplicity-first implementation:** Prefer the smallest design that satisfies the documented requirement. Reuse existing patterns before introducing new abstractions, and only add complexity when a concrete constraint requires it.
+- **File size and cohesion:** Prefer small, cohesive files over broad “god files.” When a file grows to multiple responsibilities or becomes difficult to review, split it into focused modules with clear interfaces.
+- **Runtime efficiency:** Keep hot-path code and I/O efficient by default (avoid unnecessary allocations, repeated network/file calls, and quadratic loops on large inputs). When trade-offs exist, favor correctness first and document notable performance decisions in the ticket diary / handoff.
 - **Security:** Follow your organization’s policies. Do **not** commit secrets; keep `.env*` out of git unless using checked-in **`.env.example`** placeholders only.
 
 ---
@@ -106,7 +111,7 @@ Use planning for multi-step or architectural work.
 
 ### 2. Subagent strategy
 
-- **Per ticket** (id **`T-FR-NNNN-xx`):** phases **TEST → DEV → VAL** serially inside that ticket’s section in the owning feature’s **`tickets.md`**, **one child worktree** under that feature’s **`.worktrees/FR-NNNN-<slug>/`** folder.
+- **Per ticket** (id **`T-FR-NNNN-xx`):** phases **TEST → DEV → VAL** serially inside that ticket’s section in the owning feature’s **`tickets.md`**, **one child worktree** under that feature’s **`.worktrees/FR-NNNN-<slug>/`** folder. Development commands inside that worktree still use Docker / Dev Container / CI images where possible.
 - Do **not** parallelize phases for the **same** ticket across subagents.
 - **Parallel tickets:** use **`identify-frontier`** / **`develop-frontier`**, then **`finish-feature`** (feature integration branch → **PR to `main`**, §2d) **or** **`finish-frontier`** (merge straight to **`main`**) — the parent should **delegate** implementation streams per **§1b** rather than doing every ticket inline.
 

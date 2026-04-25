@@ -7,7 +7,6 @@ node_modules/
 dist/
 build/
 .cache/
-__pycache__/
 
 # Environment
 .env
@@ -25,6 +24,3 @@ __pycache__/
 
 # Logs
 *.log
-
-# Personal/local seed statement drops (keep shared seed assets in data/)
-data/seed-statements/

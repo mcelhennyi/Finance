@@ -28,7 +28,9 @@ End each response with **Executive summary**, **Suggested next step**, and **Opt
 3. **Implement:** `/develop-frontier` (feature worktree at **`.worktrees/FR-NNNN-<slug>/feature/`**; ticket/stage child worktrees under the same feature folder)
 4. **Integrate:** `/finish-feature` (default; feature branch → **PR to `main`**) or `/finish-frontier` (direct **`main`**)
 
-**Doc site during design / VAL:** when **`docs/`** or **`mkdocs.yml`** change, use **`./develop help`** and run **`./develop up`** (Docker Compose) or **`./develop local`** (venv on the host); use **`./develop build`** for a static check. Optional **`develop.conf`**; see root **`README.md`** and **`.cursor/skills/feature-request/SKILL.md`** (local dev / Docker section).
+**Development commands:** during implementation, run build/test/lint/package-manager/doc/dev-server commands inside Docker / Docker Compose / Dev Container / CI images where possible. Use **`./develop run …`**, `docker compose run …`, or the configured Dev Container before host-local commands; document exceptions in feature diaries or handoffs.
+
+**Doc site during design / VAL:** when **`docs/`** or **`mkdocs.yml`** change, use **`./develop help`** and run **`./develop up`** (Docker Compose) or **`./develop local`** (venv fallback; document why host-local was used); use **`./develop build`** for a static check. Optional **`develop.conf`**; see root **`README.md`** and **`.cursor/skills/feature-request/SKILL.md`** (local dev / Docker section).
 
 ## “Identify” disambiguation
 

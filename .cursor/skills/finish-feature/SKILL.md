@@ -29,7 +29,7 @@ In the feature worktree checkout of **`feat/FR-NNNN-<slug>`** (normally **`.work
 
 ## 2 — Validation on the feature branch
 
-Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets (Docker / Dev Container per **`docs/ai-context.md`**). Fix forward on the **feature branch** if issues are small; otherwise stop and leave the branch for human triage.
+Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets using Docker / Docker Compose / Dev Container / CI images where possible per **`docs/ai-context.md`**. Host-local validation is an exception and must be documented in the finish handoff. Fix forward on the **feature branch** if issues are small; otherwise stop and leave the branch for human triage.
 
 ## 3 — Push feature branch and open PR to `main`
 

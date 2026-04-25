@@ -19,7 +19,10 @@ Use with **`docs/ai-context.md`**. This file mirrors Cursor-facing rules for Cla
 
 ## Testing environment
 
-- When **`.devcontainer/`** or CI images exist, run verification (**VAL**) there as tickets specify.
+- Run development-specific commands (**build**, **test**, **lint**, **format**, generators, package-manager scripts, doc builds, and dev servers) inside Docker / Docker Compose / Dev Container / CI images where possible.
+- Prefer repo wrappers such as **`./develop`**, `docker compose run`, or the configured Dev Container before host-local execution.
+- When a container path is unavailable, host-local commands are allowed only as documented exceptions in the ticket diary / handoff, with a follow-up to add container support when appropriate.
+- Run verification (**VAL**) in the containerized environment tickets specify.
 
 ## Worktrees and session beacon
 

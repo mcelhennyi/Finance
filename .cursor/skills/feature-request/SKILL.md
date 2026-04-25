@@ -58,6 +58,7 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 ### Local dev: `./develop` and Docker (when this repo has MkDocs / Compose)
 
 - **`./develop` is the supported entrypoint** (not a parallel to **`/identify-frontier`**) for running the **documentation** stack: **`help`**, **`up`**, **`down`**, **`build`**, **`local`**, shell/run helpers. See the root **`README.md`**.
+- **Development commands default to containers:** when a repo ships **`./develop`**, Compose, a Dev Container, or CI image, run build/test/lint/package-manager/doc/dev-server commands through that container path where possible. Host-local commands are exceptions and must be recorded in the stage diary or handoff.
 - **During design (Stages 1..N):** if the feature adds or rewrites **design or product docs** under **`docs/`**, run **`./develop up`** or **`./develop local`** to verify navigation, links, Mermaid, and formatting before you treat a design stage as done.
 - **During implementation and VAL:** if a **ticket** changes **`docs/`** or site config, include **`./develop build`** (or the ticket’s own Docker-based doc check) in **VAL** or note the equivalent verification in **`parallel/…` / `tickets.md`** so **`docs/ai-context.md`** (Docker for verification) is satisfied. If the project has no **`./develop`** or Compose yet, use **`/develop-frontier`**-assigned worktrees and document **VAL** criteria per ticket.
 
@@ -208,8 +209,9 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 2. Update **`tasks/ticket-progress.md` → Current focus** per **`develop-frontier`**: `Session status` = `developing`, list worktrees and ticket ids.
 3. Run **`/develop-frontier`** (or the skill) to launch **one subagent per parallel-capable ticket**, each in a child worktree under **`.worktrees/FR-NNNN-<slug>/`** on a feature-prefixed ticket/stage branch, **TEST→DEV→VAL** in order **inside** each ticket.
 4. For each parallel subagent, ensure **`parallel/…-diary.md`** gets an entry when that stream starts and when it ends.
-5. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
-6. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
+5. Run development-specific commands for each ticket (**build**, **test**, **lint**, **format**, package-manager scripts, doc builds, and dev servers) inside Docker / Docker Compose / Dev Container / CI images where possible; record host-local exceptions in the ticket diary or handoff.
+6. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
+7. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
 
 ---
 
