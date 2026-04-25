@@ -1,0 +1,36 @@
+---
+description: Documentation is the source of truth; escalation and amendment rules
+alwaysApply: true
+---
+
+## Documentation authority and escalation
+
+**Process** (worktrees, tickets, frontier workflow, session bootstrap) is defined in **`docs/ai-context.md`**. **Product and system behavior** — interfaces, architecture, and testable requirements — are defined in **`docs/design/`** and, if your team publishes one, the **primary documentation site** (for example MkDocs under **`docs/`**). Those design artifacts are the **source of truth** for what they specify.
+
+### Docs are the source of truth (design)
+
+Design documentation is intended to be correct. When **code and design disagree**, **fix the code**, not the design doc.
+
+If you believe a design doc is wrong, **do not edit it silently**. Follow the **Design amendment process** in **`docs/ai-context.md`**.
+
+**Key discipline:** Never “just make it work” in code without spec backing. If the design does not support the interface you need, that is a **`DESIGN-GAP`**.
+
+### Escalation tags
+
+| Tag | When to use | What to do |
+| --- | --- | --- |
+| **`DESIGN-GAP`** | The design is ambiguous or under-specified for what you must implement | **Stop** on that component. Flag it; do not guess. |
+| **`DESIGN-FLAW`** | A failing test or behavior shows a **wrong design assumption**, not a simple code bug | **Stop** validation on that component; document evidence; amend design via **`docs/ai-context.md`**. |
+| **`CODE-DEFECT`** | Behavior or tests fail against a **correct** design | Fix the code; no silent design edits. |
+
+**`COMPLETED`** and other workflow tags, if your project uses them, stay defined in **`docs/ai-context.md`**.
+
+### When ambiguous — stop and ask
+
+If you sense ambiguity or assumptions not grounded in **`docs/design/`**:
+
+- **Do not guess.** State the ambiguity.
+- Ask for clarification before proceeding.
+- If the gap is in the spec itself, treat it as **`DESIGN-GAP`**.
+
+Amendment block format and merge expectations: **`docs/ai-context.md`** (Docs authority and escalation).

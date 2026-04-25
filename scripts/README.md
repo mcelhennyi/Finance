@@ -4,6 +4,24 @@ Utility scripts for the Finance Hub project. All scripts are parameterized and r
 
 ---
 
+## `serve-docs.sh` — Local MkDocs preview
+
+Serves the site defined by root **`mkdocs.yml`** (port **8000** by default).
+
+### Usage
+
+```bash
+./scripts/serve-docs.sh
+# Custom port
+./scripts/serve-docs.sh 9000
+```
+
+**Dependencies:** Python env with `mkdocs` and project theme/plugins installed (e.g. `pip install -r requirements.txt` and extras your `mkdocs.yml` needs).
+
+**Exit codes:** `0` on clean run; non-zero if `mkdocs` fails to start.
+
+---
+
 ## `dev.sh` — Development server
 
 Starts the Finance Hub development server via Docker Compose with live reload.

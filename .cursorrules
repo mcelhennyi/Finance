@@ -1,5 +1,7 @@
 # Cursor Rules for Finance Hub Project
 
+**AI process** (tickets, **`FR-NNNN`** features, worktrees, authority tags) is defined in **`docs/ai-context.md`**, with entry points in **`.cursor/rules/main.mdc`** and project-wide stack notes in **`.cursor/rules/stack-conventions.mdc`**. The sections below are Finance Hub–specific on top of that baseline.
+
 ## Markdown Formatting
 
 - **MANDATORY**: Always put a blank line between any non-blank line and a line that starts a bulleted or numbered list item

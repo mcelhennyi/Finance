@@ -1,0 +1,16 @@
+---
+description: Keep Cursor and Claude docs synchronized
+alwaysApply: true
+---
+
+# Cursor/Claude doc sync
+
+When updating guidance, commands, skills, or workflow documentation, keep Cursor and Claude docs aligned in the same change.
+
+- Treat `.cursor/**` and `.claude/**` guidance docs as mirrored sources of truth.
+- If you add or modify a command, rule, or workflow in one ecosystem, update the corresponding doc in the other ecosystem in the same task.
+- Keep intent, behavior, and operational steps identical unless a platform-specific difference is explicitly required.
+- If a platform-specific difference is required, document the reason directly in both docs.
+- Do not leave one side partially updated; complete both updates before considering the task done.
+- **Agent workflow** (worktrees, frontiers, **subagents / context budget** in **`docs/ai-context.md` §1b**) must stay aligned across **`docs/ai-context.md`**, **`.cursor/rules/main.mdc`**, **`.claude/rules/development-standards.md`**, **`CLAUDE.md`**, and any **`.cursor/skills/`** or **`.claude/commands/`** files that restate those rules.
+- **Docs authority** (design as source of truth, escalation tags, fix-code-not-docs) must stay aligned across **`docs/ai-context.md`**, **`docs/design/documentation-style.md`**, **`.cursor/rules/docs-authority-and-escalation.mdc`**, and **`.claude/rules/docs-authority-and-escalation.md`**.

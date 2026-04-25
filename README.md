@@ -51,6 +51,7 @@ This brings up the API and web UI (see [docs/PORTS.md](docs/PORTS.md) for defaul
 - `frontend/` — Vite + React dashboard
 - `docs/` — MkDocs site (design, guides, port registry)
 - `scripts/` — Development and automation helpers
+- **`.skeleton/`** — Git submodule: shared [process skeleton](https://github.com/mcelhennyi/.skeleton) (tickets, AI rules, `sync-skeleton`). Day-to-day process context: **`docs/ai-context.md`**. Update template copies: **`./sync-skeleton`** (see **`.skeleton/INIT.MD`**).
 
 ## Documentation
 

@@ -1,0 +1,23 @@
+---
+description: Finance Hub — Python API, SQLAlchemy, React/Vite frontend
+alwaysApply: true
+---
+
+## Stack
+
+- **Backend:** Python 3, FastAPI, Pydantic v2, SQLAlchemy 2 (`Mapped[...]`, `DeclarativeBase`), SQLite in dev
+- **Frontend:** TypeScript, React 18, Vite, Tailwind CSS (see `frontend/`)
+- **Docs:** MkDocs from root `mkdocs.yml` (`docs/`)
+
+## Authoritative style rules
+
+- **`.cursor/rules/code-style.mdc`** — formatting (Black, isort), types, privacy, Pydantic at boundaries
+- **`.cursor/rules/doc-standards.mdc`** — docstrings, Mermaid, tie-backs to `docs/design/`
+- **`.editorconfig`** and **`pyproject.toml`** — line length, indent
+
+## Tests and quality
+
+- pytest; coverage targets in **`.cursorrules`** (≥80% overall; stricter for business logic)
+- Run from repo root per `pyproject.toml` / CI
+
+Keep this file **free of product domain** except pointers to design docs as in **doc-standards**.

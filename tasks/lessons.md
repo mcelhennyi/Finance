@@ -1,7 +1,5 @@
-# Lessons Learned
+# Lessons learned
 
-Track corrections and non-obvious decisions here so future sessions don't repeat the same mistakes.
+Short notes from incidents, reviews, or retro sessions. **Bullets only**; link tickets or PRs when relevant.
 
----
-
-*No lessons recorded yet. This file is updated after user corrections or surprising findings.*
+- *(none yet)*

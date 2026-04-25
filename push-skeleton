@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Sync tooling files listed in skeleton.manifest into an upstream repo's .skeleton/
+# directory. Intended for projects that started from this template to contribute
+# process-only improvements back without merging product code.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: push-skeleton contribute
+
+Copies each path pair from skeleton.manifest (source relative to this repo,
+destination relative to upstream .skeleton/) into SKELETON_UPSTREAM/.skeleton/.
+
+Configuration (first match wins):
+  1. Environment variable SKELETON_UPSTREAM — absolute path to the repo that
+     hosts the canonical .skeleton/ directory.
+  2. File .skeleton-upstream in the repo root — single line, same path.
+
+Safety: destination segments must not contain ".." or start with "/".
+
+Typical workflow:
+  1. Clone or open a local checkout of the skeleton source repository.
+  2. In your derived project, set .skeleton-upstream to that path (or export
+     SKELETON_UPSTREAM).
+  3. Run ./push-skeleton contribute from the derived project root.
+  4. In the skeleton source repo, review git diff under .skeleton/, then commit.
+
+EOF
+}
+
+die() { echo "push-skeleton: $*" >&2; exit 1; }
+
+repo_root() {
+  if git rev-parse --show-toplevel >/dev/null 2>&1; then
+    git rev-parse --show-toplevel
+  else
+    pwd -P
+  fi
+}
+
+find_manifest() {
+  local root="$1"
+  if [[ -f "$root/skeleton.manifest" ]]; then
+    echo "$root/skeleton.manifest"
+  elif [[ -f "$root/.skeleton/skeleton.manifest" ]]; then
+    echo "$root/.skeleton/skeleton.manifest"
+  else
+    die "skeleton.manifest not found at $root/skeleton.manifest or $root/.skeleton/skeleton.manifest"
+  fi
+}
+
+resolve_upstream() {
+  local root="$1"
+  if [[ -n "${SKELETON_UPSTREAM:-}" ]]; then
+    echo "$SKELETON_UPSTREAM"
+    return
+  fi
+  local f="$root/.skeleton-upstream"
+  [[ -f "$f" ]] || die "Set SKELETON_UPSTREAM or create $f with one line: absolute path to skeleton source repo"
+  local p
+  p="$(tr -d '\r' <"$f" | head -n1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  [[ -n "$p" ]] || die ".skeleton-upstream is empty"
+  echo "$p"
+}
+
+validate_dest() {
+  local d="$1"
+  [[ "$d" != /* ]] || die "invalid manifest destination (absolute): $d"
+  [[ "$d" != *..* ]] || die "invalid manifest destination (..): $d"
+}
+
+cmd_contribute() {
+  local root manif upstream dest_root line src dst abs_src abs_dst
+  root="$(repo_root)"
+  manif="$(find_manifest "$root")"
+  upstream="$(resolve_upstream "$root")"
+  [[ -d "$upstream" ]] || die "upstream is not a directory: $upstream"
+  dest_root="$upstream/.skeleton"
+  [[ -d "$dest_root" ]] || die "upstream has no .skeleton directory: $dest_root"
+
+  local copied=0 missing=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    [[ "$line" == *"|"* ]] || die "manifest line missing | : $line"
+    src="${line%%|*}"
+    dst="${line#*|}"
+    src="$(echo "$src" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    dst="$(echo "$dst" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [[ -n "$src" && -n "$dst" ]] || die "empty src or dst: $line"
+    validate_dest "$dst"
+    abs_src="$root/$src"
+    abs_dst="$dest_root/$dst"
+    if [[ ! -f "$abs_src" ]]; then
+      echo "push-skeleton: skip missing source: $src" >&2
+      missing=$((missing + 1))
+      continue
+    fi
+    mkdir -p "$(dirname "$abs_dst")"
+    cp -f "$abs_src" "$abs_dst"
+    echo "push-skeleton: updated $abs_dst"
+    copied=$((copied + 1))
+  done <"$manif"
+
+  echo "push-skeleton: done ($copied copied, $missing missing sources)."
+}
+
+main() {
+  case "${1:-}" in
+    contribute) cmd_contribute ;;
+    -h|--help|help) usage ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

@@ -1,0 +1,14 @@
+# develop.conf — optional. Copy to develop.conf in the project root and customize.
+# init-project: set DEVELOP_LABEL (or replace __PROJECT_NAME__ below) to match README / charter.
+
+# Short label shown in ./develop help
+#DEVELOP_LABEL="__PROJECT_NAME__"
+
+# Path to the Compose file used for doc preview (repo-root relative)
+#DEVELOP_COMPOSE_FILE="compose.yaml"
+
+# Service name in that Compose file for the MkDocs / documentation container
+#DEVELOP_DOCS_SERVICE="docs"
+
+# Port to mention in help text (must match the published port in compose.yaml)
+#DEVELOP_DOCS_PORT="8000"

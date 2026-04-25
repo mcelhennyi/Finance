@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# Local development entrypoint: Dockerized doc preview, host venv, compose helpers.
+# Per-repo overrides: copy develop.conf.example to develop.conf (see init-project skill).
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_ROOT"
+
+# Optional: DEVELOP_LABEL, DEVELOP_COMPOSE_FILE, DEVELOP_DOCS_SERVICE, DEVELOP_DOCS_PORT, etc.
+if [[ -f "$REPO_ROOT/develop.conf" ]]; then
+  # shellcheck source=/dev/null
+  source "$REPO_ROOT/develop.conf"
+fi
+
+: "${DEVELOP_LABEL:=$(basename "$REPO_ROOT")}"
+: "${DEVELOP_COMPOSE_FILE:=compose.yaml}"
+: "${DEVELOP_DOCS_SERVICE:=docs}"
+: "${DEVELOP_DOCS_PORT:=8000}"
+
+compose_abs() {
+  echo "$REPO_ROOT/$DEVELOP_COMPOSE_FILE"
+}
+
+has_compose_file() {
+  [[ -f "$(compose_abs)" ]]
+}
+
+require_docker() {
+  command -v docker >/dev/null 2>&1 || {
+    echo "develop: docker not found on PATH" >&2
+    exit 1
+  }
+}
+
+require_compose_file() {
+  if ! has_compose_file; then
+    echo "develop: missing $(compose_abs) (set DEVELOP_COMPOSE_FILE or add a compose file)." >&2
+    exit 1
+  fi
+}
+
+compose() {
+  require_docker
+  require_compose_file
+  (cd "$REPO_ROOT" && docker compose -f "$DEVELOP_COMPOSE_FILE" "$@")
+}
+
+usage() {
+  cat <<EOF
+${DEVELOP_LABEL} — local development
+
+Usage: $(basename "$0") <command> [arguments]
+
+Commands
+  help, -h, --help     Show this message.
+  up                   Start the doc site via Docker Compose (foreground, live reload).
+  down                 Stop Compose services for this project.
+  build                Run \`mkdocs build\` in the ${DEVELOP_DOCS_SERVICE} service (writes site/).
+  local                Run ./scripts/serve-docs.sh (Python venv + mkdocs on the host; no Docker).
+  shell                Open an interactive shell in the ${DEVELOP_DOCS_SERVICE} container.
+  run <cmd> [args]     Run a command in the ${DEVELOP_DOCS_SERVICE} container (e.g. mkdocs --version).
+  ps                   Show Compose service status.
+
+Default doc URL: http://127.0.0.1:${DEVELOP_DOCS_PORT}/  (port comes from develop.conf and compose)
+
+Optional config: copy develop.conf.example to develop.conf in the repo root and set
+DEVELOP_LABEL, DEVELOP_COMPOSE_FILE, DEVELOP_DOCS_SERVICE, DEVELOP_DOCS_PORT, etc.
+If there is no Compose file, use:  $(basename "$0") local
+EOF
+}
+
+cmd_up() {
+  compose up --build "$@"
+}
+
+cmd_down() {
+  if ! has_compose_file; then
+    echo "develop: no ${DEVELOP_COMPOSE_FILE} at $(compose_abs); nothing to stop."
+    exit 0
+  fi
+  compose down "$@"
+}
+
+cmd_build() {
+  compose run --rm "$DEVELOP_DOCS_SERVICE" mkdocs build "$@"
+}
+
+cmd_local() {
+  local s="$REPO_ROOT/scripts/serve-docs.sh"
+  if [[ ! -f "$s" ]]; then
+    echo "develop: missing $s (add scripts/serve-docs.sh or use a stack-specific flow)." >&2
+    exit 1
+  fi
+  if [[ ! -x "$s" ]]; then
+    echo "develop: $s is not executable; chmod +x $s" >&2
+    exit 1
+  fi
+  exec "$s" "$@"
+}
+
+cmd_shell() {
+  require_docker
+  require_compose_file
+  (cd "$REPO_ROOT" && docker compose -f "$DEVELOP_COMPOSE_FILE" run -it --rm \
+    --entrypoint /bin/sh "$DEVELOP_DOCS_SERVICE")
+}
+
+cmd_run() {
+  if [[ $# -lt 1 ]]; then
+    echo "develop: run what? e.g. $(basename "$0") run mkdocs --version" >&2
+    exit 1
+  fi
+  compose run --rm "$DEVELOP_DOCS_SERVICE" "$@"
+}
+
+main() {
+  local cmd="${1:-}"
+  if [[ -z "$cmd" ]]; then
+    usage
+    exit 0
+  fi
+  case "$cmd" in
+    -h | --help | help) usage ;;
+    up) shift; cmd_up "$@" ;;
+    down) shift; cmd_down "$@" ;;
+    build) shift; cmd_build "$@" ;;
+    local) shift; cmd_local "$@" ;;
+    shell) shift; cmd_shell "$@" ;;
+    run) shift; cmd_run "$@" ;;
+    ps)
+      shift
+      if has_compose_file; then
+        compose ps "$@"
+      else
+        echo "develop: no ${DEVELOP_COMPOSE_FILE} at $(compose_abs); cannot show Compose status."
+        exit 0
+      fi
+      ;;
+    *)
+      echo "develop: unknown command: $cmd" >&2
+      echo "Try: $(basename "$0") help" >&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

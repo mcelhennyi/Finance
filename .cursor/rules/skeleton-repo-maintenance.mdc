@@ -1,0 +1,35 @@
+---
+description: >-
+  When editing the skeleton template, update CHANGELOG.md and DEPRECATED_PATHS
+  together with skeleton.manifest. Applies when SKELETON_REPO exists at repo
+  root (canonical skeleton) or when preparing commits inside the .skeleton
+  submodule for upstream.
+globs:
+  - "CHANGELOG.md"
+  - ".skeleton/CHANGELOG.md"
+  - "DEPRECATED_PATHS"
+  - ".skeleton/DEPRECATED_PATHS"
+  - "skeleton.manifest"
+  - ".skeleton/skeleton.manifest"
+alwaysApply: false
+---
+
+# Skeleton template maintenance
+
+## Preconditions
+
+- If **`SKELETON_REPO`** exists at the **git root** of this workspace, treat this tree as the **canonical skeleton** (or a submodule checkout of it).
+- If you are in a **consumer** repo and only editing **`.skeleton/`** as a submodule before contributing upstream, apply the same discipline before opening a PR to the skeleton repository.
+
+## Required on template edits
+
+1. **`CHANGELOG.md`**: add bullets under **`[Unreleased]` → Template** for behavioral or structural changes to shipped files.
+2. **Removals / renames** that affect consumers: append paths to **`DEPRECATED_PATHS`** (repo-root-relative paths that **`sync-skeleton`** should delete outside `.skeleton/`) and document under **`[Unreleased]` → Deprecations** with the date and migration hint.
+3. **`skeleton.manifest`**: keep in sync with files that should be copied to consumer roots on **`sync-skeleton`** / **`push-skeleton contribute`**.
+
+## Anti-patterns
+
+- Shipping template changes without a **CHANGELOG** entry.
+- Deleting a tracked template path without a **`DEPRECATED_PATHS`** line (downstream repos will keep stale files until sync removes them).
+
+See **`docs/skeleton-MAINTAINERS.md`** for hook setup and the full workflow.

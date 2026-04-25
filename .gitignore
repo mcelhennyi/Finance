@@ -1,14 +1,42 @@
+# --- Baseline (skeleton; keep in sync with template intent) ---
+
+# Dependencies
+node_modules/
+.venv/
+.venv-*/
+
+# Build / cache
+dist/
+build/
+.cache/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+*.swp
+*.swo
+
+# Repo-local git worktrees (see docs/ai-context.md)
+.worktrees/
+
+# Logs
+*.log
+
+# --- Finance Hub (project-specific) ---
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-dist/
 *.egg-info/
 .eggs/
-.venv/
 venv/
 env/
 
@@ -34,19 +62,14 @@ data/seed-statements/*
 !data/seed-statements/.gitkeep
 *.csv
 *.pdf
-!scripts/*.csv  # allow fixture CSVs in scripts/
+!scripts/*.csv
 
-# Environment
-.env
+# Environment (overrides and local files)
 .env.local
 .env.*.local
 
 # IDE
 .vscode/settings.json
-.idea/
-*.swp
-*.swo
-.DS_Store
 
 # Reports (generated output) — exclude generated HTML but keep templates
 reports/output/
