@@ -77,6 +77,33 @@ class Transaction(Base):
         }
 
 
+class Budget(Base):
+    """Monthly category budget contract for the goals service."""
+
+    __tablename__ = "budgets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    period_month: Mapped[date] = mapped_column(nullable=False)
+    amount_limit: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class Goal(Base):
+    """Monthly financial goal contract for the goals service."""
+
+    __tablename__ = "goals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    goal_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    period_month: Mapped[date] = mapped_column(nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class MerchantDisplayOverride(Base):
     """User-defined display label for a stored merchant string (exact key match)."""
 
