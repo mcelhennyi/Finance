@@ -1,21 +1,21 @@
-# CURRENT — T-FR-0001-01
+# CURRENT — T-FR-0001-02
 
 ## Branch
 
 - Feature: `feat/FR-0001-phase2-goals-unified-view`
-- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-01-goals-budgets-contracts`
-- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-01-goals-budgets-contracts`
+- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-02-goals-actuals-engine`
+- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-02-goals-actuals-engine`
 
 ## Phase
 
 - Active phase: `VAL` (complete)
-- Goal: verify contract tests pass and Phase 1 behavior compatibility remains green
+- Goal: verify deterministic budget/goal calculations and seeded-month reconciliation behavior
 
 ## Transition log
 
 - 2026-04-25: stream started in `TEST`
-- 2026-04-25: `TEST` complete (contract tests/spec examples added)
+- 2026-04-25: `TEST` complete (failing coverage added for actuals engine behavior)
 - 2026-04-25: transitioned to `DEV`
-- 2026-04-25: `DEV` complete (API schemas + persistence model + migration stub)
+- 2026-04-25: `DEV` complete (goals actuals service module and deterministic methods implemented)
 - 2026-04-25: transitioned to `VAL`
-- 2026-04-25: `VAL` complete (contract tests green, Phase 1 compatibility check green)
+- 2026-04-25: `VAL` complete (Dockerized tests green, including seeded-month reconciliation integration fixture)
