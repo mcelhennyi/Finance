@@ -33,3 +33,9 @@
 **Stage:** feature-request-continue queue refresh
 
 **Recap (plain English):** After manually closing FR-0000 bootstrap, refreshed the parallel frontier handoff and FR-0001 identify note to remove stale parallel guidance. Updated `tasks/ticket-progress.md` Current focus to `T-FR-0001-01` (`TEST`/`planning`) so the queue beacon matches the next implementation step.
+
+## 2026-04-25 (session) — codex
+
+**Stage:** develop frontier wave 2 integration
+
+**Recap (plain English):** Completed the parallel frontier pair: `T-FR-0001-02` (goals actuals engine) and `T-FR-0001-03` (income/liability ingestion contracts) via dedicated child worktrees and PRs into the feature branch. Revalidated in Docker with the relevant test suites and advanced queue focus to `T-FR-0001-04`.

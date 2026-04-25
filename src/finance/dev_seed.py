@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from finance.db.session import get_session, init_db
+from finance.ingestion.contracts import ingest_income_csv_content, ingest_liability_csv_content
 from finance.ingestion.service import ingest_csv_content
 from finance.seed_merchant_displays import apply_merchant_display_seed, default_seed_path
 
@@ -48,7 +49,13 @@ def run_seed(directory: Path) -> int:
                 errors += 1
                 continue
             with get_session() as session:
-                result = ingest_csv_content(session, content, path.name, "")
+                lowered = path.name.lower()
+                if "income" in lowered:
+                    result = ingest_income_csv_content(session, content, path.name)
+                elif "liability" in lowered:
+                    result = ingest_liability_csv_content(session, content, path.name)
+                else:
+                    result = ingest_csv_content(session, content, path.name, "")
             if result.errors:
                 for e in result.errors:
                     print(f"    error: {e}", file=sys.stderr)

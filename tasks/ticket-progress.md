@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | `T-FR-0001-02`, `T-FR-0001-03` |
+| **Active ticket** | `T-FR-0001-04` |
 | **Active phase** | `TEST` |
-| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` + child worktrees for `T-FR-0001-02` and `T-FR-0001-03` |
+| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` + child worktree for `T-FR-0001-04` (to create) |
 | **Session status** | `planning` |
-| **Next agent should** | Start the next frontier pair in parallel: **Build goals and budget actuals engine** (`T-FR-0001-02`) and **Add income and liabilities ingestion contracts** (`T-FR-0001-03`), then progress TEST → DEV → VAL. |
+| **Next agent should** | Start `T-FR-0001-04` (**Expose unified monthly financial summary API**) now that `T-FR-0001-02` and `T-FR-0001-03` are VAL-done. |
 
 ### Parallel streams (optional)
 
@@ -27,7 +27,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0000-01 | Choose stack and scaffold repository | done | done | done | `FR-0000` (manually completed outside ticket workflow) |
 | T-FR-0001-01 | Define goals and budgets data contracts | done | done | done | `FR-0001` |
 | T-FR-0001-02 | Build goals and budget actuals engine | done | done | done | `FR-0001` (Dockerized test/validation; seeded-month reconciliation covered by integration fixture) |
-| T-FR-0001-03 | Add income and liabilities ingestion contracts | — | — | — | `FR-0001` |
+| T-FR-0001-03 | Add income and liabilities ingestion contracts | done | done | done | `FR-0001` (Dockerized test/validation; seeded CSV ingest + aggregate verification complete) |
 | T-FR-0001-04 | Expose unified monthly financial summary API | — | — | — | `FR-0001` |
 | T-FR-0001-05 | Deliver Phase 2 unified dashboard view | — | — | — | `FR-0001` |
 

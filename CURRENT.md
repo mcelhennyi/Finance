@@ -1,21 +1,19 @@
-# CURRENT — T-FR-0001-02
+# CURRENT — FR-0001 feature integration
 
 ## Branch
 
 - Feature: `feat/FR-0001-phase2-goals-unified-view`
-- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-02-goals-actuals-engine`
-- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-02-goals-actuals-engine`
+- Integrated tickets:
+  - `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-02-goals-actuals-engine`
+  - `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-03-income-liability-contracts`
+- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/feature`
 
 ## Phase
 
 - Active phase: `VAL` (complete)
-- Goal: verify deterministic budget/goal calculations and seeded-month reconciliation behavior
+- Goal: maintain integrated feature-branch state and advance to `T-FR-0001-04`
 
 ## Transition log
 
-- 2026-04-25: stream started in `TEST`
-- 2026-04-25: `TEST` complete (failing coverage added for actuals engine behavior)
-- 2026-04-25: transitioned to `DEV`
-- 2026-04-25: `DEV` complete (goals actuals service module and deterministic methods implemented)
-- 2026-04-25: transitioned to `VAL`
-- 2026-04-25: `VAL` complete (Dockerized tests green, including seeded-month reconciliation integration fixture)
+- 2026-04-25: `T-FR-0001-02` completed and merged to feature branch
+- 2026-04-25: `T-FR-0001-03` completed and merged to feature branch
