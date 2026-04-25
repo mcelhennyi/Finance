@@ -104,6 +104,46 @@ class Goal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class IncomeRecord(Base):
+    """Income contract record for manual/API and CSV ingestion paths."""
+
+    __tablename__ = "income_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    income_date: Mapped[date] = mapped_column(nullable=False)
+    source_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="Income")
+    notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_file: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class LiabilityRecord(Base):
+    """Liability contract record for debt obligations and balances."""
+
+    __tablename__ = "liability_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    as_of_date: Mapped[date] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    liability_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    principal_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    minimum_payment: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    interest_rate_apr: Mapped[Decimal] = mapped_column(Numeric(8, 4), nullable=False, default=Decimal("0.00"))
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_file: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class MerchantDisplayOverride(Base):
     """User-defined display label for a stored merchant string (exact key match)."""
 
