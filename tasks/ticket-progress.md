@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | `T-FR-0001-02`, `T-FR-0001-03` |
+| **Active ticket** | `T-FR-0001-04` |
 | **Active phase** | `TEST` |
-| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` + child worktrees for `T-FR-0001-02` and `T-FR-0001-03` |
-| **Session status** | `developing` |
-| **Next agent should** | In parallel, run `T-FR-0001-02` on `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-02-goals-actuals-engine` and `T-FR-0001-03` on `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-03-income-liability-contracts` under `.worktrees/FR-0001-phase2-goals-unified-view/`, then complete TEST → DEV → VAL. |
+| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` + child worktree for `T-FR-0001-04` (to create) |
+| **Session status** | `planning` |
+| **Next agent should** | Start `T-FR-0001-04` (**Expose unified monthly financial summary API**) now that `T-FR-0001-02` and `T-FR-0001-03` are VAL-done. |
 
 ### Parallel streams (optional)
 
