@@ -1,21 +1,21 @@
-# CURRENT — T-FR-0001-01
+# CURRENT — T-FR-0001-03
 
 ## Branch
 
 - Feature: `feat/FR-0001-phase2-goals-unified-view`
-- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-01-goals-budgets-contracts`
-- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-01-goals-budgets-contracts`
+- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-03-income-liability-contracts`
+- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-03-income-liability-contracts`
 
 ## Phase
 
 - Active phase: `VAL` (complete)
-- Goal: verify contract tests pass and Phase 1 behavior compatibility remains green
+- Goal: verify seeded income/liability CSV ingest and aggregate queries
 
 ## Transition log
 
-- 2026-04-25: stream started in `TEST`
-- 2026-04-25: `TEST` complete (contract tests/spec examples added)
+- 2026-04-25: stream started in `TEST` for `T-FR-0001-03`
+- 2026-04-25: `TEST` complete (income/liability contract tests added and passing)
 - 2026-04-25: transitioned to `DEV`
-- 2026-04-25: `DEV` complete (API schemas + persistence model + migration stub)
+- 2026-04-25: `DEV` complete (contracts schemas, CRUD/soft-delete, parser hooks, CSV ingest, aggregate route)
 - 2026-04-25: transitioned to `VAL`
-- 2026-04-25: `VAL` complete (contract tests green, Phase 1 compatibility check green)
+- 2026-04-25: `VAL` complete (seeded income/liability CSV ingest verified in Docker and visible in aggregate query)

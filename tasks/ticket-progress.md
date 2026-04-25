@@ -27,7 +27,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0000-01 | Choose stack and scaffold repository | done | done | done | `FR-0000` (manually completed outside ticket workflow) |
 | T-FR-0001-01 | Define goals and budgets data contracts | done | done | done | `FR-0001` |
 | T-FR-0001-02 | Build goals and budget actuals engine | — | — | — | `FR-0001` |
-| T-FR-0001-03 | Add income and liabilities ingestion contracts | — | — | — | `FR-0001` |
+| T-FR-0001-03 | Add income and liabilities ingestion contracts | done | done | done | `FR-0001` |
 | T-FR-0001-04 | Expose unified monthly financial summary API | — | — | — | `FR-0001` |
 | T-FR-0001-05 | Deliver Phase 2 unified dashboard view | — | — | — | `FR-0001` |
 
