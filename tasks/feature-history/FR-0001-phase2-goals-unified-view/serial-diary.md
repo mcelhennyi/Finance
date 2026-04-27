@@ -39,3 +39,9 @@
 **Stage:** develop frontier wave 2 integration
 
 **Recap (plain English):** Completed the parallel frontier pair: `T-FR-0001-02` (goals actuals engine) and `T-FR-0001-03` (income/liability ingestion contracts) via dedicated child worktrees and PRs into the feature branch. Revalidated in Docker with the relevant test suites and advanced queue focus to `T-FR-0001-04`.
+
+## 2026-04-27 (session) — codex
+
+**Stage:** FR-0001 finish-feature (04 + 05)
+
+**Recap (plain English):** Completed `T-FR-0001-04` (unified monthly summary API) and `T-FR-0001-05` (Phase 2 unified dashboard view), validated backend and frontend test suites, pushed `feat/FR-0001-phase2-goals-unified-view`, and opened PR #5 to `master` for human review.
