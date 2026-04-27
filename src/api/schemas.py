@@ -190,3 +190,84 @@ class IncomeLiabilityAggregateOut(BaseModel):
     net_cash_after_liabilities: float
     active_income_count: int
     active_liability_count: int
+
+
+# --- Unified monthly view (T-FR-0001-04) — stable for Phase 2 dashboard ---
+
+
+class BudgetSummaryRowOut(BaseModel):
+    budget_id: int
+    category: str
+    period_month: date
+    budget_amount: float
+    actual: float
+    variance: float
+    is_over_budget: bool
+    is_incomplete_month: bool
+    trending_over_budget: bool
+
+
+class GoalSummaryRowOut(BaseModel):
+    goal_id: int
+    name: str
+    goal_type: str
+    period_month: date
+    target: float
+    actual: float
+    remaining: float
+    progress_ratio: float
+    is_complete: bool
+
+
+class CardCashFlowOut(BaseModel):
+    total_charges: float
+    total_credits: float
+    net_spent: float
+    transaction_count: int
+    by_category: dict[str, float]
+
+
+class ContractAggregateOut(BaseModel):
+    total_income: float
+    total_liabilities: float
+    net_cash_after_liabilities: float
+    active_income_count: int
+    active_liability_count: int
+
+
+class LiabilityLineItemOut(BaseModel):
+    id: int
+    name: str
+    liability_type: str
+    principal_amount: float
+    as_of_date: date
+    currency: str
+
+
+class NetWorthBreakdownOut(BaseModel):
+    assets_total: float
+    assets_tracked: bool
+    liabilities_total: float
+    net_worth: float
+    liability_line_items: list[LiabilityLineItemOut]
+
+
+class ReconciliationOut(BaseModel):
+    unified_operating_net: float
+    independent_operating_net: float
+    discrepancy: float
+    within_tolerance: bool
+    income_aggregate_vs_line_items: float
+    within_tolerance_income: bool
+
+
+class UnifiedViewSummaryOut(BaseModel):
+    period_month: date
+    as_of: date
+    currency: str = "USD"
+    budgets: list[BudgetSummaryRowOut]
+    goals: list[GoalSummaryRowOut]
+    card_cash_flow: CardCashFlowOut
+    contracts: ContractAggregateOut
+    net_worth: NetWorthBreakdownOut
+    reconciliation: ReconciliationOut

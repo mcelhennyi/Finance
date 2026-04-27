@@ -10,10 +10,12 @@
 
 ## Phase
 
-- Active phase: `VAL` (complete)
-- Goal: maintain integrated feature-branch state and advance to `T-FR-0001-04`
+- Active phase: `VAL` — confirm Phase 2 unified view in running stack
+- Goal: `T-FR-0001-05` done (nav **Unified view** + summary API)
 
 ## Transition log
 
 - 2026-04-25: `T-FR-0001-02` completed and merged to feature branch
 - 2026-04-25: `T-FR-0001-03` completed and merged to feature branch
+- 2026-04-27: `T-FR-0001-04` — unified monthly summary API (`/api/unified-view/summary`) implemented on feature line
+- 2026-04-27: `T-FR-0001-05` — Phase 2 **Unified view** page + frontend tests

@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import contracts, filters, ingest, merchant_names, metrics, transactions
+from api.routers import contracts, filters, ingest, merchant_names, metrics, summary, transactions
 from finance.db.session import init_db
 
 
@@ -45,6 +45,7 @@ app.include_router(metrics.router, prefix="/api")
 app.include_router(filters.router, prefix="/api")
 app.include_router(merchant_names.router, prefix="/api")
 app.include_router(contracts.router, prefix="/api")
+app.include_router(summary.router, prefix="/api")
 
 
 @app.get("/health")

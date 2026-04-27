@@ -27,6 +27,12 @@ function formatYearMonth(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** First day of month as YYYY-MM-DD for API `month=` (e.g. unified summary). */
+export function firstOfMonthFromYm(ym: string): string {
+  const { from } = calendarMonthBounds(ym)
+  return from
+}
+
 export function thisMonthYm(): string {
   return formatYearMonth(new Date())
 }
