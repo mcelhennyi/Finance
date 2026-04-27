@@ -31,7 +31,7 @@ These capabilities are available today (exact coverage evolves with Phase 1 work
 
 Roadmap by phase (detailed in [System overview](docs/design/system-overview.md) and service design docs):
 
-- **Phase 2 — Goals and unified view** — Financial goals, budgets, and a single pane that combines income, expenses, and liabilities.
+- **Phase 2 — Goals and unified view** — Financial goals, budgets, income/liability ingestion, persisted over-budget alerts, and a single pane for cash flow plus net worth breakdown.
 - **Phase 3 — Analysis and projections** — Stronger trends over time, forward-looking projections, and scenario modeling (“what if”) on top of the same ledger.
 - **Phase 4 — Crypto portfolio** — Optional tracking for wallets and exchange accounts (e.g. Coinbase) alongside traditional cash and card flows.
 

@@ -48,8 +48,10 @@
 - **FR-6**: Goal definition (monthly spend limit per category)
 - **FR-7**: Budget vs. actual tracking with over/under indicators
 - **FR-8**: Income tracking and ingestion (salary, freelance, reimbursements)
-- **FR-9**: Liability tracking (mortgage principal/interest, student loans)
-- **FR-10**: Net cash flow dashboard (inflows − outflows per month)
+- **FR-9**: Liability tracking (mortgage principal/interest, student loans) with manual/API + CSV + parser hook ingestion paths
+- **FR-10**: Unified dashboard for monthly cash flow and net worth breakdown
+- **FR-10.1**: Unified summary reconciliation tolerance of $10 for monthly validation
+- **FR-10.2**: Over-budget signaling via both derived indicators and persisted alert records
 - **FR-11**: Receipt-to-transaction matching
 - **FR-12**: Business expense flagging
 

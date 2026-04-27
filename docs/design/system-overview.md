@@ -183,10 +183,11 @@ erDiagram
 **Deliverables**:
 
 - Income source ingestion (salary, freelance, transfers)
-- Mortgage/liability ingestion
+- Mortgage/liability ingestion (manual/API, CSV, parser plugin hooks)
 - Goal and budget definition API
 - Budget vs. actual tracking
-- Net cash flow dashboard (web UI)
+- Net cash flow + net worth dashboard (web UI)
+- Over-budget indicators with persisted alert history
 - Receipt-to-transaction matching
 - Business expense flagging
 
@@ -194,6 +195,7 @@ erDiagram
 
 - Can answer "am I on track with my savings goal?" at a glance
 - Net cash flow for any month is accurate to within $10 of bank reconciliation
+- Unified monthly summary (cash flow + net worth) reconciles within $10 operational tolerance
 
 ### Phase 3 — Trends, Projections, Scenarios (Planned)
 

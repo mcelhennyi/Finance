@@ -24,3 +24,13 @@ build/
 
 # Logs
 *.log
+
+# Local docs/output artifacts
+site/
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+
+# Local seed statement drops
+data/seed-statements/activity*.csv
