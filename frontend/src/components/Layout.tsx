@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type AppPage = 'dashboard' | 'parameters'
+export type AppPage = 'dashboard' | 'parameters' | 'unified'
 
 interface Props {
   dateRange?: string
@@ -50,6 +50,17 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
                 }`}
               >
                 Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('unified')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  activePage === 'unified'
+                    ? 'bg-teal-50 text-teal-800'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                Unified view
               </button>
               <button
                 type="button"

@@ -14,5 +14,7 @@ Design and ticket planning artifacts for Phase 2: goals, budgets, income/liabili
 
 ## Status
 
-- Lifecycle stage: design + ticket planning complete
-- Ready for implementation handoff: yes (tickets landed in global tracker files)
+- Lifecycle stage: implementation complete, in review
+- Feature branch: `feat/FR-0001-phase2-goals-unified-view`
+- PR: https://github.com/mcelhennyi/Finance/pull/5
+- Ticket state: `T-FR-0001-01` through `T-FR-0001-05` are TEST/DEV/VAL done in `tasks/ticket-progress.md`

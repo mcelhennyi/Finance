@@ -8,6 +8,7 @@ import { StatCards } from './components/StatCards'
 import { Charts } from './components/Charts'
 import { TransactionTable } from './components/TransactionTable'
 import { ParametersPage } from './pages/ParametersPage'
+import { UnifiedViewPage } from './pages/UnifiedViewPage'
 import type { FilterState } from './types'
 
 const DEFAULT_FILTER: FilterState = { from: '', to: '', category: '', source: '' }
@@ -46,6 +47,8 @@ export function App() {
     <Layout activePage={page} onNavigate={setPage}>
       {page === 'parameters' ? (
         <ParametersPage />
+      ) : page === 'unified' ? (
+        <UnifiedViewPage />
       ) : (
         <div className="space-y-6">
           <UploadZone />

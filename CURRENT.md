@@ -1,21 +1,21 @@
-# CURRENT — T-FR-0001-01
+# CURRENT — FR-0001 feature integration
 
 ## Branch
 
 - Feature: `feat/FR-0001-phase2-goals-unified-view`
-- Ticket: `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-01-goals-budgets-contracts`
-- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/T-FR-0001-01-goals-budgets-contracts`
+- Integrated tickets:
+  - `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-02-goals-actuals-engine`
+  - `feat/FR-0001-phase2-goals-unified-view--T-FR-0001-03-income-liability-contracts`
+- Worktree: `.worktrees/FR-0001-phase2-goals-unified-view/feature`
 
 ## Phase
 
-- Active phase: `VAL` (complete)
-- Goal: verify contract tests pass and Phase 1 behavior compatibility remains green
+- Active phase: `VAL` — confirm Phase 2 unified view in running stack
+- Goal: `T-FR-0001-05` done (nav **Unified view** + summary API)
 
 ## Transition log
 
-- 2026-04-25: stream started in `TEST`
-- 2026-04-25: `TEST` complete (contract tests/spec examples added)
-- 2026-04-25: transitioned to `DEV`
-- 2026-04-25: `DEV` complete (API schemas + persistence model + migration stub)
-- 2026-04-25: transitioned to `VAL`
-- 2026-04-25: `VAL` complete (contract tests green, Phase 1 compatibility check green)
+- 2026-04-25: `T-FR-0001-02` completed and merged to feature branch
+- 2026-04-25: `T-FR-0001-03` completed and merged to feature branch
+- 2026-04-27: `T-FR-0001-04` — unified monthly summary API (`/api/unified-view/summary`) implemented on feature line
+- 2026-04-27: `T-FR-0001-05` — Phase 2 **Unified view** page + frontend tests

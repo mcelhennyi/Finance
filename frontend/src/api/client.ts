@@ -8,6 +8,7 @@ import type {
   Metrics,
   SourceOption,
   Transaction,
+  UnifiedViewSummary,
 } from '../types'
 
 const BASE = '/api'
@@ -51,6 +52,13 @@ async function deleteQuery<T>(path: string, params: URLSearchParams): Promise<T>
 }
 
 export const api = {
+  unifiedViewSummary: (monthIsoDate: string, asOf?: string) => {
+    const p = new URLSearchParams()
+    p.set('month', monthIsoDate)
+    if (asOf) p.set('as_of', asOf)
+    return get<UnifiedViewSummary>('/unified-view/summary', p)
+  },
+
   metrics: (filter: Partial<FilterState>) =>
     get<Metrics>('/metrics', buildParams(filter)),
 
