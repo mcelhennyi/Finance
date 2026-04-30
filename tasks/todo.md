@@ -2,6 +2,11 @@
 
 ## Active
 
+- [ ] FR-0002 budget entry page workflow
+  - [ ] Reserve `FR-0002` and create the feature-history stub
+  - [ ] Write intake and design artifacts for manual budget allocation entry
+  - [ ] Create canonical tickets and global tracker rows
+  - [ ] Ask whether to start implementation via `/develop-frontier`
 - [ ] Build web interface for statement upload (drag-and-drop, multi-bank)
 - [ ] Implement Phase 1 ingestion service (`src/finance/ingestion/`)
 - [ ] Implement Phase 1 analysis service (`src/finance/analysis/`)
