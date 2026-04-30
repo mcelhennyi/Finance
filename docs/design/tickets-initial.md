@@ -18,6 +18,7 @@
 |-------|------------------|
 | FR-0000 | `tasks/feature-history/FR-0000-bootstrap/tickets.md` |
 | FR-0001 | `tasks/feature-history/FR-0001-phase2-goals-unified-view/tickets.md` |
+| FR-0002 | `tasks/feature-history/FR-0002-budget-entry-page/tickets.md` |
 
 ---
 
@@ -48,6 +49,27 @@ graph LR
   TFR0001_04_VAL --> TFR0001_05_TEST["Deliver Phase 2 unified dashboard view TEST (T-FR-0001-05)"]
   TFR0001_05_TEST --> TFR0001_05_DEV["Deliver Phase 2 unified dashboard view DEV (T-FR-0001-05)"]
   TFR0001_05_DEV --> TFR0001_05_VAL["Deliver Phase 2 unified dashboard view VAL (T-FR-0001-05)"]
+
+  TFR0001_05_VAL --> TFR0002_01_TEST["Define budget allocation contracts TEST (T-FR-0002-01)"]
+  TFR0002_01_TEST --> TFR0002_01_DEV["Define budget allocation contracts DEV (T-FR-0002-01)"]
+  TFR0002_01_DEV --> TFR0002_01_VAL["Define budget allocation contracts VAL (T-FR-0002-01)"]
+
+  TFR0002_01_VAL --> TFR0002_02_TEST["Expose budget allocation API TEST (T-FR-0002-02)"]
+  TFR0002_02_TEST --> TFR0002_02_DEV["Expose budget allocation API DEV (T-FR-0002-02)"]
+  TFR0002_02_DEV --> TFR0002_02_VAL["Expose budget allocation API VAL (T-FR-0002-02)"]
+
+  TFR0002_02_VAL --> TFR0002_03_TEST["Sync allocation totals into unified budgets TEST (T-FR-0002-03)"]
+  TFR0002_03_TEST --> TFR0002_03_DEV["Sync allocation totals into unified budgets DEV (T-FR-0002-03)"]
+  TFR0002_03_DEV --> TFR0002_03_VAL["Sync allocation totals into unified budgets VAL (T-FR-0002-03)"]
+
+  TFR0002_02_VAL --> TFR0002_04_TEST["Deliver budget entry page TEST (T-FR-0002-04)"]
+  TFR0002_04_TEST --> TFR0002_04_DEV["Deliver budget entry page DEV (T-FR-0002-04)"]
+  TFR0002_04_DEV --> TFR0002_04_VAL["Deliver budget entry page VAL (T-FR-0002-04)"]
+
+  TFR0002_03_VAL --> TFR0002_05_TEST["Validate and document budget entry workflow TEST (T-FR-0002-05)"]
+  TFR0002_04_VAL --> TFR0002_05_TEST
+  TFR0002_05_TEST --> TFR0002_05_DEV["Validate and document budget entry workflow DEV (T-FR-0002-05)"]
+  TFR0002_05_DEV --> TFR0002_05_VAL["Validate and document budget entry workflow VAL (T-FR-0002-05)"]
 
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone

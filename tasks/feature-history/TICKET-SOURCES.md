@@ -6,3 +6,4 @@ Canonical **`### T-FR-NNNN-xx`** sections live in the **`tickets.md`** files bel
 |------|
 | `tasks/feature-history/FR-0000-bootstrap/tickets.md` |
 | `tasks/feature-history/FR-0001-phase2-goals-unified-view/tickets.md` |
+| `tasks/feature-history/FR-0002-budget-entry-page/tickets.md` |
