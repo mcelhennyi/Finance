@@ -13,7 +13,7 @@ Custom slash commands live in **`.claude/commands/`**:
 | Command | Role |
 |---------|------|
 | **`/feature-request`** | **`FR-NNNN`** lifecycle: intake, layered design, **`20-tickets-dag.md`**, canonical **`tickets.md`**, optional frontier; repo-root **`CURRENT.md`** on **`feat/*`**; end turns with **Executive summary** + **next step** + **options** when relevant — see **`.cursor/skills/feature-request/SKILL.md`**. |
-| **`/feature-request-continue`** | Resume an in-progress **`FR-NNNN`** from **`tasks/feature-history/`** (read **`CURRENT.md`** when on **`feat/*`**). |
+| **`/feature-request-continue`** | Resume an in-progress **`FR-NNNN`** from **`tasks/feature-history/`** (read **`CURRENT.md`** when on **`feat/*`**); **`git fetch`** and verify integration PR state before suggesting merge. |
 | **`/identify-frontier`** | Parallel-ticket handoff from **`ticket-progress.md`** + **`tasks/feature-history/**/tickets.md`** (+ DAG). Run **after** tickets exist. |
 | **`/develop-frontier`** | One subagent per parallel-capable ticket (**TEST→DEV→VAL** per child worktree under **`.worktrees/FR-NNNN-<slug>/`**). |
 | **`/finish-feature`** | Merge feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → `main`**; do not auto-delete remote **`feat/*`**. |

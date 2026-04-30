@@ -7,7 +7,7 @@
 | FR id | Slug (directory) | Status | Tickets (when known) | Notes |
 |-------|------------------|--------|------------------------|-------|
 | FR-0000 | `FR-0000-bootstrap/` | `complete` | **`T-FR-0000-01`** in [`FR-0000-bootstrap/tickets.md`](FR-0000-bootstrap/tickets.md) | Core / repo bootstrap completed manually. |
-| FR-0001 | `FR-0001-phase2-goals-unified-view/` | `in-progress` | **`T-FR-0001-01`** through **`T-FR-0001-05`** in [`FR-0001-phase2-goals-unified-view/tickets.md`](FR-0001-phase2-goals-unified-view/tickets.md) | Phase 2 goals, budgets, and unified view planning and implementation. |
+| FR-0001 | `FR-0001-phase2-goals-unified-view/` | `complete` | **`T-FR-0001-01`** through **`T-FR-0001-05`** in [`FR-0001-phase2-goals-unified-view/tickets.md`](FR-0001-phase2-goals-unified-view/tickets.md) | Merged to default branch (PR #5, 2026-04-27). |
 
 **next_id:** `2`
 

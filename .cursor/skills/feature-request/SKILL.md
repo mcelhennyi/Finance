@@ -149,6 +149,20 @@ The **feature** branch **`CURRENT.md`** is the **integrated** picture after tick
 
 ---
 
+## `/feature-request-continue` and integration PR hygiene
+
+When **`README.md`**, **`90-closeout.md`**, newest **`handoffs/*.md`**, or **`tasks/ticket-progress.md` → Current focus** still instruct merging an integration PR or “awaiting merge” for the **`FR-NNNN`** under review:
+
+1. **`git fetch`** for **`origin`** (or the team’s canonical remote).
+2. **Verify merge state on the remote default branch** (`main`, `master`, or project convention — use **`docs/ai-context.md`**, **`git remote show origin`**, or **`git symbolic-ref refs/remotes/origin/HEAD`** when unsure) **before** recommending merge in the user-facing close. **Do not** tell the human to merge if the PR is already merged.
+   - Examples: **`gh pr view <n> --json state,mergedAt`** (GitHub CLI); or **`git log origin/<default> --oneline --grep 'Merge pull request'`** / confirm the feature tip is an ancestor of **`origin/<default>`** after fetch.
+3. **If already merged:** **`git pull`** the local default branch; set the feature row to **`complete`** in **`tasks/feature-history/REGISTRY.md`**; remove repo-root **`CURRENT.md`** on the default branch if it still exists; refresh **`tasks/ticket-progress.md` → Current focus**; update the feature **`README.md`** and **`90-closeout.md`** so the PR reads as merged, not blocking.
+4. **If still open:** merge + review remains a valid suggested next step; state that verification showed the PR **open** so the handoff is trustworthy.
+
+**Slash command text:** **`.claude/commands/feature-request-continue.md`** repeats the fetch + verify step at the top of the step list so orchestrators run it before reading stale merge instructions.
+
+---
+
 ## Stage 0 — Intake
 
 1. Allocate **`FR-NNNN`** in **`REGISTRY.md`**; create the directory tree; add **`README.md`** stub. **Immediately** commit and **push to `main`** (registry + stub) so concurrent feature work can deconflict on the shared **`REGISTRY.md`**.

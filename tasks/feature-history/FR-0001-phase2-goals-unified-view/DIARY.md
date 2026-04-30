@@ -1,5 +1,9 @@
 # FR-0001 consolidated diary (newest first)
 
+## 2026-04-30 — source: `serial-diary.md` / `handoffs/2026-04-30-post-merge.md`
+
+Verified PR #5 merged on `origin/master` (`d6a87ea`). Applied post-merge bookkeeping: **`REGISTRY.md`** → **`FR-0001` `complete`**, idle **`ticket-progress.md`** Current focus, removed root **`CURRENT.md`**, updated **`README.md`** / **`90-closeout.md`**, and tightened **`/feature-request-continue`** + feature-request skill to verify PR state before suggesting merge.
+
 ## 2026-04-27 — source: `serial-diary.md`
 
 Completed `T-FR-0001-04` (unified monthly summary API) and `T-FR-0001-05` (Phase 2 unified dashboard view), validated backend + frontend tests, pushed `feat/FR-0001-phase2-goals-unified-view`, and opened PR #5 to `master`.

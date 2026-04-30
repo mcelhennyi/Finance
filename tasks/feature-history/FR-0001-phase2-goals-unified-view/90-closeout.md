@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-FR-0001 ("Phase 2 goals and unified view") is implemented and open for review in PR #5. The feature now includes goals/budgets contracts and actuals computation, income/liability ingestion contracts, a unified monthly summary API, and a unified dashboard page that consumes that API.
+FR-0001 ("Phase 2 goals and unified view") shipped: merged via PR #5 to the default branch. The feature includes goals/budgets contracts and actuals computation, income/liability ingestion contracts, a unified monthly summary API, and a unified dashboard page that consumes that API.
 
 ## Artifact links
 
@@ -15,12 +15,13 @@ FR-0001 ("Phase 2 goals and unified view") is implemented and open for review in
 - `handoffs/2026-04-25-continue.md`
 - `handoffs/2026-04-25-identify-note.md`
 - `handoffs/2026-04-27-finish-feature.md`
+- `handoffs/2026-04-30-post-merge.md`
 
 ## Branch / PR
 
-- Feature branch: `feat/FR-0001-phase2-goals-unified-view`
-- PR: https://github.com/mcelhennyi/Finance/pull/5
-- Note: `CURRENT.md` is branch-local and should be removed when PR lands on `master`.
+- Feature branch (historical): `feat/FR-0001-phase2-goals-unified-view`
+- PR (merged): https://github.com/mcelhennyi/Finance/pull/5
+- Note: repo-root `CURRENT.md` was removed from the default branch after merge per workflow.
 
 ## Ticket mapping (title first)
 
@@ -32,9 +33,9 @@ FR-0001 ("Phase 2 goals and unified view") is implemented and open for review in
 
 ## Suggested next step
 
-Complete PR #5 review/merge to `master`, then mark `FR-0001` complete in `tasks/feature-history/REGISTRY.md`.
+Use **`/feature-request`** for the next product slice (**`FR-0002`** when allocated), or extend Phase 2 with new tickets under a new **`FR-NNNN`** if scope warrants a separate feature id.
 
 ## Options
 
-- **A. Merge PR #5 now:** close FR-0001 and start the next queued feature.
-- **B. Hold PR #5 for UI/API refinements:** add incremental commits on the same feature branch before merge.
+- **A. New `FR-NNNN`:** register the next id in **`REGISTRY.md`** and run the full design → tickets → frontier flow.
+- **B. Small follow-ups:** track as tickets under a new or existing feature per team policy; avoid reusing **`FR-0001`** for unrelated work.

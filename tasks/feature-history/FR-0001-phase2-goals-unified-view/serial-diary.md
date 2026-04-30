@@ -45,3 +45,9 @@
 **Stage:** FR-0001 finish-feature (04 + 05)
 
 **Recap (plain English):** Completed `T-FR-0001-04` (unified monthly summary API) and `T-FR-0001-05` (Phase 2 unified dashboard view), validated backend and frontend test suites, pushed `feat/FR-0001-phase2-goals-unified-view`, and opened PR #5 to `master` for human review.
+
+## 2026-04-30 (session)
+
+**Stage:** post-merge bookkeeping (PR #5 landed on default branch)
+
+**Recap (plain English):** Confirmed merge on `origin/master`, set `FR-0001` to `complete` in `REGISTRY.md`, refreshed `tasks/ticket-progress.md` Current focus to idle, removed root `CURRENT.md`, updated feature `README.md` and `90-closeout.md` for merged state, and tightened `/feature-request-continue` + feature-request skill to always verify PR state before suggesting merge.

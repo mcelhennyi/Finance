@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | `—` (FR-0001 Phase 2 view queue complete) |
-| **Active phase** | `VAL` (verify in Docker) |
-| **Branch / worktree** | `feat/FR-0001-phase2-goals-unified-view` |
+| **Active ticket** | `—` (no active ticket; allocate next **`FR-NNNN`** when starting new product work) |
+| **Active phase** | `idle` |
+| **Branch / worktree** | default branch (`master` / team convention); last shipped: **FR-0001** (PR #5 merged) |
 | **Session status** | `ready` |
-| **Next agent should** | VAL `T-FR-0001-05` end-to-end (compose + `npm test` in `frontend/`), then merge/PR or plan next feature. |
+| **Next agent should** | Start the next feature with **`/feature-request`** (new **`FR-NNNN`**) or pick the smallest open ticket per **How to choose next work** below. |
 
 ### Parallel streams (optional)
 
