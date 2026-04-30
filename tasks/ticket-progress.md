@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | `—` (no active ticket; allocate next **`FR-NNNN`** when starting new product work) |
-| **Active phase** | `idle` |
-| **Branch / worktree** | default branch (`master` / team convention); last shipped: **FR-0001** (PR #5 merged) |
-| **Session status** | `planning` |
-| **Next agent should** | For **FR-0002 budget entry page**, run `/identify-frontier` and then `/develop-frontier` if implementation should begin; the first eligible ticket is **Define budget allocation contracts** (`T-FR-0002-01`). |
+| **Active ticket** | **Define budget allocation contracts** (`T-FR-0002-01`) |
+| **Active phase** | `starting` |
+| **Branch / worktree** | `feat/FR-0002-budget-entry-page` at `.worktrees/FR-0002-budget-entry-page/feature/`; ticket worktree pending |
+| **Session status** | `developing` |
+| **Next agent should** | Start **Define budget allocation contracts** (`T-FR-0002-01`) in `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/`, branch `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts`, then complete TEST → DEV → VAL. |
 
 ### Parallel streams (optional)
 
@@ -16,7 +16,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| *(none — single stream)* | — | — | — | — |
+| Budget allocation contracts | `T-FR-0002-01` | `FR-0002` | `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts` / `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/` | Frontier stream ready to launch |
 
 ---
 
