@@ -15,7 +15,7 @@ The user has (or will) run **`./init-skeleton`** from a **clone of the skeleton*
 
 ## Preconditions
 
-- **Preferred:** `.skeleton/` exists as a **git submodule** and root files mirror **`skeleton.manifest`** (see **`INIT.MD`**).
+- **Preferred:** `.skeleton/` exists as a **git submodule** and root files mirror **`skeleton.manifest`** after **`./init-skeleton`** (see **`INIT.MD`**). **`init-skeleton`** seeds **all** manifest paths once, including entries later listed in **`.skeleton/.syncignore`**; **`./sync-skeleton`** then only refreshes paths **not** in that ignore file.
 - If the user only has a flat copy of template files (no submodule), follow **`INIT.MD`** legacy guidance or have them run **`init-skeleton`** from a clean skeleton clone before heavy customization.
 
 ## Required inputs (ask if missing)
@@ -69,7 +69,7 @@ If the user named a **local path** to the skeleton **source** checkout used with
 
 ### 6. Remind about sync
 
-- Tell the user to run **`./sync-skeleton`** after upstream skeleton releases (pulls submodule, applies **`DEPRECATED_PATHS`**, refreshes manifest files at root).
+- Tell the user to run **`./sync-skeleton`** after upstream skeleton releases (pulls submodule, applies **`DEPRECATED_PATHS`**, refreshes **tooling** manifest paths at root — paths in **`.skeleton/.syncignore`** are **skipped**, so registry / tickets / lessons / extended **`.gitignore`**, etc., stay project-owned). Greenfield starter copies of those files came from **`./init-skeleton`** only.
 
 ### 7. Close the loop
 
@@ -77,7 +77,8 @@ If the user named a **local path** to the skeleton **source** checkout used with
 
 ## Anti-patterns
 
-- Re-“materializing” by copying from **`.skeleton/`** over user-edited root files without a **`sync-skeleton`** discussion (sync is the supported path).
+- Re-“materializing” by copying from **`.skeleton/`** over user-edited **syncignored** root files without an explicit plan — **`sync-skeleton`** intentionally does not touch those paths; use a deliberate manual copy or a one-off team decision.
+- Expecting **`sync-skeleton`** to refresh **`REGISTRY.md`**, **`ticket-progress.md`**, or other **`.syncignore`d** files; use **`init-skeleton`** for the first seed, then treat them as consumer-owned (see **`INIT.MD`** → *Greenfield vs ongoing*).
 - Importing product docs or secrets from unrelated repos.
 - Adding **`skeleton.manifest`** entries for application source paths.
 

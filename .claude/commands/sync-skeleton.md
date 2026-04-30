@@ -8,7 +8,7 @@ description: >-
 
 Follow the Cursor project skill **`sync-skeleton`** (`.cursor/skills/sync-skeleton/SKILL.md`).
 
-**Summary:** From the **project root**, run **`./sync-skeleton`**. That updates the **`.skeleton/`** git submodule, applies **`.skeleton/DEPRECATED_PATHS`**, overwrites **root** paths from **`skeleton.manifest`**, and **stages** — you review and **`git commit`**.
+**Summary:** From the **project root**, run **`./sync-skeleton`**. That updates the **`.skeleton/`** git submodule, applies **`.skeleton/DEPRECATED_PATHS`**, overwrites **root** paths from **`skeleton.manifest`** **except** lines in **`.skeleton/.syncignore`**, and **stages** — you review and **`git commit`**. Greenfield **`./init-skeleton`** already copied the syncignored paths once from the template.
 
 **Details:** **`.skeleton/INIT.MD`** → *Syncing template updates (`./sync-skeleton`)*.
 

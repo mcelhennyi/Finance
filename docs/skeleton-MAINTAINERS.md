@@ -32,3 +32,8 @@ Downstream projects run **`./sync-skeleton`**, which:
 3. Overwrites files listed in **`skeleton.manifest`** from **`.skeleton/`** into the consumer root, **except** paths listed in **`.skeleton/.syncignore`** (exact repo-root-relative lines). Use **`.syncignore`** for registry, ticket progress, global DAG, architecture overview, and other files that stay in **`skeleton.manifest`** for **initial** seeding but must not be overwritten on every sync.
 
 When adding a new **`skeleton.manifest`** pair that consumers will customize, add the **consumer-side** path to **`.skeleton/.syncignore`** and document it under **`CHANGELOG.md` → Template**.
+
+### Greenfield (`init-skeleton`) vs ongoing (`sync-skeleton`)
+
+- **`./init-skeleton`** (first-time materialization) copies **all** **`skeleton.manifest`** pairs to the consumer root **without** applying **`.syncignore`**, so new repos get registry stubs, ticket trackers, starter DAG files, and a minimal **`.gitignore`** in one shot.
+- **`./sync-skeleton`** applies **`.syncignore`**: only manifest-listed paths **not** ignored are overwritten. Product-owned files stay stable while skills, rules, scripts, and other tooling continue to update from the template.
