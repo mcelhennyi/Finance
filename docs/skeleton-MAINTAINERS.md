@@ -29,4 +29,6 @@ Downstream projects run **`./sync-skeleton`**, which:
 
 1. Fast-forwards the **`.skeleton/`** submodule.
 2. Deletes paths listed in **`.skeleton/DEPRECATED_PATHS`** from the **consumer root** (not from inside `.skeleton/`).
-3. Overwrites files listed in **`skeleton.manifest`** from `.skeleton/` into the consumer root.
+3. Overwrites files listed in **`skeleton.manifest`** from **`.skeleton/`** into the consumer root, **except** paths listed in **`.skeleton/.syncignore`** (exact repo-root-relative lines). Use **`.syncignore`** for registry, ticket progress, global DAG, architecture overview, and other files that stay in **`skeleton.manifest`** for **initial** seeding but must not be overwritten on every sync.
+
+When adding a new **`skeleton.manifest`** pair that consumers will customize, add the **consumer-side** path to **`.skeleton/.syncignore`** and document it under **`CHANGELOG.md` → Template**.

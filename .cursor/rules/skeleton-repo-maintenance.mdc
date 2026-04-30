@@ -26,6 +26,7 @@ alwaysApply: false
 1. **`CHANGELOG.md`**: add bullets under **`[Unreleased]` → Template** for behavioral or structural changes to shipped files.
 2. **Removals / renames** that affect consumers: append paths to **`DEPRECATED_PATHS`** (repo-root-relative paths that **`sync-skeleton`** should delete outside `.skeleton/`) and document under **`[Unreleased]` → Deprecations** with the date and migration hint.
 3. **`skeleton.manifest`**: keep in sync with files that should be copied to consumer roots on **`sync-skeleton`** / **`push-skeleton contribute`**.
+4. **`.skeleton/.syncignore`**: when **`skeleton.manifest`** lists a path that is only a **starter copy** and real consumers diverge (registry, ticket graph, lessons, product architecture), add the **consumer-root** path to **`.syncignore`** so **`sync-skeleton`** does not overwrite it; note in **`CHANGELOG.md`**.
 
 ## Anti-patterns
 

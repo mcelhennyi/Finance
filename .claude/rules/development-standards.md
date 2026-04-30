@@ -10,8 +10,11 @@ Use with **`docs/ai-context.md`**. This file mirrors Cursor-facing rules for Cla
 
 ## Comments and documentation
 
-- Prefer short module-level notes that point to **`docs/design/...`** where behavior is specified.
+- Prefer short **file or module** notes that state **I/O contracts** (what goes to logs vs API responses; which stream or channel), **invariants**, and **security/privacy boundaries** (what must never be logged or sent), and that point to **`docs/design/...`** where behavior is specified.
 - Use the traceability prefix defined in **`docs/design/documentation-style.md`** (default pattern **`@PROJ-<AREA>-<NUMBER>`** until customized).
+- **What to comment:** **why** something is done a non-obvious way; **preconditions, errors, and threading** for public APIs or process boundaries; **stubs and temporary** behavior, with **DESIGN-GAP** or a ticket reference when design is incomplete.
+- **What to skip:** comments that only narrate the next line in English; JSDoc that duplicates an obvious function name with no new information.
+- **Claude / Cursor / humans:** the same bar applies — explanatory, not noise.
 
 ## Tie backs to documentation
 

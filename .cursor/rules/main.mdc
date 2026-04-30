@@ -17,4 +17,6 @@ All **process** standards for this project live in **`docs/ai-context.md`**. Loa
 
 **Stack-specific code style:** enable **`.cursor/rules/stack-conventions.mdc`** when you have chosen a stack (set `alwaysApply: true` in that file).
 
+**Explanatory comments:** follow **`.claude/rules/development-standards.md`** (Comments and documentation) and the **Explanatory comments** section in **`.cursor/rules/stack-conventions.mdc`**.
+
 **Claude Code** without Cursor: mirror expectations in **`.claude/rules/development-standards.md`** and slash commands under **`.claude/commands/`**.

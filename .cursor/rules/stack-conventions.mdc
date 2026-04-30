@@ -14,4 +14,11 @@ After the team selects a stack (see **`T-FR-0000-01`**), replace this stub with 
 - **Tests:** *(not set)*
 - **Build / run:** *(not set)*
 
+## Explanatory comments (all languages; enable with stack rules or adopt here)
+
+- Comment **why**, **invariants**, and **I/O or IPC contracts** (stdout vs stderr, log safety, wire formats, what must not be logged).
+- On **public APIs and process boundaries**, document preconditions, errors, and threading when non-obvious.
+- For **stubs and placeholders**, state that explicitly; use **DESIGN-GAP** or a ticket when design is open.
+- Do **not** add comments that only restate the following line of code; avoid narrating control flow the code already shows.
+
 Keep this file **free of product domain** unless documenting how code style relates to design docs.
