@@ -4,22 +4,24 @@
 |------|--------|
 | **FR** | FR-0002 |
 | **Feature folder** | `tasks/feature-history/FR-0002-budget-entry-page/` |
-| **This branch** | `feat/FR-0002-budget-entry-page` (feature integration) |
-| **Parent branch** | `master` |
+| **This branch** | `feat/FR-0002-budget-entry-page--T-FR-0002-01-define-budget-allocation-contracts` |
+| **Parent branch** | `feat/FR-0002-budget-entry-page` |
+| **Ticket** | `T-FR-0002-01` — Define budget allocation contracts |
 | **Last meaningful update** | 2026-04-30 |
 
 ## What is on this branch
 
-- Feature planning for the manual budget entry page.
-- Frontier handoff identifying **Define budget allocation contracts** (`T-FR-0002-01`) as the first implementation ticket.
+- Pydantic contracts for allocation plans/items and derived summary shapes (`src/api/schemas.py`).
+- Domain enums and monthly normalization (`src/finance/budget_allocation/`).
+- ORM models `BudgetAllocationPlan` / `BudgetAllocationItem` (`src/finance/db/models.py`).
+- SQL stub aligned with ORM (`src/finance/db/migrations/phase2_budget_allocation_stub.sql`).
+- Tests: `tests/test_budget_allocation_contracts.py`.
 
 ## In flight / blockers
 
-- No ticket branches have been merged yet.
-- `T-FR-0002-01` is ready to start in its child worktree.
+- None. VAL complete; open PR into feature branch.
 
 ## Next
 
-1. Create `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts` from this branch.
-2. Complete TEST → DEV → VAL for **Define budget allocation contracts** (`T-FR-0002-01`).
-3. Merge the ticket branch back into this feature branch, then refresh this file.
+1. Merge PR into `feat/FR-0002-budget-entry-page` when reviewed.
+2. Follow-on: `T-FR-0002-02` (allocation API).

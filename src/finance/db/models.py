@@ -43,7 +43,9 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    account_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("accounts.id"), nullable=True)
+    account_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("accounts.id"), nullable=True
+    )
     transaction_date: Mapped[date] = mapped_column(nullable=False)
     description_raw: Mapped[str] = mapped_column(Text, nullable=False)
     description_normalized: Mapped[str] = mapped_column(Text, nullable=False)
@@ -133,8 +135,12 @@ class LiabilityRecord(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     liability_type: Mapped[str] = mapped_column(String(100), nullable=False)
     principal_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    minimum_payment: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=Decimal("0.00"))
-    interest_rate_apr: Mapped[Decimal] = mapped_column(Numeric(8, 4), nullable=False, default=Decimal("0.00"))
+    minimum_payment: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False, default=Decimal("0.00")
+    )
+    interest_rate_apr: Mapped[Decimal] = mapped_column(
+        Numeric(8, 4), nullable=False, default=Decimal("0.00")
+    )
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
     source_file: Mapped[str] = mapped_column(String(500), nullable=False, default="")
@@ -183,3 +189,50 @@ class IngestionLog(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ok")
     error_details: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+
+class BudgetAllocationPlan(Base):
+    """Manual allocation plan for one planning month (FR-0002)."""
+
+    __tablename__ = "budget_allocation_plans"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    period_month: Mapped[date] = mapped_column(nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    income_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    income_cadence: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+    items: Mapped[list["BudgetAllocationItem"]] = relationship(
+        back_populates="plan",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class BudgetAllocationItem(Base):
+    """Planned recurring line within a :class:`BudgetAllocationPlan`."""
+
+    __tablename__ = "budget_allocation_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plan_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("budget_allocation_plans.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    item_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    planned_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    cadence: Mapped[str] = mapped_column(String(50), nullable=False)
+    monthly_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(20), nullable=False)
+    due_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+    plan: Mapped[BudgetAllocationPlan] = relationship(back_populates="items")
