@@ -14,6 +14,8 @@ services:
       FINANCE_PORT: "8000"
       FINANCE_DB_URL: ""        # override for PostgreSQL: postgresql://user:pass@db:5432/finance
       FINANCE_SEED_DIR: "/seed"
+      # BBD page default scenario (YAML preferred; sibling `ian.toml` used when missing)
+      FINANCE_BBD_DEFAULT_YAML: "/seed/ian.yaml"
       # Merchant display overrides (git-tracked); API rewrites this on Save/Clear in Parameters
       FINANCE_SEED_MERCHANT_DISPLAYS: "/app/data/seed-merchant-displays.json"
       CORS_ORIGINS: "http://localhost:3501,http://localhost:3502"

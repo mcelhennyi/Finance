@@ -1,4 +1,5 @@
 import type {
+  BbdDefaultScenarioResponse,
   BbdRunPayload,
   BbdRunResponse,
   FilterState,
@@ -116,4 +117,6 @@ export const api = {
 
   bbdProjectionRun: (payload: BbdRunPayload) =>
     postJson<BbdRunResponse>('/bbd-projection/run', payload),
+
+  bbdDefaultScenario: () => get<BbdDefaultScenarioResponse>('/bbd-projection/default-scenario'),
 }

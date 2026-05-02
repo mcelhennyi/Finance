@@ -1,0 +1,84 @@
+# Buy, Borrow, Die — illustrative YAML sample for API default hydration and backend tests.
+# Hub API default: FINANCE_BBD_DEFAULT_YAML → `/seed/ian.yaml` (docker) or repo path locally.
+# All currency values are nominal dollars at simulation start; rates are decimals (e.g. 0.24 = 24% marginal).
+
+timing:
+  start_year: 2026
+  horizon_years: 50
+  current_age: 35
+
+income:
+  w2_gross_income: 190000
+  w2_growth_rate: 0.03
+  w2_retire_year_offset: 30
+
+taxes:
+  federal_marginal_rate: 0.24
+  state_marginal_rate: 0.05
+  ltcg_rate: 0.15
+  niit_rate: 0.038
+  depreciation_recapture_rate: 0.25
+
+expenses:
+  annual_living_expenses: 90000
+  expense_inflation: 0.03
+
+savings:
+  annual_401k_contribution: 23000
+  employer_match: 9500
+  starting_taxable_portfolio: 0
+  starting_portfolio_basis: 0
+  portfolio_nominal_return: 0.085
+  portfolio_volatility: 0.16
+  portfolio_dividend_yield: 0.015
+  annual_taxable_savings_override: null
+
+borrowing:
+  sbloc_ltv_cap: 0.50
+  sbloc_margin_call_ltv: 0.70
+  sbloc_spread_over_sofr: 0.025
+  sofr_rate: 0.0365
+  sofr_long_run: 0.030
+  rate_mean_reversion: 0.20
+  heloc_rate_spread_over_prime: 0.005
+  cashout_refi_rate: 0.072
+  heloc_max_cltv: 0.85
+  cashout_refi_max_cltv: 0.75
+
+strategy:
+  drawdown_start_year_offset: 25
+  target_annual_drawdown: 120000
+  capitalize_interest: true
+  inflate_drawdown: true
+  convert_primary_to_rental_year: null
+  pe_exit_treatment: cash
+
+properties:
+  - name: Primary Home
+    purchase_price: 360000
+    purchase_year: 2021
+    current_value: 420000
+    mortgage_balance: 308000
+    mortgage_rate: 0.03
+    mortgage_term_years: 30
+    mortgage_origination_year: 2021
+    monthly_piti: 2500
+    monthly_market_rent: 2400
+    is_primary: true
+    rental_start_year: null
+    appreciation_rate: 0.035
+    rent_growth_rate: 0.03
+    vacancy_and_mgmt_pct: 0.10
+    annual_maintenance_pct: 0.01
+    land_value_pct: 0.20
+
+private_equity:
+  - name: Private Startup Equity
+    current_value: 200000
+    cost_basis: 0
+    expected_growth_rate: 0.15
+    volatility: 0.55
+    annual_failure_prob: 0.06
+    annual_exit_prob: 0.08
+    exit_multiple_mean: 2.5
+    exit_multiple_vol: 1.5
