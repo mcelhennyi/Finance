@@ -19,6 +19,7 @@
 | FR-0000 | `tasks/feature-history/FR-0000-bootstrap/tickets.md` |
 | FR-0001 | `tasks/feature-history/FR-0001-phase2-goals-unified-view/tickets.md` |
 | FR-0002 | `tasks/feature-history/FR-0002-budget-entry-page/tickets.md` |
+| FR-0003 | `tasks/feature-history/FR-0003-bbd-projection-ui/tickets.md` |
 
 ---
 
@@ -70,6 +71,22 @@ graph LR
   TFR0002_04_VAL --> TFR0002_05_TEST
   TFR0002_05_TEST --> TFR0002_05_DEV["Validate and document budget entry workflow DEV (T-FR-0002-05)"]
   TFR0002_05_DEV --> TFR0002_05_VAL["Validate and document budget entry workflow VAL (T-FR-0002-05)"]
+
+  TFR0003_01_TEST["Extract BBD projection as importable module TEST (T-FR-0003-01)"] --> TFR0003_01_DEV["Extract BBD projection as importable module DEV (T-FR-0003-01)"]
+  TFR0003_01_DEV --> TFR0003_01_VAL["Extract BBD projection as importable module VAL (T-FR-0003-01)"]
+
+  TFR0003_01_VAL --> TFR0003_02_TEST["Add BBD projection REST API TEST (T-FR-0003-02)"]
+  TFR0003_02_TEST --> TFR0003_02_DEV["Add BBD projection REST API DEV (T-FR-0003-02)"]
+  TFR0003_02_DEV --> TFR0003_02_VAL["Add BBD projection REST API VAL (T-FR-0003-02)"]
+
+  TFR0003_02_VAL --> TFR0003_03_TEST["Deliver BBD projection page TEST (T-FR-0003-03)"]
+  TFR0003_03_TEST --> TFR0003_03_DEV["Deliver BBD projection page DEV (T-FR-0003-03)"]
+  TFR0003_03_DEV --> TFR0003_03_VAL["Deliver BBD projection page VAL (T-FR-0003-03)"]
+
+  TFR0003_02_VAL --> TFR0003_04_TEST["Validate BBD UX and document operator workflow TEST (T-FR-0003-04)"]
+  TFR0003_03_VAL --> TFR0003_04_TEST
+  TFR0003_04_TEST --> TFR0003_04_DEV["Validate BBD UX and document operator workflow DEV (T-FR-0003-04)"]
+  TFR0003_04_DEV --> TFR0003_04_VAL["Validate BBD UX and document operator workflow VAL (T-FR-0003-04)"]
 
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
