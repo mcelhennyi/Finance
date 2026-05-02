@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from dataclasses import asdict
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -128,6 +129,93 @@ class BbdScenarioIn(BaseModel):
     private_equity: list[BbdPrivateEquityIn] = Field(default_factory=list)
 
 
+class BbdDefaultScenarioResponse(BaseModel):
+    """GET `/api/bbd-projection/default-scenario` wrapper for hydration in the SPA."""
+
+    scenario: BbdScenarioIn
+
+
+def _private_equity_api_dict(pe: PrivateEquity) -> dict[str, Any]:
+    d = asdict(pe)
+    d.pop("has_exited", None)
+    d.pop("is_zero", None)
+    return d
+
+
+def scenario_engine_to_nested_mapping(engine: Scenario) -> dict[str, Any]:
+    """Build nested dict that validates as [`BbdScenarioIn`][api.bbd_projection_schemas.BbdScenarioIn].
+
+    Used by GET `/api/bbd-projection/default-scenario` so the SPA can hydrate the same
+    shape POST accepts.
+
+    Args:
+        engine: Resolved engine scenario (YAML/TOML or in-memory).
+
+    Returns:
+        JSON-serializable mapping for pydantic validation.
+    """
+    return {
+        "timing": {
+            "start_year": engine.start_year,
+            "horizon_years": engine.horizon_years,
+            "current_age": engine.current_age,
+        },
+        "income": {
+            "w2_gross_income": engine.w2_gross_income,
+            "w2_growth_rate": engine.w2_growth_rate,
+            "w2_retire_year_offset": engine.w2_retire_year_offset,
+        },
+        "taxes": {
+            "federal_marginal_rate": engine.federal_marginal_rate,
+            "state_marginal_rate": engine.state_marginal_rate,
+            "ltcg_rate": engine.ltcg_rate,
+            "niit_rate": engine.niit_rate,
+            "depreciation_recapture_rate": engine.depreciation_recapture_rate,
+        },
+        "expenses": {
+            "annual_living_expenses": engine.annual_living_expenses,
+            "expense_inflation": engine.expense_inflation,
+        },
+        "savings": {
+            "annual_401k_contribution": engine.annual_401k_contribution,
+            "employer_match": engine.employer_match,
+            "starting_taxable_portfolio": engine.starting_taxable_portfolio,
+            "starting_portfolio_basis": engine.starting_portfolio_basis,
+            "portfolio_nominal_return": engine.portfolio_nominal_return,
+            "portfolio_volatility": engine.portfolio_volatility,
+            "portfolio_dividend_yield": engine.portfolio_dividend_yield,
+            "annual_taxable_savings_override": engine.annual_taxable_savings_override,
+        },
+        "borrowing": {
+            "sbloc_ltv_cap": engine.sbloc_ltv_cap,
+            "sbloc_margin_call_ltv": engine.sbloc_margin_call_ltv,
+            "sbloc_spread_over_sofr": engine.sbloc_spread_over_sofr,
+            "sofr_rate": engine.sofr_rate,
+            "sofr_long_run": engine.sofr_long_run,
+            "rate_mean_reversion": engine.rate_mean_reversion,
+            "heloc_rate_spread_over_prime": engine.heloc_rate_spread_over_prime,
+            "cashout_refi_rate": engine.cashout_refi_rate,
+            "heloc_max_cltv": engine.heloc_max_cltv,
+            "cashout_refi_max_cltv": engine.cashout_refi_max_cltv,
+        },
+        "strategy": {
+            "drawdown_start_year_offset": engine.drawdown_start_year_offset,
+            "target_annual_drawdown": engine.target_annual_drawdown,
+            "capitalize_interest": engine.capitalize_interest,
+            "inflate_drawdown": engine.inflate_drawdown,
+            "convert_primary_to_rental_year": engine.convert_primary_to_rental_year,
+            "pe_exit_treatment": engine.pe_exit_treatment,
+        },
+        "properties": [asdict(p) for p in engine.properties],
+        "private_equity": [_private_equity_api_dict(pe) for pe in engine.private_equity],
+    }
+
+
+def scenario_engine_to_bbdscenario_in(engine: Scenario) -> BbdScenarioIn:
+    """Validate engine output through the HTTP contract model."""
+    return BbdScenarioIn.model_validate(scenario_engine_to_nested_mapping(engine))
+
+
 class BbdRunRequest(BaseModel):
     scenario: BbdScenarioIn
     monte_carlo_trials: int = Field(default=0, ge=0, le=MAX_MONTE_CARLO_TRIALS)
@@ -143,6 +231,18 @@ class YearStateRow(BaseModel):
     drawdown_borrowed: float
     taxes_paid: float
     living_expenses: float
+    gross_cash_income: float = Field(
+        ...,
+        description="Modeled nominal cash receipts: W-2 + rental net cash flow + dividends + draws.",
+    )
+    taxes_delta_yoy: float | None = Field(
+        None,
+        description="Change in taxes_paid vs prior modeled year (null first year).",
+    )
+    gross_income_delta_yoy: float | None = Field(
+        None,
+        description="Change in gross_cash_income vs prior year (null first year).",
+    )
     portfolio_value: float
     portfolio_basis: float
     portfolio_unrealized_gain: float
@@ -190,35 +290,59 @@ class BbdRunResponse(BaseModel):
     monte_carlo: MonteCarloSummary | None = None
 
 
-def _year_state_row(h: YearState) -> YearStateRow:
-    return YearStateRow(
-        year=h.year,
-        age=h.age,
-        w2_income=h.w2_income,
-        rental_net_cash_flow=h.rental_net_cash_flow,
-        portfolio_dividends=h.portfolio_dividends,
-        drawdown_borrowed=h.drawdown_borrowed,
-        taxes_paid=h.taxes_paid,
-        living_expenses=h.living_expenses,
-        portfolio_value=h.portfolio_value,
-        portfolio_basis=h.portfolio_basis,
-        portfolio_unrealized_gain=h.portfolio_unrealized_gain,
-        properties_value=h.properties_value,
-        properties_mortgage_balance=h.properties_mortgage_balance,
-        pe_value=h.pe_value,
-        pe_basis=h.pe_basis,
-        pe_exited_this_year=h.pe_exited_this_year,
-        sbloc_balance=h.sbloc_balance,
-        heloc_refi_balance=h.heloc_refi_balance,
-        total_assets=h.total_assets,
-        total_liabilities=h.total_liabilities,
-        net_worth=h.net_worth,
-        sbloc_capacity_remaining=h.sbloc_capacity_remaining,
-        sbloc_ltv=h.sbloc_ltv,
-        margin_call=h.margin_call,
-        sofr=h.sofr,
-        sbloc_rate=h.sbloc_rate,
-    )
+def _schedule_rows(history: list[YearState]) -> list[YearStateRow]:
+    """Flatten engine history plus year-over-year tax and receipts deltas."""
+    rows: list[YearStateRow] = []
+    for i, h in enumerate(history):
+        gross_cash_income = (
+            h.w2_income + h.rental_net_cash_flow + h.portfolio_dividends + h.drawdown_borrowed
+        )
+        prev = history[i - 1] if i > 0 else None
+        prev_gross: float | None = None
+        if prev is not None:
+            prev_gross = (
+                prev.w2_income
+                + prev.rental_net_cash_flow
+                + prev.portfolio_dividends
+                + prev.drawdown_borrowed
+            )
+        taxes_delta_yoy = None if prev is None else h.taxes_paid - prev.taxes_paid
+        gross_income_delta_yoy = None if prev_gross is None else gross_cash_income - prev_gross
+
+        rows.append(
+            YearStateRow(
+                year=h.year,
+                age=h.age,
+                w2_income=h.w2_income,
+                rental_net_cash_flow=h.rental_net_cash_flow,
+                portfolio_dividends=h.portfolio_dividends,
+                drawdown_borrowed=h.drawdown_borrowed,
+                taxes_paid=h.taxes_paid,
+                living_expenses=h.living_expenses,
+                gross_cash_income=gross_cash_income,
+                taxes_delta_yoy=taxes_delta_yoy,
+                gross_income_delta_yoy=gross_income_delta_yoy,
+                portfolio_value=h.portfolio_value,
+                portfolio_basis=h.portfolio_basis,
+                portfolio_unrealized_gain=h.portfolio_unrealized_gain,
+                properties_value=h.properties_value,
+                properties_mortgage_balance=h.properties_mortgage_balance,
+                pe_value=h.pe_value,
+                pe_basis=h.pe_basis,
+                pe_exited_this_year=h.pe_exited_this_year,
+                sbloc_balance=h.sbloc_balance,
+                heloc_refi_balance=h.heloc_refi_balance,
+                total_assets=h.total_assets,
+                total_liabilities=h.total_liabilities,
+                net_worth=h.net_worth,
+                sbloc_capacity_remaining=h.sbloc_capacity_remaining,
+                sbloc_ltv=h.sbloc_ltv,
+                margin_call=h.margin_call,
+                sofr=h.sofr,
+                sbloc_rate=h.sbloc_rate,
+            )
+        )
+    return rows
 
 
 def _estate_row(o: EstateOutcome) -> EstateOutcomeRow:
@@ -283,7 +407,7 @@ def run_bbd_from_request(payload: BbdRunRequest) -> BbdRunResponse:
         )
 
     return BbdRunResponse(
-        schedule=[_year_state_row(h) for h in history],
+        schedule=_schedule_rows(history),
         estate_sell_path=_estate_row(sell_path),
         estate_bbd_path=_estate_row(bbd_path),
         bbd_net_advantage_vs_sell_path=delta,
