@@ -88,6 +88,46 @@ Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, 
 
 ---
 
+## `bbd_projection.py` — Buy, Borrow, Die projection (CLI)
+
+**Purpose:** Runs the same multi-engine projection used by **`POST /api/bbd-projection/run`**: deterministic paths, terminal estate heuristic, CSV export, and optional Monte Carlo. Core logic lives under **`finance.bbd.engine`** (`src/finance/bbd/`); this script stays a thin TOML/CLI façade.
+
+### Usage
+
+```bash
+# After editable install from repo root
+pip install -e .
+python scripts/bbd_projection.py config.toml
+python scripts/bbd_projection.py config.toml --csv schedule.csv
+python scripts/bbd_projection.py config.toml --montecarlo 500
+python scripts/bbd_projection.py --emit-default starter.toml
+```
+
+### Inputs
+
+- **TOML** file covering `[timing]`, `[income]`, `[taxes]`, `[expenses]`, `[savings]`, `[borrowing]`, `[strategy]`, `[[properties]]`, `[[private_equity]]` (see **`--emit-default`** output).
+
+### Outputs
+
+- **Stdout:** Human-readable summaries (deterministic schedule samples + terminal estate comparison + optional Monte Carlo stats).
+- **`--csv PATH`:** Year-by-year numeric schedule.
+
+### Dependencies
+
+- **Python:** 3.11+ (stdlib **`tomllib`**).
+- **`pip install -e .`** so `finance.bbd` is importable.
+
+### Exit codes
+
+- **0:** Success.
+- **Non-zero:** argparse errors, missing config path, **`ValueError`** from unknown TOML keys.
+
+### Related
+
+- **Web UI:** Finance Hub navigation **BBD** (JSON scenario payload to **`/api/bbd-projection/run`**).
+
+---
+
 ## Adding a New Script
 
 When you add a script here, document it above with:

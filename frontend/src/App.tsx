@@ -9,6 +9,7 @@ import { Charts } from './components/Charts'
 import { TransactionTable } from './components/TransactionTable'
 import { ParametersPage } from './pages/ParametersPage'
 import { UnifiedViewPage } from './pages/UnifiedViewPage'
+import { BbdProjectionPage } from './pages/BbdProjectionPage'
 import type { FilterState } from './types'
 
 const DEFAULT_FILTER: FilterState = { from: '', to: '', category: '', source: '' }
@@ -49,6 +50,8 @@ export function App() {
         <ParametersPage />
       ) : page === 'unified' ? (
         <UnifiedViewPage />
+      ) : page === 'bbd' ? (
+        <BbdProjectionPage />
       ) : (
         <div className="space-y-6">
           <UploadZone />

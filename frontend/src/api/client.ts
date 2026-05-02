@@ -1,4 +1,6 @@
 import type {
+  BbdRunPayload,
+  BbdRunResponse,
   FilterState,
   Filters,
   IngestionResult,
@@ -38,6 +40,26 @@ async function putJson<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error((err as { detail?: string }).detail ?? res.statusText)
+  }
+  return res.json() as Promise<T>
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    const detail = (err as { detail?: string | unknown }).detail
+    const msg =
+      typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+          ? JSON.stringify(detail)
+          : res.statusText
+    throw new Error(msg)
   }
   return res.json() as Promise<T>
 }
@@ -91,4 +113,7 @@ export const api = {
     }
     return res.json() as Promise<IngestionResult>
   },
+
+  bbdProjectionRun: (payload: BbdRunPayload) =>
+    postJson<BbdRunResponse>('/bbd-projection/run', payload),
 }

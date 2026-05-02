@@ -1,6 +1,6 @@
 # FR-0003 — BBD projection web UI
 
-**Status:** design (registry + tickets landed)  
+**Status:** complete (implemented on default branch workspace)  
 **Script:** [`scripts/bbd_projection.py`](../../../scripts/bbd_projection.py)
 
 ## Artifacts

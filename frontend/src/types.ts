@@ -157,3 +157,66 @@ export interface UnifiedViewSummary {
   net_worth: NetWorthBreakdown
   reconciliation: Reconciliation
 }
+
+/** One simulation year from `/api/bbd-projection/run` (parity with backend `YearStateRow`). */
+export interface BbdScheduleRow {
+  year: number
+  age: number
+  w2_income: number
+  rental_net_cash_flow: number
+  portfolio_dividends: number
+  drawdown_borrowed: number
+  taxes_paid: number
+  living_expenses: number
+  portfolio_value: number
+  portfolio_basis: number
+  portfolio_unrealized_gain: number
+  properties_value: number
+  properties_mortgage_balance: number
+  pe_value: number
+  pe_basis: number
+  pe_exited_this_year: boolean
+  sbloc_balance: number
+  heloc_refi_balance: number
+  total_assets: number
+  total_liabilities: number
+  net_worth: number
+  sbloc_capacity_remaining: number
+  sbloc_ltv: number
+  margin_call: boolean
+  sofr: number
+  sbloc_rate: number
+}
+
+export interface BbdEstateOutcomeRow {
+  label: string
+  gross_estate: number
+  debt_to_repay: number
+  cap_gains_tax: number
+  depreciation_recapture_tax: number
+  net_to_heirs: number
+}
+
+export interface BbdMonteCarloSummary {
+  n_trials: number
+  final_nw_p10: number
+  final_nw_p50: number
+  final_nw_p90: number
+  final_nw_mean: number
+  margin_call_rate: number
+  bankrupt_rate: number
+}
+
+export interface BbdRunResponse {
+  schedule: BbdScheduleRow[]
+  estate_sell_path: BbdEstateOutcomeRow
+  estate_bbd_path: BbdEstateOutcomeRow
+  bbd_net_advantage_vs_sell_path: number
+  monte_carlo: BbdMonteCarloSummary | null
+}
+
+export interface BbdRunPayload {
+  scenario: Record<string, unknown>
+  monte_carlo_trials?: number
+  monte_carlo_seed?: number
+}

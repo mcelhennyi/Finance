@@ -1,3 +1,11 @@
+## 2026-05-02 (later) — implementation
+
+**Stage:** DEV + VAL (`T-FR-0003-01` … `T-FR-0003-04`).
+
+**Recap:** Landed **`finance.bbd.engine`**, **`POST /api/bbd-projection/run`**, SPA **BBD** page (`BbdProjectionPage`), CLI shim `scripts/bbd_projection.py`, `scripts/README.md` entry; pytest includes `tests/test_finance_bbd_engine.py` and `tests/test_api_bbd_projection.py`.
+
+---
+
 ## 2026-05-02 (session) — feature-request orchestrator
 
 **Stage:** Stage 0 intake + Stage 1 L0 skeleton + tickets promoted + global trackers updated.
