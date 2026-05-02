@@ -9,7 +9,7 @@ See [`../planned-vs-actual.md`](../planned-vs-actual.md) (**documentation tracea
 
 ## PR
 
-- Replace with **`gh`** output after create: **`https://github.com/…`** ( **`feat/FR-0003-bbd-ui-followup`** → **`master`** ).
+**PR:** https://github.com/mcelhennyi/Finance/pull/6 (**`feat/FR-0003-bbd-ui-followup`** → **`master`**).
 
 ## What was integrated (executive summary)
 
