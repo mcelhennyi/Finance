@@ -7,11 +7,12 @@ See Also:
 from __future__ import annotations
 
 import csv
+import os
 import random
 import statistics
 import sys
 import tomllib
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
 from typing import Any, Optional
 
@@ -252,25 +253,42 @@ def emit_default_config(path: str) -> None:
     print(f"Edit it, then run: python {sys.argv[0]} {path}")
 
 
-def load_scenario_from_config(path: str) -> "Scenario":
-    """Parse a TOML config file into a Scenario object."""
-    with open(path, "rb") as f:
-        cfg = tomllib.load(f)
+def scenario_from_mapping(cfg: dict[str, Any], *, source_label: str) -> "Scenario":
+    """Build a Scenario from a nested timing/income/taxes/... mapping (TOML or YAML)."""
 
-    def section(name: str) -> dict:
-        return cfg.get(name, {})
+    def section(name: str) -> dict[str, Any]:
+        raw = cfg.get(name)
+        if raw is None:
+            return {}
+        if not isinstance(raw, dict):
+            raise ValueError(f"{source_label}: [{name}] must be a mapping, got {type(raw).__name__}")
+        return raw
 
-    # Build Property objects
+    prop_field_names = {f.name for f in fields(Property)}
+    pe_allow = {f.name for f in fields(PrivateEquity)} - {"has_exited", "is_zero"}
+
+    properties_raw = cfg.get("properties") or []
+    if not isinstance(properties_raw, list):
+        raise ValueError(f"{source_label}: properties must be a list")
+
+    pe_raw = cfg.get("private_equity") or []
+    if not isinstance(pe_raw, list):
+        raise ValueError(f"{source_label}: private_equity must be a list")
+
     properties: list[Property] = []
-    for prop_cfg in cfg.get("properties", []):
-        properties.append(Property(**prop_cfg))
+    for prop_cfg in properties_raw:
+        if not isinstance(prop_cfg, dict):
+            raise ValueError(f"{source_label}: each properties[] entry must be a mapping")
+        filtered = {k: prop_cfg[k] for k in prop_field_names if k in prop_cfg}
+        properties.append(Property(**filtered))
 
-    # Build PrivateEquity objects
     pe_holdings: list[PrivateEquity] = []
-    for pe_cfg in cfg.get("private_equity", []):
-        pe_holdings.append(PrivateEquity(**pe_cfg))
+    for pe_cfg in pe_raw:
+        if not isinstance(pe_cfg, dict):
+            raise ValueError(f"{source_label}: each private_equity[] entry must be a mapping")
+        filtered = {k: pe_cfg[k] for k in pe_allow if k in pe_cfg}
+        pe_holdings.append(PrivateEquity(**filtered))
 
-    # Flatten config sections into a dict of all Scenario fields
     flat: dict[str, Any] = {}
     for section_name in ("timing", "income", "taxes", "expenses", "savings",
                          "borrowing", "strategy"):
@@ -279,14 +297,51 @@ def load_scenario_from_config(path: str) -> "Scenario":
     flat["properties"] = properties
     flat["private_equity"] = pe_holdings
 
-    # Defensive: drop any keys not in Scenario (typo protection)
     valid_fields = {f.name for f in Scenario.__dataclass_fields__.values()}
     extras = set(flat.keys()) - valid_fields
     if extras:
         raise ValueError(f"Unknown config keys: {extras}. "
-                         f"Check section names and key spellings in {path}")
+                         f"Check section names and key spellings in {source_label}")
 
     return Scenario(**flat)
+
+
+def load_scenario_from_config(path: str) -> "Scenario":
+    """Parse a TOML config file into a Scenario object."""
+    with open(path, "rb") as f:
+        cfg = tomllib.load(f)
+    return scenario_from_mapping(cfg, source_label=str(path))
+
+
+def load_scenario_from_yaml_path(path: str | Path) -> "Scenario":
+    """Parse a YAML config file using the same nested layout as seed TOML."""
+    try:
+        import yaml  # type: ignore[import-untyped]  # PyYAML dependency
+    except ImportError as e:  # pragma: no cover
+        raise RuntimeError("YAML scenario loading requires PyYAML") from e
+    p = Path(path)
+    with p.open(encoding="utf-8") as f:
+        loaded = yaml.safe_load(f)
+
+    cfg: dict[str, Any] = loaded if isinstance(loaded, dict) else {}
+    return scenario_from_mapping(cfg, source_label=str(p))
+
+
+def load_engine_default_seed_scenario() -> "Scenario":
+    """Load FINANCE_BBD_DEFAULT_YAML (default `/seed/ian.yaml`), or sibling `.toml` if missing."""
+
+    yaml_path = Path(os.environ.get("FINANCE_BBD_DEFAULT_YAML", "/seed/ian.yaml")).expanduser()
+
+    if yaml_path.is_file():
+        return load_scenario_from_yaml_path(yaml_path)
+
+    sibling_toml = yaml_path.with_suffix(".toml")
+    if sibling_toml.is_file():
+        return load_scenario_from_config(str(sibling_toml))
+
+    raise FileNotFoundError(
+        f"No BBD seed file at {yaml_path} (YAML) or {sibling_toml} (TOML)."
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from finance.bbd.engine import Scenario, cumulative_depreciation_for_estate_approx, project
+from finance.bbd.engine import (
+    Scenario,
+    cumulative_depreciation_for_estate_approx,
+    load_scenario_from_config,
+    load_scenario_from_yaml_path,
+    project,
+)
 
 
 @pytest.mark.unit
@@ -55,3 +63,11 @@ def test_projection_accumulates_nominal_when_no_drawdown() -> None:
 def test_cumulative_depreciation_zero_without_rentals() -> None:
     scenario = Scenario(horizon_years=10, properties=[], private_equity=[])
     assert cumulative_depreciation_for_estate_approx(scenario) == 0.0
+
+
+@pytest.mark.unit
+def test_ian_yaml_parity_with_toml() -> None:
+    root = Path(__file__).resolve().parents[1]
+    ypath = root / "data" / "seed-statements" / "ian.yaml"
+    tpath = root / "data" / "seed-statements" / "ian.toml"
+    assert load_scenario_from_yaml_path(ypath) == load_scenario_from_config(str(tpath))

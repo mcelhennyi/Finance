@@ -168,6 +168,9 @@ export interface BbdScheduleRow {
   drawdown_borrowed: number
   taxes_paid: number
   living_expenses: number
+  gross_cash_income: number
+  taxes_delta_yoy: number | null
+  gross_income_delta_yoy: number | null
   portfolio_value: number
   portfolio_basis: number
   portfolio_unrealized_gain: number
@@ -219,4 +222,9 @@ export interface BbdRunPayload {
   scenario: Record<string, unknown>
   monte_carlo_trials?: number
   monte_carlo_seed?: number
+}
+
+/** GET `/api/bbd-projection/default-scenario`. */
+export interface BbdDefaultScenarioResponse {
+  scenario: Record<string, unknown>
 }

@@ -1,22 +1,29 @@
 /** BBD structured form — binds to `/api/bbd-projection/run` scenario shape. */
 
 import type { Dispatch, SetStateAction } from 'react'
+import { OutputHoverTip } from '../OutputHoverTip'
 import type { BbdScenarioState } from '../../lib/bbdScenario'
 import { createDefaultPrivateEquity, createDefaultProperty } from '../../lib/bbdScenario'
+import { FormFieldLabel, MoneyField, PctField, UnitCaption } from './BbdValueFields'
+import { BbdDocsSectionLink } from './BbdDocsContext'
+import { BBD_FIELD_TIPS } from './bbdFieldTips'
+import type { BbdDocsSection } from './bbdDocAnchors'
 
 function NumField(props: {
   label: string
   value: number
   step?: string
   hint?: string
+  narrow?: boolean
+  /** Explains integers (years vs counts vs speed). */
+  unit?: string
+  tip?: string
   onCommit: (n: number) => void
 }) {
-  const { label, value, step = '1', hint, onCommit } = props
+  const { label, value, step = '1', hint, narrow, unit, tip, onCommit } = props
   return (
     <label className="block">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-        {label}
-      </span>
+      <FormFieldLabel label={label} tip={tip} />
       {hint ? (
         <span className="ml-2 text-[10px] text-slate-400 font-normal normal-case">{hint}</span>
       ) : null}
@@ -27,8 +34,9 @@ function NumField(props: {
         onChange={e =>
           onCommit(e.target.value === '' ? 0 : Number(e.target.value) || 0)
         }
-        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+        className={`mt-0.5 ${narrow ? 'w-full max-w-[6.75rem]' : 'w-full'} rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white`}
       />
+      {unit ? <UnitCaption text={unit} /> : null}
     </label>
   )
 }
@@ -36,9 +44,19 @@ function NumField(props: {
 function CheckField(props: {
   label: string
   checked: boolean
+  tip?: string
   onChange: (v: boolean) => void
 }) {
-  const { label, checked, onChange } = props
+  const { label, checked, tip, onChange } = props
+  const textCls = 'text-sm text-slate-700'
+  const labelInner = tip ? (
+    <OutputHoverTip tip={tip} dashed={false} placement="below" className={textCls}>
+      {label}
+    </OutputHoverTip>
+  ) : (
+    <span className={textCls}>{label}</span>
+  )
+
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <input
@@ -47,16 +65,17 @@ function CheckField(props: {
         onChange={e => onChange(e.target.checked)}
         className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
       />
-      <span className="text-sm text-slate-700">{label}</span>
+      {labelInner}
     </label>
   )
 }
 
-function SectionTitle(props: { children: string }) {
+function SectionTitle(props: { children: string; docsSection?: BbdDocsSection }) {
   return (
-    <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 pb-2 border-b border-slate-100 mb-4">
-      {props.children}
-    </h2>
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-slate-100 pb-2">
+      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{props.children}</h2>
+      {props.docsSection ? <BbdDocsSectionLink section={props.docsSection} /> : null}
+    </div>
   )
 }
 
@@ -90,11 +109,33 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
 
   return (
     <div className="space-y-8">
+      <p className="text-[11px] leading-relaxed text-slate-600 border border-slate-100 rounded-lg px-3 py-2.5 bg-slate-50/85">
+        <span className="font-semibold text-slate-700">Units cheat sheet.</span>{' '}
+        <strong className="font-medium text-slate-600">$</strong>{' '}rows specify nominal-USD cadence in the muted
+        line underneath. <strong className="font-medium text-slate-600">%</strong> rows clarify what each percent
+        attaches to directly under the control (collateral balances, modeled income, modeled years). Whole-number
+        year inputs are Gregorian calendar integers unless labeled as counted years from horizon start.
+        <br />
+        <span className="mt-1 inline-block text-[10px] leading-snug text-slate-500">
+          Hover a field label—each shows how that input feeds the modeled taxes, borrowing, portfolio, or estate heuristic.
+        </span>{' '}
+        <span className="mt-1 block">
+          <BbdDocsSectionLink
+            section="intro"
+            label="Planner overview ›"
+            className="text-[10px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
+          />
+        </span>
+      </p>
+
       <div>
-        <SectionTitle>Timing</SectionTitle>
+        <SectionTitle docsSection="timing">Timing</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NumField
             label="Start year"
+            tip={BBD_FIELD_TIPS.timing.startYear}
+            narrow
+            unit="Calendar · first modeled year."
             value={scenario.timing.start_year}
             onCommit={v =>
               setScenario(s => ({
@@ -105,6 +146,9 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           <NumField
             label="Horizon (years)"
+            tip={BBD_FIELD_TIPS.timing.horizonYears}
+            narrow
+            unit="Count of simulated years (annual steps)."
             value={scenario.timing.horizon_years}
             onCommit={v =>
               setScenario(s => ({
@@ -118,6 +162,9 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           <NumField
             label="Starting age"
+            tip={BBD_FIELD_TIPS.timing.startingAge}
+            narrow
+            unit="Completed years · at start year."
             value={scenario.timing.current_age}
             onCommit={v =>
               setScenario(s => ({
@@ -130,12 +177,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <div>
-        <SectionTitle>Income</SectionTitle>
+        <SectionTitle docsSection="income">Income</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <NumField
+          <MoneyField
             label="W-2 gross (annual)"
+            tip={BBD_FIELD_TIPS.income.w2GrossAnnual}
+            unit="Nominal USD per calendar year."
             value={scenario.income.w2_gross_income}
-            step="1000"
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -143,11 +191,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="W-2 growth rate"
-            step="0.001"
-            hint="decimal per year"
+          <PctField
+            label="Annual raise (%/yr)"
+            tip={BBD_FIELD_TIPS.income.w2GrowthRate}
+            unit="Applied once per year to modeled wages."
             value={scenario.income.w2_growth_rate}
+            step="0.1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -157,6 +207,9 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           <NumField
             label="Years until W-2 ends"
+            tip={BBD_FIELD_TIPS.income.w2YearsUntilEnds}
+            narrow
+            unit="Years after projection begins (not calendar end date)."
             value={scenario.income.w2_retire_year_offset}
             onCommit={v =>
               setScenario(s => ({
@@ -172,12 +225,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <div>
-        <SectionTitle>Expenses</SectionTitle>
+        <SectionTitle docsSection="expenses">Expenses</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <NumField
+          <MoneyField
             label="Annual living expenses"
+            tip={BBD_FIELD_TIPS.expenses.annualLivingExpenses}
+            unit="Nominal USD / year · excludes property P+I+tax here."
             value={scenario.expenses.annual_living_expenses}
-            step="500"
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -185,11 +239,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="Expense inflation"
-            step="0.001"
-            hint="decimal"
+          <PctField
+            label="Expense inflation (%/yr)"
+            tip={BBD_FIELD_TIPS.expenses.expenseInflation}
+            unit="Growth on modeled non-housing consumption."
             value={scenario.expenses.expense_inflation}
+            step="0.1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -201,11 +257,12 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <div>
-        <SectionTitle>Savings & portfolio inputs</SectionTitle>
+        <SectionTitle docsSection="savings">Savings & portfolio inputs</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-          <NumField
-            label="401(k) contrib"
-            step="500"
+          <MoneyField
+            label="401(k) elective deferrals"
+            tip={BBD_FIELD_TIPS.savings401kDeferrals}
+            unit="Nominal USD per calendar year."
             value={scenario.savings.annual_401k_contribution}
             onCommit={v =>
               setScenario(s => ({
@@ -214,9 +271,10 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <MoneyField
             label="Employer match"
-            step="100"
+            tip={BBD_FIELD_TIPS.savingsEmployerMatch}
+            unit="Nominal USD credited per calendar year."
             value={scenario.savings.employer_match}
             onCommit={v =>
               setScenario(s => ({
@@ -225,9 +283,10 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <MoneyField
             label="Starting taxable portfolio"
-            step="1000"
+            tip={BBD_FIELD_TIPS.savingsStartingTaxablePortfolio}
+            unit="Market value nominal USD · at projection start."
             value={scenario.savings.starting_taxable_portfolio}
             onCommit={v =>
               setScenario(s => ({
@@ -236,9 +295,10 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <MoneyField
             label="Starting portfolio basis"
-            step="1000"
+            tip={BBD_FIELD_TIPS.savingsStartingBasis}
+            unit="Cost basis nominal USD · at projection start."
             value={scenario.savings.starting_portfolio_basis}
             onCommit={v =>
               setScenario(s => ({
@@ -247,11 +307,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="Portfolio nominal return"
-            step="0.001"
-            hint="decimal"
+          <PctField
+            label="Portfolio nominal return (%/yr)"
+            tip={BBD_FIELD_TIPS.savingsPortfolioNominalReturn}
+            unit="Nominal expected return modeled per year."
             value={scenario.savings.portfolio_nominal_return}
+            step="0.1"
+            displayDecimals={4}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -259,10 +321,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="Portfolio volatility"
-            step="0.01"
+          <PctField
+            label="Portfolio volatility (σ)"
+            tip={BBD_FIELD_TIPS.savingsPortfolioVolatility}
+            unit="Annualized variability of modeled returns."
             value={scenario.savings.portfolio_volatility}
+            step="0.5"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -270,11 +335,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="Dividend yield"
-            step="0.001"
-            hint="decimal"
+          <PctField
+            label="Dividend yield (tax)"
+            tip={BBD_FIELD_TIPS.savingsDividendYield}
+            unit="% of portfolio value taxed as dividends each modeled year."
             value={scenario.savings.portfolio_dividend_yield}
+            step="0.05"
+            displayDecimals={4}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -286,6 +353,7 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
         <div className="flex flex-wrap gap-4 items-end">
           <CheckField
             label="Fixed annual taxable savings override"
+            tip={BBD_FIELD_TIPS.savingsOverrideToggle}
             checked={scenario.savings.annual_taxable_savings_override_enabled}
             onChange={chk =>
               setScenario(s => ({
@@ -302,9 +370,10 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           {scenario.savings.annual_taxable_savings_override_enabled ? (
             <div className="w-52">
-              <NumField
+              <MoneyField
                 label="Annual override amount"
-                step="500"
+                tip={BBD_FIELD_TIPS.savingsOverrideAmount}
+                unit="Fixed nominal USD/year into taxable brokerage when checked."
                 value={scenario.savings.annual_taxable_savings_override ?? 0}
                 onCommit={v =>
                   setScenario(s => ({
@@ -322,12 +391,26 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <details className="rounded-lg border border-slate-100 bg-slate-50/40 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Tax rates</summary>
+        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-700 [&::-webkit-details-marker]:hidden">
+          <span>Tax rates</span>
+          <BbdDocsSectionLink section="taxes" />
+        </summary>
+        <p className="mt-3 mb-4 text-[11px] leading-relaxed text-slate-500">
+          Each percentage is nominal and applies inside the coarse tax simplification baked into this
+          model (not individualized tax-law precision). Entries match the decimals in the HTTP API JSON,
+          but fields show percents typed as readable numbers (
+          <span className="font-mono">24</span>
+          {' '}
+          means 24%).
+        </p>
         <div className="mt-4 grid md:grid-cols-3 gap-4">
-          <NumField
-            label="Federal marginal"
-            step="0.01"
+          <PctField
+            label="Federal marginal bracket"
+            tip={BBD_FIELD_TIPS.taxesFederalMarginal}
+            unit="Rough % surcharge on modeled ordinary taxable income beyond standard assumptions."
             value={scenario.taxes.federal_marginal_rate}
+            step="1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -335,10 +418,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="State marginal"
-            step="0.005"
+            tip={BBD_FIELD_TIPS.taxesStateMarginal}
+            unit="% applied to modeled taxable ordinary income · state levy."
             value={scenario.taxes.state_marginal_rate}
+            step="0.5"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -346,10 +432,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="LTCG rate"
-            step="0.01"
+            tip={BBD_FIELD_TIPS.taxesLtcg}
+            unit="% modeled on taxable long-term gains when crystallized."
             value={scenario.taxes.ltcg_rate}
+            step="1"
+            displayDecimals={4}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -357,10 +446,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="NIIT rate"
-            step="0.001"
+          <PctField
+            label="NIIT surcharge"
+            tip={BBD_FIELD_TIPS.taxesNiit}
+            unit="Net Investment Income Tax style % modeled on MAGI thresholds."
             value={scenario.taxes.niit_rate}
+            step="0.1"
+            displayDecimals={6}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -368,11 +460,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
-            label="Depreciation recapture"
-            step="0.01"
-            hint="decimal"
+          <PctField
+            label="Depreciation recapture slice"
+            tip={BBD_FIELD_TIPS.taxesDepreciationRecapture}
+            unit="% haircut on depreciation recapture at modeled sale/disposition."
             value={scenario.taxes.depreciation_recapture_rate}
+            step="1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -384,14 +478,23 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </details>
 
       <details className="rounded-lg border border-slate-100 bg-slate-50/40 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-          Borrowing & rates (SBLOC, HELOC, refi caps)
+        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-700 [&::-webkit-details-marker]:hidden">
+          <span>Borrowing & rates (SBLOC, HELOC, refi caps)</span>
+          <BbdDocsSectionLink section="borrowing" />
         </summary>
+        <p className="mt-3 mb-4 text-[11px] leading-relaxed text-slate-500">
+          SOFR-heavy lines are nominal annual percentages. Anything labeled{' '}
+          <span className="font-semibold text-slate-600">LTV / CLTV</span> expresses loan balance as a
+          fraction of the pledged portfolio or modeled property appraisal.
+        </p>
         <div className="mt-4 grid md:grid-cols-3 gap-4">
-          <NumField
+          <PctField
             label="SBLOC max LTV"
-            step="0.05"
+            tip={BBD_FIELD_TIPS.borrowSblocMaxLtv}
+            unit="Borrowings divided by pledged taxable portfolio earmarked SBLOC collateral."
             value={scenario.borrowing.sbloc_ltv_cap}
+            step="5"
+            displayDecimals={2}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -399,10 +502,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="SBLOC margin-call LTV"
-            step="0.05"
+            tip={BBD_FIELD_TIPS.borrowSblocMarginLtv}
+            unit="Borrowings / collateral triggering modeled liquidation event."
             value={scenario.borrowing.sbloc_margin_call_ltv}
+            step="5"
+            displayDecimals={2}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -410,10 +516,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="SBLOC spread above SOFR"
-            step="0.001"
+            tip={BBD_FIELD_TIPS.borrowSblocSpreadOverSofr}
+            unit="Additive margin on top of modeled annual SOFR (nominal)."
             value={scenario.borrowing.sbloc_spread_over_sofr}
+            step="0.1"
+            displayDecimals={5}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -424,10 +533,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="Starting SOFR"
-            step="0.001"
+            tip={BBD_FIELD_TIPS.borrowSofrStarting}
+            unit="First-year benchmark nominal APR."
             value={scenario.borrowing.sofr_rate}
+            step="0.1"
+            displayDecimals={5}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -435,10 +547,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="SOFR long-run mean"
-            step="0.001"
+            tip={BBD_FIELD_TIPS.borrowSofrLongRunMean}
+            unit="Anchoring rate for stochastic mean-reversion."
             value={scenario.borrowing.sofr_long_run}
+            step="0.1"
+            displayDecimals={5}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -450,8 +565,11 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
             }
           />
           <NumField
-            label="Rate mean-reversion"
+            label="Rate mean-reversion (speed)"
+            tip={BBD_FIELD_TIPS.borrowRateMeanReversion}
+            narrow
             step="0.05"
+            unit="Higher pushes SOFR faster toward its long-run mean · not itself a percentage."
             value={scenario.borrowing.rate_mean_reversion}
             onCommit={v =>
               setScenario(s => ({
@@ -463,10 +581,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="HELOC spread vs prime"
-            step="0.001"
+            tip={BBD_FIELD_TIPS.borrowHelocSpreadOverPrime}
+            unit="Additive margin over modeled prime APR on HELOC borrowing."
             value={scenario.borrowing.heloc_rate_spread_over_prime}
+            step="0.05"
+            displayDecimals={4}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -477,10 +598,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="Cash-out refi rate"
-            step="0.005"
+            tip={BBD_FIELD_TIPS.borrowCashOutRefiRate}
+            unit="Nominal annual note rate modeled on leveraged property cash-outs."
             value={scenario.borrowing.cashout_refi_rate}
+            step="0.1"
+            displayDecimals={4}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -488,10 +612,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="HELOC max CLTV"
-            step="0.05"
+            tip={BBD_FIELD_TIPS.borrowHelocMaxCltv}
+            unit="Combined liens modeled as capped share of appraisal."
             value={scenario.borrowing.heloc_max_cltv}
+            step="1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -499,10 +626,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <PctField
             label="Cash-out max CLTV"
-            step="0.05"
+            tip={BBD_FIELD_TIPS.borrowCashOutMaxCltv}
+            unit="Investment-property cash-outs capped versus modeled value."
             value={scenario.borrowing.cashout_refi_max_cltv}
+            step="1"
+            displayDecimals={3}
             onCommit={v =>
               setScenario(s => ({
                 ...s,
@@ -517,10 +647,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </details>
 
       <div>
-        <SectionTitle>Drawdown strategy</SectionTitle>
+        <SectionTitle docsSection="strategy">Drawdown strategy</SectionTitle>
         <div className="grid md:grid-cols-3 gap-4 mb-3">
           <NumField
             label="Years until borrow phase"
+            tip={BBD_FIELD_TIPS.strategyDrawdownLagYears}
+            narrow
+            unit="Counted from horizon start · full years accumulating before modeled draws."
             value={scenario.strategy.drawdown_start_year_offset}
             onCommit={v =>
               setScenario(s => ({
@@ -532,9 +665,10 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <NumField
+          <MoneyField
             label="Target annual tax-free draw"
-            step="1000"
+            tip={BBD_FIELD_TIPS.strategyTargetAnnualDrawdown}
+            unit="Nominal USD per modeled year · tax-free-ish cash goal while borrowing phase live."
             value={scenario.strategy.target_annual_drawdown}
             onCommit={v =>
               setScenario(s => ({
@@ -546,10 +680,8 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               }))
             }
           />
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              PE exit treatment
-            </span>
+          <label className="block max-w-[13rem]">
+            <FormFieldLabel label="PE exit treatment" tip={BBD_FIELD_TIPS.strategyPeExitTreatment} />
             <select
               value={scenario.strategy.pe_exit_treatment}
               className="mt-0.5 w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -567,11 +699,13 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               <option value="stock">stock</option>
               <option value="hold">hold</option>
             </select>
+            <UnitCaption text="Matches API enum tokens for PE liquidity modeling: cash, stock, hold." />
           </label>
         </div>
         <div className="flex flex-wrap gap-6 mb-4">
           <CheckField
             label="Capitalize interest on borrowing"
+            tip={BBD_FIELD_TIPS.strategyCapitalizeInterest}
             checked={scenario.strategy.capitalize_interest}
             onChange={v =>
               setScenario(s => ({
@@ -585,6 +719,7 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           <CheckField
             label="Inflate draw target with CPI-style expense assumption"
+            tip={BBD_FIELD_TIPS.strategyInflateDrawdown}
             checked={scenario.strategy.inflate_drawdown}
             onChange={v =>
               setScenario(s => ({
@@ -595,6 +730,7 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
           />
           <CheckField
             label="Convert primary to rental"
+            tip={BBD_FIELD_TIPS.strategyConvertPrimary}
             checked={scenario.strategy.convert_primary_enabled}
             onChange={chk =>
               setScenario(s => ({
@@ -614,6 +750,9 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
         {scenario.strategy.convert_primary_enabled ? (
           <NumField
             label="Conversion calendar year"
+            tip={BBD_FIELD_TIPS.strategyConvertYear}
+            narrow
+            unit="Gregorian calendar year modeled for flipping primary-use to rental income."
             value={scenario.strategy.convert_primary_to_rental_year ?? scenario.timing.start_year}
             onCommit={v =>
               setScenario(s => ({
@@ -629,7 +768,12 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <div>
-        <SectionTitle>Properties</SectionTitle>
+        <SectionTitle docsSection="properties">Properties</SectionTitle>
+        <p className="text-[11px] text-slate-500 mb-3 max-w-[48rem]">
+          Dollar balances are nominal USD. Anything labeled{' '}
+          <span className="font-semibold text-slate-600">Monthly</span> repeats each calendar month; annual
+          drivers use percentages next to each control.
+        </p>
         <button
           type="button"
           className="text-xs font-semibold text-teal-700 hover:text-teal-900 mb-4"
@@ -666,7 +810,7 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                 </button>
               </div>
               <label className="block text-sm">
-                <span className="text-[11px] uppercase text-slate-400 font-semibold">Name</span>
+                <FormFieldLabel label="Name" tip={BBD_FIELD_TIPS.propertyDisplayName} />
                 <input
                   type="text"
                   value={row.name}
@@ -676,50 +820,65 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
               </label>
               <CheckField
                 label="Primary residence"
+                tip={BBD_FIELD_TIPS.propertyPrimaryResidence}
                 checked={row.is_primary}
                 onChange={v =>
                   pn(pr => ({ ...pr, is_primary: v }), idx)
                 }
               />
               <div className="grid md:grid-cols-4 gap-3">
-                <NumField
+                <MoneyField
                   label="Purchase price"
-                  step="1000"
+                  tip={BBD_FIELD_TIPS.propertyPurchasePrice}
+                  unit="Historical trade value · nominal USD at purchase date."
                   value={row.purchase_price}
                   onCommit={v => pn(pr => ({ ...pr, purchase_price: v }), idx)}
                 />
                 <NumField
                   label="Purchase year"
+                  tip={BBD_FIELD_TIPS.propertyPurchaseYear}
+                  narrow
+                  unit="Gregorian calendar year modeled for acquiring the deed."
                   value={row.purchase_year}
                   onCommit={v => pn(pr => ({ ...pr, purchase_year: Math.round(v) }), idx)}
                 />
-                <NumField
+                <MoneyField
                   label="Current value"
-                  step="1000"
+                  tip={BBD_FIELD_TIPS.propertyCurrentValue}
+                  unit="Nominal modeled appraisal/mark at projection start."
                   value={row.current_value}
                   onCommit={v => pn(pr => ({ ...pr, current_value: v }), idx)}
                 />
-                <NumField
+                <MoneyField
                   label="Mortgage balance"
-                  step="1000"
+                  tip={BBD_FIELD_TIPS.propertyMortgageBalance}
+                  unit="Principal remaining · nominal USD at projection start."
                   value={row.mortgage_balance}
                   onCommit={v => pn(pr => ({ ...pr, mortgage_balance: v }), idx)}
                 />
-                <NumField
+                <PctField
                   label="Mortgage APR"
-                  step="0.001"
-                  hint="decimal"
+                  tip={BBD_FIELD_TIPS.propertyMortgageApr}
+                  unit="Annual nominal rate on amortizing lien."
                   value={row.mortgage_rate}
+                  step="0.1"
+                  displayDecimals={5}
                   onCommit={v => pn(pr => ({ ...pr, mortgage_rate: v }), idx)}
                 />
                 <NumField
                   label="Mortgage term (years)"
+                  tip={BBD_FIELD_TIPS.propertyMortgageTermYears}
+                  narrow
+                  unit="Whole years on original amortization schedule."
                   value={row.mortgage_term_years}
                   onCommit={v =>
                     pn(pr => ({ ...pr, mortgage_term_years: Math.max(1, Math.round(v)) }), idx)}
                 />
                 <NumField
                   label="Mortgage start year"
+                  tip={BBD_FIELD_TIPS.propertyMortgageStartYear}
+                  narrow
+                  unit="Calendar year the modeled note began amortizing."
                   value={row.mortgage_origination_year}
                   onCommit={v =>
                     pn(pr => ({
@@ -727,15 +886,17 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                       mortgage_origination_year: Math.round(v),
                     }), idx)}
                 />
-                <NumField
+                <MoneyField
                   label="Monthly PITI"
-                  step="50"
+                  tip={BBD_FIELD_TIPS.propertyMonthlyPiti}
+                  unit="Nominal USD per calendar month · principal+interest+taxes+insurance bundle."
                   value={row.monthly_piti}
                   onCommit={v => pn(pr => ({ ...pr, monthly_piti: v }), idx)}
                 />
-                <NumField
+                <MoneyField
                   label="Monthly market rent"
-                  step="50"
+                  tip={BBD_FIELD_TIPS.propertyMonthlyMarketRent}
+                  unit="Comparable rent · nominal USD per month at projection start."
                   value={row.monthly_market_rent}
                   onCommit={v => pn(pr => ({ ...pr, monthly_market_rent: v }), idx)}
                 />
@@ -747,6 +908,9 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                 <div className="mt-3 grid md:grid-cols-4 gap-3">
                   <NumField
                     label="Rental start year (0 = unset)"
+                    tip={BBD_FIELD_TIPS.propertyRentalStartYear}
+                    narrow
+                    unit="Gregorian calendar year rents begin accruing toward NOI (0 blanks it)."
                     value={row.rental_start_year ?? 0}
                     onCommit={v => {
                       const y = Math.round(v)
@@ -756,36 +920,49 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                       }), idx)
                     }}
                   />
-                  <NumField
-                    label="Appreciation rate"
-                    step="0.001"
-                    hint="decimal"
+                  <PctField
+                    label="Appreciation (%/yr)"
+                    tip={BBD_FIELD_TIPS.propertyAppreciation}
+                    unit="Growth on modeled property resale value annually."
                     value={row.appreciation_rate}
+                    step="0.1"
+                    displayDecimals={4}
                     onCommit={v => pn(pr => ({ ...pr, appreciation_rate: v }), idx)}
                   />
-                  <NumField
+                  <PctField
                     label="Rent growth"
-                    step="0.001"
+                    tip={BBD_FIELD_TIPS.propertyRentGrowth}
+                    unit="Growth on modeled market rent assumptions once leased."
                     value={row.rent_growth_rate}
+                    step="0.1"
+                    displayDecimals={4}
                     onCommit={v => pn(pr => ({ ...pr, rent_growth_rate: v }), idx)}
                   />
-                  <NumField
+                  <PctField
                     label="Vacancy + mgmt"
-                    step="0.01"
+                    tip={BBD_FIELD_TIPS.propertyVacancyMgmt}
+                    unit="% of modeled gross rents lost to vacancy and property-management drag."
                     value={row.vacancy_and_mgmt_pct}
+                    step="0.5"
+                    displayDecimals={3}
                     onCommit={v => pn(pr => ({ ...pr, vacancy_and_mgmt_pct: v }), idx)}
                   />
-                  <NumField
-                    label="Maintenance % value"
-                    step="0.001"
+                  <PctField
+                    label="Maintenance / value"
+                    tip={BBD_FIELD_TIPS.propertyMaintenanceVsValue}
+                    unit="Annual upkeep modeled as fraction of contemporaneous appraisal."
                     value={row.annual_maintenance_pct}
+                    step="0.1"
+                    displayDecimals={4}
                     onCommit={v => pn(pr => ({ ...pr, annual_maintenance_pct: v }), idx)}
                   />
-                  <NumField
-                    label="Land allocation"
-                    step="0.05"
-                    hint="% of basis"
+                  <PctField
+                    label="Land (basis allocation)"
+                    tip={BBD_FIELD_TIPS.propertyLandBasisPct}
+                    unit="Non-depreciable land share of modeled cost basis allocation."
                     value={row.land_value_pct}
+                    step="1"
+                    displayDecimals={2}
                     onCommit={v => pn(pr => ({ ...pr, land_value_pct: v }), idx)}
                   />
                 </div>
@@ -803,7 +980,11 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
       </div>
 
       <div>
-        <SectionTitle>Private equity</SectionTitle>
+        <SectionTitle docsSection="privateEquity">Private equity</SectionTitle>
+        <p className="text-[11px] text-slate-500 mb-3 max-w-[48rem]">
+          Balances default to nominal USD. Probability lines are modeled chances each simulated year. Exit
+          multiples are unitless scaling factors versus the contemporaneous modeled mark.
+        </p>
         <button
           type="button"
           className="text-xs font-semibold text-teal-700 hover:text-teal-900 mb-4"
@@ -840,7 +1021,7 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                 </button>
               </div>
               <label className="block text-sm">
-                <span className="text-[11px] uppercase text-slate-400 font-semibold">Name</span>
+                <FormFieldLabel label="Name" tip={BBD_FIELD_TIPS.peDisplayName} />
                 <input
                   type="text"
                   value={row.name}
@@ -849,52 +1030,69 @@ export function BbdScenarioFields({ scenario, setScenario }: BbdScenarioFieldsPr
                 />
               </label>
               <div className="grid md:grid-cols-4 gap-3">
-                <NumField
+                <MoneyField
                   label="Current value mark"
-                  step="5000"
+                  tip={BBD_FIELD_TIPS.peCurrentMark}
+                  unit="Fair value / latest round · nominal USD at projection start."
                   value={row.current_value}
                   onCommit={v => pe(pr => ({ ...pr, current_value: v }), idx)}
                 />
-                <NumField
+                <MoneyField
                   label="Cost basis"
-                  step="1000"
+                  tip={BBD_FIELD_TIPS.peCostBasis}
+                  unit="Modeled statutory basis · nominal USD (often grants/strike-heavy)."
                   value={row.cost_basis}
                   onCommit={v => pe(pr => ({ ...pr, cost_basis: v }), idx)}
                 />
-                <NumField
-                  label="Expected growth rate"
-                  step="0.01"
-                  hint="decimal"
+                <PctField
+                  label="Expected growth (%/yr)"
+                  tip={BBD_FIELD_TIPS.peExpectedGrowthRate}
+                  unit="Growth applied to modeled private-equity valuation each simulated year."
                   value={row.expected_growth_rate}
+                  step="0.5"
+                  displayDecimals={4}
                   onCommit={v => pe(pr => ({ ...pr, expected_growth_rate: v }), idx)}
                 />
-                <NumField
-                  label="Volatility"
-                  step="0.05"
+                <PctField
+                  label="Volatility (σ)"
+                  tip={BBD_FIELD_TIPS.peVolatilityAnnual}
+                  unit="Swinginess of modeled private-equity returns on an annual horizon."
                   value={row.volatility}
+                  step="0.5"
+                  displayDecimals={3}
                   onCommit={v => pe(pr => ({ ...pr, volatility: v }), idx)}
                 />
-                <NumField
+                <PctField
                   label="Annual failure prob."
-                  step="0.02"
+                  tip={BBD_FIELD_TIPS.peAnnualFailureProbability}
+                  unit="Modeled chance each simulated year leaves the stake worthless."
                   value={row.annual_failure_prob}
+                  step="0.5"
+                  displayDecimals={4}
                   onCommit={v => pe(pr => ({ ...pr, annual_failure_prob: v }), idx)}
                 />
-                <NumField
+                <PctField
                   label="Annual exit prob."
-                  step="0.02"
+                  tip={BBD_FIELD_TIPS.peAnnualExitProbability}
+                  unit="Modeled chance each simulated year triggers modeled liquidity mechanics."
                   value={row.annual_exit_prob}
+                  step="0.5"
+                  displayDecimals={4}
                   onCommit={v => pe(pr => ({ ...pr, annual_exit_prob: v }), idx)}
                 />
                 <NumField
                   label="Exit multiple mean"
+                  tip={BBD_FIELD_TIPS.peExitMultipleMean}
                   step="0.1"
+                  unit="Plain multiple (unitless): modeled proceeds factor before randomness draws."
                   value={row.exit_multiple_mean}
                   onCommit={v => pe(pr => ({ ...pr, exit_multiple_mean: v }), idx)}
                 />
                 <NumField
                   label="Exit multiple σ"
+                  tip={BBD_FIELD_TIPS.peExitMultipleVol}
                   step="0.1"
+                  unit="Spread describing how modeled exit multiples wobble around that mean."
                   value={row.exit_multiple_vol}
                   onCommit={v => pe(pr => ({ ...pr, exit_multiple_vol: v }), idx)}
                 />
