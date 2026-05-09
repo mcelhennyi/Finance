@@ -40,6 +40,11 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0003-02 | Add BBD projection REST API | done | done | done | `FR-0003`; `POST /api/bbd-projection/run` |
 | T-FR-0003-03 | Deliver BBD projection page | done | done | done | `FR-0003`; **BBD** nav — `frontend/src/pages/BbdProjectionPage.tsx` |
 | T-FR-0003-04 | Validate BBD UX and document operator workflow | done | done | done | `FR-0003`; `scripts/README.md` + pytest / host notes |
+| T-FR-0004-01 | BBD bottom control dock and relocated actions | todo | todo | todo | `FR-0004`; deps none |
+| T-FR-0004-02 | BBD visualization view-model and chart-ready series | todo | todo | todo | `FR-0004`; deps none; parallelizable with `T-FR-0004-01` |
+| T-FR-0004-03 | BBD 2D story dashboard and educational callouts | todo | todo | todo | `FR-0004`; deps `T-FR-0004-01`, `T-FR-0004-02` |
+| T-FR-0004-04 | BBD spatial / 3D–time experience (lazy WebGL) | todo | todo | todo | `FR-0004`; deps `T-FR-0004-02`, `T-FR-0004-03` |
+| T-FR-0004-05 | BBD experience integration VAL and operator docs | todo | todo | todo | `FR-0004`; deps `T-FR-0004-04` |
 
 ---
 
