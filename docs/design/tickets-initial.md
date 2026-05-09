@@ -20,6 +20,7 @@
 | FR-0001 | `tasks/feature-history/FR-0001-phase2-goals-unified-view/tickets.md` |
 | FR-0002 | `tasks/feature-history/FR-0002-budget-entry-page/tickets.md` |
 | FR-0003 | `tasks/feature-history/FR-0003-bbd-projection-ui/tickets.md` |
+| FR-0004 | `tasks/feature-history/FR-0004-bbd-projection-experience/tickets.md` |
 
 ---
 
@@ -87,6 +88,26 @@ graph LR
   TFR0003_03_VAL --> TFR0003_04_TEST
   TFR0003_04_TEST --> TFR0003_04_DEV["Validate BBD UX and document operator workflow DEV (T-FR-0003-04)"]
   TFR0003_04_DEV --> TFR0003_04_VAL["Validate BBD UX and document operator workflow VAL (T-FR-0003-04)"]
+
+  TFR0004_01_TEST["BBD bottom control dock and relocated actions TEST (T-FR-0004-01)"] --> TFR0004_01_DEV["BBD bottom control dock and relocated actions DEV (T-FR-0004-01)"]
+  TFR0004_01_DEV --> TFR0004_01_VAL["BBD bottom control dock and relocated actions VAL (T-FR-0004-01)"]
+
+  TFR0004_02_TEST["BBD visualization view-model and chart-ready series TEST (T-FR-0004-02)"] --> TFR0004_02_DEV["BBD visualization view-model and chart-ready series DEV (T-FR-0004-02)"]
+  TFR0004_02_DEV --> TFR0004_02_VAL["BBD visualization view-model and chart-ready series VAL (T-FR-0004-02)"]
+
+  TFR0004_01_VAL --> TFR0004_03_TEST["BBD 2D story dashboard and educational callouts TEST (T-FR-0004-03)"]
+  TFR0004_02_VAL --> TFR0004_03_TEST
+  TFR0004_03_TEST --> TFR0004_03_DEV["BBD 2D story dashboard and educational callouts DEV (T-FR-0004-03)"]
+  TFR0004_03_DEV --> TFR0004_03_VAL["BBD 2D story dashboard and educational callouts VAL (T-FR-0004-03)"]
+
+  TFR0004_02_VAL --> TFR0004_04_TEST["BBD spatial / 3D-time experience (lazy WebGL) TEST (T-FR-0004-04)"]
+  TFR0004_03_VAL --> TFR0004_04_TEST
+  TFR0004_04_TEST --> TFR0004_04_DEV["BBD spatial / 3D-time experience (lazy WebGL) DEV (T-FR-0004-04)"]
+  TFR0004_04_DEV --> TFR0004_04_VAL["BBD spatial / 3D-time experience (lazy WebGL) VAL (T-FR-0004-04)"]
+
+  TFR0004_04_VAL --> TFR0004_05_TEST["BBD experience integration VAL and operator docs TEST (T-FR-0004-05)"]
+  TFR0004_05_TEST --> TFR0004_05_DEV["BBD experience integration VAL and operator docs DEV (T-FR-0004-05)"]
+  TFR0004_05_DEV --> TFR0004_05_VAL["BBD experience integration VAL and operator docs VAL (T-FR-0004-05)"]
 
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
