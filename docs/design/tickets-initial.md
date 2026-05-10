@@ -21,6 +21,8 @@
 | FR-0002 | `tasks/feature-history/FR-0002-budget-entry-page/tickets.md` |
 | FR-0003 | `tasks/feature-history/FR-0003-bbd-projection-ui/tickets.md` |
 | FR-0004 | `tasks/feature-history/FR-0004-bbd-projection-experience/tickets.md` |
+| FR-0005 | `tasks/feature-history/FR-0005-budget-page-docs-dock/tickets.md` |
+| FR-0006 | `tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md` |
 
 ---
 
@@ -109,6 +111,37 @@ graph LR
   TFR0004_05_TEST --> TFR0004_05_DEV["BBD experience integration VAL and operator docs DEV (T-FR-0004-05)"]
   TFR0004_05_DEV --> TFR0004_05_VAL["BBD experience integration VAL and operator docs VAL (T-FR-0004-05)"]
 
+  TFR0005_01_TEST["Budget page guide, annotations, and dock TEST (T-FR-0005-01)"] --> TFR0005_01_DEV["Budget page guide, annotations, and dock DEV (T-FR-0005-01)"]
+  TFR0005_01_DEV --> TFR0005_01_VAL["Budget page guide, annotations, and dock VAL (T-FR-0005-01)"]
+
+  TFR0002_02_VAL --> TFR0006_01_TEST["Define cash-flow graph persistence contracts TEST (T-FR-0006-01)"]
+  TFR0006_01_TEST --> TFR0006_01_DEV["Define cash-flow graph persistence contracts DEV (T-FR-0006-01)"]
+  TFR0006_01_DEV --> TFR0006_01_VAL["Define cash-flow graph persistence contracts VAL (T-FR-0006-01)"]
+
+  TFR0006_01_VAL --> TFR0006_02_TEST["Add cash-flow graph migration and ORM models TEST (T-FR-0006-02)"]
+  TFR0006_02_TEST --> TFR0006_02_DEV["Add cash-flow graph migration and ORM models DEV (T-FR-0006-02)"]
+  TFR0006_02_DEV --> TFR0006_02_VAL["Add cash-flow graph migration and ORM models VAL (T-FR-0006-02)"]
+
+  TFR0006_02_VAL --> TFR0006_03_TEST["Expose cash-flow graph CRUD API TEST (T-FR-0006-03)"]
+  TFR0006_03_TEST --> TFR0006_03_DEV["Expose cash-flow graph CRUD API DEV (T-FR-0006-03)"]
+  TFR0006_03_DEV --> TFR0006_03_VAL["Expose cash-flow graph CRUD API VAL (T-FR-0006-03)"]
+
+  TFR0006_03_VAL --> TFR0006_04_TEST["Budget React Flow panel wired to graph API TEST (T-FR-0006-04)"]
+  TFR0006_04_TEST --> TFR0006_04_DEV["Budget React Flow panel wired to graph API DEV (T-FR-0006-04)"]
+  TFR0006_04_DEV --> TFR0006_04_VAL["Budget React Flow panel wired to graph API VAL (T-FR-0006-04)"]
+
+  TFR0006_04_VAL --> TFR0006_05_TEST["Cash-flow time scrub and aggregated views TEST (T-FR-0006-05)"]
+  TFR0006_05_TEST --> TFR0006_05_DEV["Cash-flow time scrub and aggregated views DEV (T-FR-0006-05)"]
+  TFR0006_05_DEV --> TFR0006_05_VAL["Cash-flow time scrub and aggregated views VAL (T-FR-0006-05)"]
+
+  TFR0003_02_VAL --> TFR0006_06_TEST["BBD-suggested cash-flow edges TEST (T-FR-0006-06)"]
+  TFR0006_04_VAL --> TFR0006_06_TEST
+  TFR0006_06_TEST --> TFR0006_06_DEV["BBD-suggested cash-flow edges DEV (T-FR-0006-06)"]
+  TFR0006_06_DEV --> TFR0006_06_VAL["BBD-suggested cash-flow edges VAL (T-FR-0006-06)"]
+
+  TFR0006_07_TEST["Compose default for allocation auto-template TEST (T-FR-0006-07)"] --> TFR0006_07_DEV["Compose default for allocation auto-template DEV (T-FR-0006-07)"]
+  TFR0006_07_DEV --> TFR0006_07_VAL["Compose default for allocation auto-template VAL (T-FR-0006-07)"]
+
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
   class TFR0001_01_TEST,TFR0001_01_DEV,TFR0001_01_VAL triadDone
@@ -120,6 +153,8 @@ graph LR
   class TFR0003_01_TEST,TFR0003_01_DEV,TFR0003_01_VAL,TFR0003_02_TEST,TFR0003_02_DEV,TFR0003_02_VAL,TFR0003_03_TEST,TFR0003_03_DEV,TFR0003_03_VAL,TFR0003_04_TEST,TFR0003_04_DEV,TFR0003_04_VAL triadDone
 
   class TFR0004_01_TEST,TFR0004_01_DEV,TFR0004_01_VAL,TFR0004_02_TEST,TFR0004_02_DEV,TFR0004_02_VAL,TFR0004_03_TEST,TFR0004_03_DEV,TFR0004_03_VAL,TFR0004_04_TEST,TFR0004_04_DEV,TFR0004_04_VAL,TFR0004_05_TEST,TFR0004_05_DEV,TFR0004_05_VAL triadDone
+
+  class TFR0005_01_TEST,TFR0005_01_DEV,TFR0005_01_VAL triadDone
 ```
 
 When ticket **`T-FR-NNNN-xx`** is fully complete (TEST/DEV/VAL all `done` in **`ticket-progress.md`**), add:

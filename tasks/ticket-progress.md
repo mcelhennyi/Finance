@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | **Define budget allocation contracts** (`T-FR-0002-01`) |
-| **Active phase** | `starting` |
-| **Branch / worktree** | `feat/FR-0002-budget-entry-page` at `.worktrees/FR-0002-budget-entry-page/feature/`; ticket worktree pending |
-| **Session status** | `developing` |
-| **Next agent should** | Start **Define budget allocation contracts** (`T-FR-0002-01`) in `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/`, branch `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts`, then complete TEST → DEV → VAL. |
+| **Active ticket** | Start [**Define cash-flow graph persistence contracts**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-01`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) or parallel [**Compose default for allocation auto-template**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-07`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
+| **Active phase** | — |
+| **Branch / worktree** | — |
+| **Session status** | `ready` |
+| **Next agent should** | Push **`FR-0006`** registry stub if not on **`origin/main`**, then **`/identify-frontier`** → **`/develop-frontier`** per **`docs/ai-context.md`**. |
 
 ### Parallel streams (optional)
 
@@ -16,9 +16,9 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| Budget allocation contracts | `T-FR-0002-01` | `FR-0002` | `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts` / `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/` | Frontier stream ready to launch |
+| *(none)* | — | — | — | — |
 
-**Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
+**Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0002`** closeout: [`FR-0002-budget-entry-page/90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
 
 ---
 
@@ -32,11 +32,11 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0001-03 | Add income and liabilities ingestion contracts | done | done | done | `FR-0001` (Dockerized test/validation; seeded CSV ingest + aggregate verification complete) |
 | T-FR-0001-04 | Expose unified monthly financial summary API | done | done | done | `FR-0001` (GET `/api/unified-view/summary`; `finance.unified.monthly`; tests + USD 10 reconciliation block) |
 | T-FR-0001-05 | Deliver Phase 2 unified dashboard view | done | done | done | `FR-0001` (Unified view page, vitest: alerts + month + contract shape) |
-| T-FR-0002-01 | Define budget allocation contracts | todo | todo | todo | `FR-0002`; first eligible implementation ticket; depends on completed `T-FR-0001-05` |
-| T-FR-0002-02 | Expose budget allocation API | todo | todo | todo | `FR-0002`; depends on `T-FR-0002-01` |
-| T-FR-0002-03 | Sync allocation totals into unified budgets | todo | todo | todo | `FR-0002`; depends on `T-FR-0002-02` |
-| T-FR-0002-04 | Deliver budget entry page | todo | todo | todo | `FR-0002`; depends on `T-FR-0002-02` |
-| T-FR-0002-05 | Validate and document budget entry workflow | todo | todo | todo | `FR-0002`; depends on `T-FR-0002-03` and `T-FR-0002-04` |
+| T-FR-0002-01 | Define budget allocation contracts | done | done | done | `FR-0002`; ORM + Pydantic + cadence/summary in `src/finance/allocation/`; migration stub `phase2_budget_allocation_stub.sql`; `tests/test_allocation_contracts.py` |
+| T-FR-0002-02 | Expose budget allocation API | done | done | done | `FR-0002`; `GET/POST/PUT/DELETE /api/budget-allocation/plans`, nested items, `.../summary`; `finance.allocation.service`; `tests/test_api_budget_allocation.py`; `httpx` dependency for TestClient |
+| T-FR-0002-03 | Sync allocation totals into unified budgets | done | done | done | `FR-0002`; `Budget.allocation_derived`; `finance.allocation.budget_sync`; hooks in `service`; `tests/test_allocation_budget_sync.py` + unified API test |
+| T-FR-0002-04 | Deliver budget entry page | done | done | done | `FR-0002`; `BudgetPage`, nav **Budget**, `api` budget-allocation methods, `lib/budgetAllocation.ts` + vitest, invalidates `unifiedViewSummary` |
+| T-FR-0002-05 | Validate and document budget entry workflow | done | done | done | `FR-0002`; [`operator-budget-allocation.md`](feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md), [`90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md), [`scripts/README.md`](../scripts/README.md) § Budget allocation validation |
 | T-FR-0003-01 | Extract BBD projection as importable module | done | done | done | `FR-0003`; `src/finance/bbd/engine.py` + tests |
 | T-FR-0003-02 | Add BBD projection REST API | done | done | done | `FR-0003`; `POST /api/bbd-projection/run` |
 | T-FR-0003-03 | Deliver BBD projection page | done | done | done | `FR-0003`; **BBD** nav — `frontend/src/pages/BbdProjectionPage.tsx` |
@@ -46,6 +46,14 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0004-03 | BBD 2D story dashboard and educational callouts | done | done | done | `FR-0004`; `BbdStoryDashboard.tsx` |
 | T-FR-0004-04 | BBD spatial / 3D–time experience (lazy WebGL) | done | done | done | `FR-0004`; `BbdSpatialPanel.tsx`, lazy + reduced-motion |
 | T-FR-0004-05 | BBD experience integration VAL and operator docs | done | done | done | `FR-0004`; Docker lint/test, `scripts/README.md` |
+| T-FR-0005-01 | Budget page in-app guide, field annotations, and floating dock | done | done | done | `FR-0005`; `BudgetDocsProvider`, `budgetFieldTips`, `BudgetPage` dock — `docker compose run web npm run build` |
+| T-FR-0006-01 | Define cash-flow graph persistence contracts | pending | pending | pending | `FR-0006`; deps `T-FR-0002-02` (VAL done) |
+| T-FR-0006-02 | Add cash-flow graph migration and ORM models | pending | pending | pending | `FR-0006`; deps `T-FR-0006-01` |
+| T-FR-0006-03 | Expose cash-flow graph CRUD API | pending | pending | pending | `FR-0006`; deps `T-FR-0006-02` |
+| T-FR-0006-04 | Budget React Flow panel wired to graph API | pending | pending | pending | `FR-0006`; deps `T-FR-0006-03` |
+| T-FR-0006-05 | Cash-flow time scrub and aggregated views | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04` |
+| T-FR-0006-06 | BBD-suggested cash-flow edges | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04`, `T-FR-0003-02` |
+| T-FR-0006-07 | Compose default for allocation auto-template | pending | pending | pending | `FR-0006`; no ticket deps |
 
 ---
 
