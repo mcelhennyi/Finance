@@ -7,7 +7,7 @@
 
 ## PR
 
-- **PR:** https://github.com/mcelhennyi/Finance/pull/7 (**`feat/FR-0004-bbd-projection-experience`** → **`master`**).
+- **PR:** https://github.com/mcelhennyi/Finance/pull/7 (**`feat/FR-0004-bbd-projection-experience`** → **`master`**), merged **`01842f3`**.
 
 ## VAL (2026-05-09)
 
@@ -17,11 +17,11 @@
 
 Immersive BBD experience: **`bbdVizModel`** + tests, **`BbdStoryDashboard`**, lazy **`BbdSpatialPanel`** (**`three`** stack), **`BbdLightModal`**, output tips, bottom dock workflow on **`BbdProjectionPage`**, CLI bundle **`scripts/bbd-projection/`** (with **`ian.toml`** gitignored per README), template path fixes in **`engine.py`** / seed TOML header. **`FR-0003`** **`90-closeout.md`** and **`ticket-progress`** updates are included in the same integration commit as documented in the main feature commit message.
 
-**Not in this branch:** Settings / Parameters rename (gear nav); keep that for a separate PR if still desired.
+**Also merged with conflict resolution:** Settings gear nav and related pages from **`master`** (see merge commit history).
 
 ## Suggested next step
 
-Open **PR → `master`**, describe the **FR-0003 follow-up + FR-0004** bundle in the PR body, merge when green.
+Complete **`/finish-feature`** bookkeeping (**`90-closeout.md`**, **`REGISTRY.md`**) via follow-up commit or PR.
 
 ## Options
 

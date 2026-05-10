@@ -29,10 +29,9 @@ FR-0003 (BBD projection web UI) is **complete** per **`REGISTRY.md`**: packaged 
 
 ## Suggested next step
 
-Continue **`FR-0002`** budget entry implementation (**`tasks/ticket-progress.md` → Current focus**) or **`FR-0004`** closeout bookkeeping if that stream is merge-complete.
+Continue **`FR-0002`** budget entry implementation (**`tasks/ticket-progress.md` → Current focus**).
 
 ## Options
 
-- **A.** Treat **`FR-0004`** immersive BBD as the next closeout if all tickets are VAL-done and PR is merged — align **`REGISTRY.md`**, feature **`README.md`**, and **`Parallel streams`**.
-- **B.** Optional rename of illustrative **`data/seed-statements/ian.yaml`** noted in feature **`README.md`**.
-- **C.** New **`FR-NNNN`** for unrelated product slices per **`REGISTRY.md`** **`next_id`**.
+- **A.** Optional rename of illustrative **`data/seed-statements/ian.yaml`** noted in feature **`README.md`**.
+- **B.** New **`FR-NNNN`** for unrelated product slices per **`REGISTRY.md`** **`next_id`**.
