@@ -8,7 +8,7 @@
 | **Active phase** | — |
 | **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** |
 | **Session status** | `developing` |
-| **Next agent should** | **`develop-frontier`**:**[`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)** — worktree **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`**, branch **`feat/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow`** from **`feat/FR-0006-budget-cash-flow-graph`**; handoff [`tasks/handoffs/2026-05-10-parallel-frontier.md`](handoffs/2026-05-10-parallel-frontier.md); draft PR **#9** stays incomplete until **`finish-feature`**. |
+| **Next agent should** | **`develop-frontier` (`FR-0006`):** [`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) — worktree **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`**, ticket branch **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-04-react-flow`** (double-dash; Git cannot nest **`feat/FR-0006-budget-cash-flow-graph/…`** under the existing feature branch ref); PR **base** **`feat/FR-0006-budget-cash-flow-graph`**; handoff [`tasks/handoffs/2026-05-10-parallel-frontier.md`](handoffs/2026-05-10-parallel-frontier.md); draft PR **#9** incomplete until **`finish-feature`**. |
 
 ### Parallel streams (optional)
 
@@ -16,7 +16,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| **FR-0006 graph UI** | [`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | **`FR-0006`** | **`feat/FR-0006-budget-cash-flow-graph`**, optional **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`** | Single eligible frontier ticket after **`T-FR-0006-03`** |
+| **FR-0006 graph UI** | [`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | **`FR-0006`** | **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-04-react-flow`** @ **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`** | Frontier ticket; integration checkout remains repo root **`feat/FR-0006-budget-cash-flow-graph`** |
 
 **Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0002`** closeout: [`FR-0002-budget-entry-page/90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
 
