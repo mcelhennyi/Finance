@@ -56,7 +56,7 @@ Starts the Finance Hub development server via Docker Compose with live reload.
 
 Place statement CSVs in **`data/seed-statements/`** (contents are gitignored; only `.gitkeep` is tracked). You can also run **`PYTHONPATH=src python -m finance.dev_seed`** from the repo root against your local DB.
 
-**Merchant display overrides** (pretty names from the Parameters page) are stored in **`data/seed-merchant-displays.json`** (tracked in git). After each successful Save or Clear in the UI, the API rewrites that file from the database so mappings survive `./scripts/dev.sh --fresh --seed`. Seeding applies that JSON after CSV ingest (or alone if there are no CSVs).
+**Merchant display overrides** (pretty names edited under **Settings → Transactions → Merchant display** in the SPA) are stored in **`data/seed-merchant-displays.json`** (tracked in git). After each successful Save or Clear in the UI, the API rewrites that file from the database so mappings survive `./scripts/dev.sh --fresh --seed`. Seeding applies that JSON after CSV ingest (or alone if there are no CSVs).
 
 To dump the current DB overrides to the JSON file without running full seed:
 
@@ -85,6 +85,32 @@ Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, 
 - UI: **http://localhost:3501**
 
 (Exact ports are listed in [docs/PORTS.md](../docs/PORTS.md).)
+
+---
+
+## `check-frontend-no-merge-markers.sh` — Block broken SPA builds
+
+Scans **`frontend/src`** for unresolved git merge markers (`<<<<<<<`, `>>>>>>>`). Those strings break Vite’s TSX parser and typically produce a **blank white page** at **http://localhost:3501** until they are removed.
+
+### Usage
+
+```bash
+./scripts/check-frontend-no-merge-markers.sh
+```
+
+### Dependencies
+
+- **bash**, **grep** (POSIX; available on macOS and in most Linux images)
+
+### Exit codes
+
+- **0** — no markers found
+- **1** — at least one marker line found (see stderr for paths)
+- **2** — `frontend/src` missing (unexpected layout)
+
+### What it does
+
+Recursively greps `*.ts`, `*.tsx`, `*.js`, and `*.jsx` under **`frontend/src`** for lines starting with **`<<<<<<<`** or **`>>>>>>>`**, then prints matches and exits non-zero if any exist.
 
 ---
 

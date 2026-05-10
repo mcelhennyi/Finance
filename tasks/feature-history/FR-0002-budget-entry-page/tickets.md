@@ -96,7 +96,7 @@ Add a React page where users can enter, edit, delete, and review planned allocat
 
 #### Notes
 
-- Follow existing `ParametersPage` mutation and table patterns.
+- Follow existing `MerchantNamesSettings` mutation and table patterns (same stack as Settings → Merchant display; `frontend/src/pages/ParametersPage.tsx` remains a thin compatibility wrapper around that UI for older imports).
 - Use Finance Hub wording and layout. The source spreadsheet does not define UI language or visual hierarchy.
 - Invalidate unified summary queries after saves that affect category budgets.
 

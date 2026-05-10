@@ -91,7 +91,7 @@ The page should use Finance Hub's existing dashboard language and Tailwind card/
 
 - Month selector and plan summary at the top.
 - Editable allocation table for item name, category, amount, cadence, payment method, due day, and notes.
-- Add, save, delete, loading, empty, and error states consistent with `ParametersPage`.
+- Add, save, delete, loading, empty, and error states consistent with `MerchantNamesSettings` / `SettingsPage` (gear → Settings → Transactions → Merchant display).
 - Summary cards for total monthly allocation, cash allocation, credit allocation, and remaining income.
 - Navigation entry named for the product concept, not copied from the sample document.
 
