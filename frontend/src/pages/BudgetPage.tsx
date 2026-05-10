@@ -463,7 +463,7 @@ export function BudgetPage() {
 
           <div id={BUDGET_SCROLL_ANCHORS.cashFlowGraph} className="scroll-mt-24">
             <SectionTitle docsSection="cashFlowMap">Cash flow map</SectionTitle>
-            <CashFlowGraphPanel planId={selectedPlanId} />
+            <CashFlowGraphPanel planId={selectedPlanId} planIncomeMonthly={activePlan?.income_monthly ?? null} />
           </div>
 
           {itemsQuery.isError && (

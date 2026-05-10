@@ -1,3 +1,13 @@
+## 2026-05-10 (session) — T-FR-0006-05 / T-FR-0006-06 time scrub + BBD suggestions
+
+**Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** **`cashFlowTimeAggregation`** computes approximate in/out/net per node by grain (day/month/year); **`CashFlowGraphPanel`** adds grain selector + totals table (remainder edges contribute $0). **`bbdCashFlowSuggestions`** maps first projection year to proposed **`CashFlowEdgeSpec`** rows; operators run default **`POST /api/bbd-projection/run`** (MC off) and **Add edge** before **Save graph**. **`docker compose run --no-deps web`** **`npm ci`**, **`npm run test`**, **`npm run build`**.
+
+**Manual VAL:** Budget → cash flow map → switch grain; optional **Generate suggestions from BBD** when API available → add edge → **Save graph** → **Reload**.
+
+---
+
 ## 2026-05-10 (session) — T-FR-0006-04 Budget React Flow panel
 
 **Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-04-react-flow`**

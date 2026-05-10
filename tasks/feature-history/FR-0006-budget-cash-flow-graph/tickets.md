@@ -117,11 +117,17 @@ Deliver **P3** from [`docs/design/budget-cash-flow-graph.md`](../../../docs/desi
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | Time math | Tests cover aggregation windows and edge cases (empty graph, zero flows) |
-| **DEV** | Implement UX + API | Controls in SPA; server or client aggregation per design decision |
-| **VAL** | Performance sanity | Documented check on realistic graph size; no blocking main-thread regressions |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Time math | Tests cover aggregation windows and edge cases (empty graph, zero flows) | done |
+| **DEV** | Implement UX + API | Controls in SPA; server or client aggregation per design decision | done |
+| **VAL** | Performance sanity | Documented check on realistic graph size; no blocking main-thread regressions | done |
+
+**VAL notes:** Client **`aggregateNodeFlows`** / **`cashFlowTimeAggregation`** + grain selector on **`CashFlowGraphPanel`**; plan income wired for percent edges; **`docker compose run … npm run build`** + **`npm run test`**.
+
+#### Notes
+
+- **`CashFlowSnapshot`** not materialized — client aggregation sufficient at this stage.
 
 ---
 
@@ -136,11 +142,17 @@ Deliver **P3** from [`docs/design/budget-cash-flow-graph.md`](../../../docs/desi
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | Suggestion mapping | Tests for mapping projection artifacts → proposed edges (fixture JSON) |
-| **DEV** | Implement integration | API + minimal UI affordance; design doc **`DESIGN-GAP`** cleared or tagged |
-| **VAL** | Operator clarity | Doc note in operator guide; manual walkthrough recorded in diary |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Suggestion mapping | Tests for mapping projection artifacts → proposed edges (fixture JSON) | done |
+| **DEV** | Implement integration | API + minimal UI affordance; design doc **`DESIGN-GAP`** cleared or tagged | done |
+| **VAL** | Operator clarity | Doc note in operator guide; manual walkthrough recorded in diary | done |
+
+**VAL notes:** **`bbdCashFlowSuggestions`** maps **`BbdRunResponse.schedule[0]`** to proposed **`CashFlowEdgeSpec`**; Budget UI runs **`POST /api/bbd-projection/run`** (default scenario, MC off) then **Add edge** per suggestion; serial diary walkthrough.
+
+#### Notes
+
+- **`DESIGN-GAP`:** Heuristic mapping only — refine when projection exposes richer cash-flow facts (tagged in **`bbdCashFlowSuggestions.ts`**).
 
 ---
 

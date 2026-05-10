@@ -24,6 +24,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '../../api/client'
 import type { CashFlowEdgeSpec, CashFlowNodeSpec, CashNodeKind } from '../../types'
+import { suggestedEdgesFromBbdResponse } from '../../lib/bbdCashFlowSuggestions'
 import {
   CashEdgeData,
   CashFlowRfNode,
@@ -33,6 +34,11 @@ import {
   graphDocumentToFlowElements,
   newEdgeRef,
 } from '../../lib/cashFlowGraphFlow'
+import {
+  aggregateNodeFlows,
+  type TimeGrain,
+} from '../../lib/cashFlowTimeAggregation'
+import { formatUsd } from '../../lib/budgetAllocation'
 
 const KIND_OPTIONS: CashNodeKind[] = [
   'income_source',
@@ -62,9 +68,11 @@ const CashFlowNodeViewMemo = memo(CashFlowNodeView)
 
 interface Props {
   planId: number | null
+  /** Used for percent-of-inflow aggregation (plan summary monthly income). */
+  planIncomeMonthly?: number | null
 }
 
-export function CashFlowGraphPanel({ planId }: Props) {
+export function CashFlowGraphPanel({ planId, planIncomeMonthly = null }: Props) {
   const queryClient = useQueryClient()
   const [nodes, setNodes] = useNodesState<CashFlowRfNode>([])
   const [edges, setEdges] = useEdgesState<Edge<CashEdgeData>>([])
@@ -74,6 +82,11 @@ export function CashFlowGraphPanel({ planId }: Props) {
   const [addName, setAddName] = useState('')
   const [addKind, setAddKind] = useState<CashNodeKind>('checking')
   const [addError, setAddError] = useState<string | null>(null)
+  const [grain, setGrain] = useState<TimeGrain>('month')
+  const [bbdSuggestions, setBbdSuggestions] = useState<{
+    edges: CashFlowEdgeSpec[]
+    meta: { rationale: string }[]
+  } | null>(null)
 
   const graphQuery = useQuery({
     queryKey: ['budgetCashFlowGraph', planId],
@@ -99,6 +112,25 @@ export function CashFlowGraphPanel({ planId }: Props) {
     onSuccess: data => {
       if (planId != null) {
         queryClient.setQueryData(['budgetCashFlowGraph', planId], data)
+      }
+    },
+  })
+
+  const bbdSuggestMut = useMutation({
+    mutationFn: async () => {
+      const def = await api.bbdDefaultScenario()
+      return api.bbdProjectionRun({
+        scenario: def.scenario,
+        monte_carlo_trials: 0,
+      })
+    },
+    onSuccess: data => {
+      if (planId == null) return
+      try {
+        const doc = flowElementsToGraphDocument(planId, nodes, edges)
+        setBbdSuggestions(suggestedEdgesFromBbdResponse(data, doc.nodes))
+      } catch {
+        setBbdSuggestions(null)
       }
     },
   })
@@ -154,6 +186,22 @@ export function CashFlowGraphPanel({ planId }: Props) {
     () => edges.find(e => e.id === selectedEdgeId),
     [edges, selectedEdgeId],
   )
+
+  const graphDocForAgg = useMemo(() => {
+    if (planId == null) return null
+    try {
+      return flowElementsToGraphDocument(planId, nodes, edges)
+    } catch {
+      return null
+    }
+  }, [planId, nodes, edges])
+
+  const nodeTotals = useMemo(() => {
+    if (!graphDocForAgg) return {}
+    return aggregateNodeFlows(graphDocForAgg, grain, {
+      planIncomeMonthly: planIncomeMonthly ?? null,
+    })
+  }, [graphDocForAgg, grain, planIncomeMonthly])
 
   const patchSelectedNode = useCallback(
     (partial: Partial<CashFlowNodeSpec>) => {
@@ -215,6 +263,25 @@ export function CashFlowGraphPanel({ planId }: Props) {
     setAddError(null)
   }, [addKind, addName, addRef, nodes.length, nodes, setNodes])
 
+  const addSuggestedEdge = useCallback(
+    (spec: CashFlowEdgeSpec) => {
+      setEdges(eds => {
+        if (eds.some(e => e.id === spec.ref)) return eds
+        return [
+          ...eds,
+          {
+            id: spec.ref,
+            source: spec.from_ref,
+            target: spec.to_ref,
+            label: edgeSummaryLabel(spec),
+            data: { spec },
+          },
+        ]
+      })
+    },
+    [setEdges],
+  )
+
   const nodeTypes = useMemo(
     (): NodeTypes => ({ cashNode: CashFlowNodeViewMemo }),
     [],
@@ -265,6 +332,111 @@ export function CashFlowGraphPanel({ planId }: Props) {
               <span className="text-xs text-red-700" role="alert">
                 {saveMut.error instanceof Error ? saveMut.error.message : 'Save failed'}
               </span>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Time view (approximate)
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-xs text-slate-600 flex items-center gap-2">
+                Grain
+                <select
+                  className="rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                  value={grain}
+                  onChange={e => setGrain(e.target.value as TimeGrain)}
+                  aria-label="Aggregation time grain"
+                >
+                  <option value="day">Day</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                </select>
+              </label>
+              <span className="text-[11px] text-slate-500">
+                Fixed and percent-of-inflow edges; remainder flows count as $0 here.
+              </span>
+            </div>
+            {graphDocForAgg && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-slate-500 border-b border-slate-100">
+                      <th className="py-1 pr-2">Node</th>
+                      <th className="py-1 pr-2 tabular-nums">In</th>
+                      <th className="py-1 pr-2 tabular-nums">Out</th>
+                      <th className="py-1 tabular-nums">Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {graphDocForAgg.nodes.map(n => {
+                      const t = nodeTotals[n.ref]
+                      return (
+                        <tr key={n.ref} className="border-b border-slate-50">
+                          <td className="py-1 pr-2 font-medium text-slate-800">{n.display_name}</td>
+                          <td className="py-1 pr-2 tabular-nums">{formatUsd(t?.inflow ?? 0)}</td>
+                          <td className="py-1 pr-2 tabular-nums">{formatUsd(t?.outflow ?? 0)}</td>
+                          <td className="py-1 tabular-nums">{formatUsd(t?.net ?? 0)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3 space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-widest text-amber-900/80">
+              BBD-linked suggestions
+            </div>
+            <p className="text-[11px] text-amber-950/85 leading-snug">
+              Runs the default projection once (deterministic path; Monte Carlo off). Proposed edges can be
+              added below — nothing persists until <strong>Save graph</strong>.
+            </p>
+            <button
+              type="button"
+              disabled={bbdSuggestMut.isPending}
+              onClick={() => {
+                setBbdSuggestions(null)
+                bbdSuggestMut.mutate()
+              }}
+              className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
+            >
+              {bbdSuggestMut.isPending ? 'Running projection…' : 'Generate suggestions from BBD'}
+            </button>
+            {bbdSuggestMut.isError && (
+              <p className="text-xs text-red-700" role="alert">
+                {bbdSuggestMut.error instanceof Error ? bbdSuggestMut.error.message : 'Projection failed'}
+              </p>
+            )}
+            {bbdSuggestions && bbdSuggestions.edges.length === 0 && !bbdSuggestMut.isPending && (
+              <p className="text-xs text-slate-600">
+                No suggestions — ensure checking / brokerage / income nodes exist, or dividends and draws are
+                positive in the projection.
+              </p>
+            )}
+            {bbdSuggestions && bbdSuggestions.edges.length > 0 && (
+              <ul className="space-y-2">
+                {bbdSuggestions.edges.map((spec, i) => (
+                  <li
+                    key={spec.ref}
+                    className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-amber-100 bg-white px-2 py-2 text-xs"
+                  >
+                    <div>
+                      <div className="font-medium text-slate-800">{spec.label}</div>
+                      <div className="text-slate-500">{bbdSuggestions.meta[i]?.rationale}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addSuggestedEdge(spec)}
+                      className="shrink-0 rounded-md bg-slate-800 px-2 py-1 text-[11px] font-semibold text-white hover:bg-slate-900"
+                    >
+                      Add edge
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
