@@ -38,6 +38,8 @@ services:
       - /app/node_modules                 # keep image deps; bind mount hides them otherwise
     environment:
       VITE_API_TARGET: "http://api:8000"
+      # Headroom for `npm run build` (Vite + larger SPA chunks) inside the Node container.
+      NODE_OPTIONS: "--max-old-space-size=6144"
     depends_on:
       - api
     restart: unless-stopped

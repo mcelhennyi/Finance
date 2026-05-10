@@ -1,7 +1,13 @@
 import type {
+  AllocationItem,
+  AllocationItemListResponse,
+  AllocationPlan,
+  AllocationPlanListResponse,
+  AllocationSummary,
   BbdDefaultScenarioResponse,
   BbdRunPayload,
   BbdRunResponse,
+  CashFlowGraphDocument,
   FilterState,
   Filters,
   IngestionResult,
@@ -74,6 +80,14 @@ async function deleteQuery<T>(path: string, params: URLSearchParams): Promise<T>
   return res.json() as Promise<T>
 }
 
+async function delPath(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error((err as { detail?: string }).detail ?? res.statusText)
+  }
+}
+
 export const api = {
   unifiedViewSummary: (monthIsoDate: string, asOf?: string) => {
     const p = new URLSearchParams()
@@ -119,4 +133,39 @@ export const api = {
     postJson<BbdRunResponse>('/bbd-projection/run', payload),
 
   bbdDefaultScenario: () => get<BbdDefaultScenarioResponse>('/bbd-projection/default-scenario'),
+
+  listBudgetAllocationPlans: (monthIsoDate: string) => {
+    const p = new URLSearchParams()
+    p.set('month', monthIsoDate)
+    return get<AllocationPlanListResponse>('/budget-allocation/plans', p)
+  },
+
+  createBudgetAllocationPlan: (body: Record<string, unknown>) =>
+    postJson<AllocationPlan>('/budget-allocation/plans', body),
+
+  updateBudgetAllocationPlan: (planId: number, body: Record<string, unknown>) =>
+    putJson<AllocationPlan>(`/budget-allocation/plans/${planId}`, body),
+
+  deleteBudgetAllocationPlan: (planId: number) => delPath(`/budget-allocation/plans/${planId}`),
+
+  listBudgetAllocationItems: (planId: number) =>
+    get<AllocationItemListResponse>(`/budget-allocation/plans/${planId}/items`),
+
+  createBudgetAllocationItem: (planId: number, body: Record<string, unknown>) =>
+    postJson<AllocationItem>(`/budget-allocation/plans/${planId}/items`, body),
+
+  updateBudgetAllocationItem: (planId: number, itemId: number, body: Record<string, unknown>) =>
+    putJson<AllocationItem>(`/budget-allocation/plans/${planId}/items/${itemId}`, body),
+
+  deleteBudgetAllocationItem: (planId: number, itemId: number) =>
+    delPath(`/budget-allocation/plans/${planId}/items/${itemId}`),
+
+  budgetAllocationSummary: (planId: number) =>
+    get<AllocationSummary>(`/budget-allocation/plans/${planId}/summary`),
+
+  getBudgetCashFlowGraph: (planId: number) =>
+    get<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`),
+
+  putBudgetCashFlowGraph: (planId: number, body: CashFlowGraphDocument) =>
+    putJson<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`, body),
 }
