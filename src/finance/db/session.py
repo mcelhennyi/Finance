@@ -78,11 +78,49 @@ def apply_additive_schema_fixes(engine: Engine) -> None:
         )
 
 
+def apply_cash_flow_nodes_parent_ref_column(engine: Engine) -> None:
+    """Add ``parent_ref`` to ``cash_flow_nodes`` when missing (SQLite / legacy volumes)."""
+
+    insp = inspect(engine)
+    if not insp.has_table("cash_flow_nodes"):
+        return
+    cols = {c["name"] for c in insp.get_columns("cash_flow_nodes")}
+    if "parent_ref" in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE cash_flow_nodes ADD COLUMN parent_ref VARCHAR(64)"))
+
+
+def apply_cash_flow_nodes_account_metadata_columns(engine: Engine) -> None:
+    """Add account metadata columns to ``cash_flow_nodes`` when missing."""
+
+    insp = inspect(engine)
+    if not insp.has_table("cash_flow_nodes"):
+        return
+    cols = {c["name"] for c in insp.get_columns("cash_flow_nodes")}
+    alters = [
+        ("currency", "ALTER TABLE cash_flow_nodes ADD COLUMN currency VARCHAR(3) NOT NULL DEFAULT 'USD'"),
+        ("current_balance", "ALTER TABLE cash_flow_nodes ADD COLUMN current_balance NUMERIC(12, 2)"),
+        ("balance_as_of", "ALTER TABLE cash_flow_nodes ADD COLUMN balance_as_of DATE"),
+        ("account_mask", "ALTER TABLE cash_flow_nodes ADD COLUMN account_mask VARCHAR(32)"),
+        ("notes", "ALTER TABLE cash_flow_nodes ADD COLUMN notes TEXT NOT NULL DEFAULT ''"),
+        ("is_active", "ALTER TABLE cash_flow_nodes ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"),
+    ]
+    missing = [sql for col, sql in alters if col not in cols]
+    if not missing:
+        return
+    with engine.begin() as conn:
+        for sql in missing:
+            conn.execute(text(sql))
+
+
 def init_db() -> None:
     """Create all tables if they don't exist; upgrade legacy SQLite schemas additively."""
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
     apply_additive_schema_fixes(engine)
+    apply_cash_flow_nodes_parent_ref_column(engine)
+    apply_cash_flow_nodes_account_metadata_columns(engine)
 
 
 @contextmanager

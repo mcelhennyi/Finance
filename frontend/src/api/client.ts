@@ -4,6 +4,11 @@ import type {
   AllocationPlan,
   AllocationPlanListResponse,
   AllocationSummary,
+  BudgetCategoryCatalogItem,
+  BudgetCategoryInventoryListOut,
+  BudgetCategoryLinkedAllocationItemListOut,
+  BudgetCategoryOptionsOut,
+  BudgetCategoryReassignOut,
   BbdDefaultScenarioResponse,
   BbdRunPayload,
   BbdRunResponse,
@@ -171,4 +176,23 @@ export const api = {
 
   putBudgetCashFlowGraph: (planId: number, body: CashFlowGraphDocument) =>
     putJson<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`, body),
+
+  listBudgetCategoryOptions: () => get<BudgetCategoryOptionsOut>('/budget-allocation/category-options'),
+
+  listBudgetCategoryInventory: () => get<BudgetCategoryInventoryListOut>('/budget-allocation/category-inventory'),
+
+  listBudgetCategoryInventoryItems: (label: string) =>
+    get<BudgetCategoryLinkedAllocationItemListOut>(
+      '/budget-allocation/category-inventory/items',
+      new URLSearchParams({ label }),
+    ),
+
+  createBudgetCategoryCatalogEntry: (body: { label: string }) =>
+    postJson<BudgetCategoryCatalogItem>('/budget-allocation/category-catalog', body),
+
+  reassignBudgetCategory: (body: { from_label: string; replacement_label: string }) =>
+    postJson<BudgetCategoryReassignOut>('/budget-allocation/category-reassign', body),
+
+  deleteBudgetCategoryCatalogEntry: (labelId: number) =>
+    delPath(`/budget-allocation/category-catalog/${labelId}`),
 }

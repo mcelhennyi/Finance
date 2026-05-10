@@ -23,6 +23,12 @@ function stableOffset(ref: string): { x: number; y: number } {
   return { x: (u % 6) * GRID_X, y: ((u / 6) | 0) % 5 * GRID_Y }
 }
 
+/** Default canvas coordinates for a new graph node from its ref. */
+export function defaultNodeLayoutForRef(ref: string): { layout_x: number; layout_y: number } {
+  const o = stableOffset(ref)
+  return { layout_x: o.x, layout_y: o.y }
+}
+
 export type CashNodeData = { spec: CashFlowNodeSpec; highlighted?: boolean }
 export type CashEdgeData = { spec: CashFlowEdgeSpec }
 
@@ -100,8 +106,15 @@ export function flowElementsToGraphDocument(
       display_name: prev?.display_name?.trim() ? prev.display_name.trim() : ref,
       kind: (prev?.kind ?? 'other') as CashNodeKind,
       institution: prev?.institution ?? null,
+      parent_ref: prev?.parent_ref?.trim() ? prev.parent_ref.trim() : null,
       layout_x: n.position.x,
       layout_y: n.position.y,
+      currency: prev?.currency ?? 'USD',
+      current_balance: prev?.current_balance ?? null,
+      balance_as_of: prev?.balance_as_of ?? null,
+      account_mask: prev?.account_mask?.trim() ? prev.account_mask.trim() : null,
+      notes: prev?.notes ?? '',
+      is_active: prev?.is_active ?? true,
     }
   })
 

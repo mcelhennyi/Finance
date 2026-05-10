@@ -10,6 +10,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from finance.allocation.budget_sync import sync_allocation_to_budgets
+from finance.allocation.category_catalog import ensure_budget_category_labels_from_strings
 from finance.allocation.default_template import (
     allocation_auto_template_enabled,
     starter_plan_create,
@@ -134,6 +135,7 @@ def create_allocation_item(
     refresh_item_monthly_amount(row)
     session.add(row)
     session.flush()
+    ensure_budget_category_labels_from_strings(session, [payload.category])
     sync_allocation_to_budgets(session, session.get(AllocationPlan, plan_id).period_month)
     return row
 
@@ -185,6 +187,8 @@ def update_allocation_item(
     if "planned_amount" in data or "cadence" in data:
         refresh_item_monthly_amount(row)
     session.flush()
+    if "category" in data and data["category"] is not None:
+        ensure_budget_category_labels_from_strings(session, [row.category])
     plan = session.get(AllocationPlan, row.plan_id)
     if plan is not None:
         sync_allocation_to_budgets(session, plan.period_month)

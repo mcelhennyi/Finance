@@ -203,6 +203,51 @@ export interface AllocationItemListResponse {
   items: AllocationItem[]
 }
 
+/** Merged category strings for budget line pickers (`/api/budget-allocation/category-options`). */
+export interface BudgetCategoryOptionsOut {
+  labels: string[]
+}
+
+export interface BudgetCategoryCatalogItem {
+  id: number
+  label: string
+}
+
+/** Per-label usage for the Budget categories table (`/api/budget-allocation/category-inventory`). */
+export interface BudgetCategoryInventoryItem {
+  label: string
+  allocation_item_count: number
+  catalog_id: number | null
+}
+
+export interface BudgetCategoryInventoryListOut {
+  items: BudgetCategoryInventoryItem[]
+}
+
+export interface BudgetCategoryLinkedAllocationItem {
+  id: number
+  plan_id: number
+  plan_name: string
+  period_month: string
+  item_name: string
+  category: string
+  planned_amount: number
+  cadence: string
+  monthly_amount: number
+  payment_method: string
+  due_day: number | null
+  notes: string
+  sort_order: number
+}
+
+export interface BudgetCategoryLinkedAllocationItemListOut {
+  items: BudgetCategoryLinkedAllocationItem[]
+}
+
+export interface BudgetCategoryReassignOut {
+  items_updated: number
+}
+
 /** Cash-flow graph (`/api/budget-allocation/plans/{id}/cash-flow-graph`, T-FR-0006). */
 
 export type CashNodeKind =
@@ -223,8 +268,16 @@ export interface CashFlowNodeSpec {
   display_name: string
   kind: CashNodeKind
   institution: string | null
+  /** Parent account node ref within the same plan (e.g. card under a Chase profile). */
+  parent_ref?: string | null
   layout_x: number | null
   layout_y: number | null
+  currency?: string
+  current_balance?: string | null
+  balance_as_of?: string | null
+  account_mask?: string | null
+  notes?: string
+  is_active?: boolean
 }
 
 /** API returns decimals as strings in JSON. */

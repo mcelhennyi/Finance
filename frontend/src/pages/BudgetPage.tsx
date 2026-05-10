@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -21,12 +21,14 @@ import {
 import { coverageAccountLabelFromGraph, planMoneyFlowPhrases } from '../lib/budgetPlanMoneyFlows'
 import { firstOfMonthFromYm } from '../lib/monthRange'
 import { loadBudgetPagePrefs, persistBudgetPagePrefs } from '../lib/budgetPagePrefs'
-import type { AllocationItem, AllocationPlan } from '../types'
+import type { AllocationItem, AllocationPlan, BudgetCategoryLinkedAllocationItem } from '../types'
 import { BudgetDocsSectionLink, useBudgetDocs } from '../components/budget/BudgetDocsContext'
 import { BUDGET_FIELD_TIPS } from '../components/budget/budgetFieldTips'
 import { BUDGET_SCROLL_ANCHORS, type BudgetDocsSection } from '../components/budget/budgetDocAnchors'
 import { CashFlowGraphPanel } from '../components/budget/CashFlowGraphPanel'
 import { OutputHoverTip } from '../components/OutputHoverTip'
+
+const BUDGET_CATEGORY_DATALIST_ID = 'finance-budget-category-datalist'
 
 const EMPTY_GRAPH_HIGHLIGHT_REFS: string[] = []
 
@@ -110,6 +112,10 @@ export function BudgetPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [loadModalOpen, setLoadModalOpen] = useState(false)
   const [graphPayHoverNodeRef, setGraphPayHoverNodeRef] = useState<string | null>(null)
+  const [newCatalogLabel, setNewCatalogLabel] = useState('')
+  const [expandedCategoryLabel, setExpandedCategoryLabel] = useState<string | null>(null)
+  const [categoryLineDrafts, setCategoryLineDrafts] = useState<Record<number, string>>({})
+  const [updatingCategoryLineId, setUpdatingCategoryLineId] = useState<number | null>(null)
 
   const { openDocs } = useBudgetDocs()
   const barBottom = 'max(0.75rem, env(safe-area-inset-bottom, 0px))'
@@ -140,6 +146,8 @@ export function BudgetPage() {
     queryClient.invalidateQueries({ queryKey: ['budgetSummary'] })
     queryClient.invalidateQueries({ queryKey: ['budgetCashFlowGraph'] })
     queryClient.invalidateQueries({ queryKey: ['unifiedViewSummary'] })
+    queryClient.invalidateQueries({ queryKey: ['budgetCategoryOptions'] })
+    queryClient.invalidateQueries({ queryKey: ['budgetCategoryInventory'] })
   }
 
   const plansQuery = useQuery({
@@ -200,6 +208,57 @@ export function BudgetPage() {
     () => planMoneyFlowPhrases(planGraphQuery.data ?? undefined),
     [planGraphQuery.data],
   )
+
+  const categoryOptionsQuery = useQuery({
+    queryKey: ['budgetCategoryOptions'],
+    queryFn: () => api.listBudgetCategoryOptions(),
+  })
+
+  const categoryInventoryQuery = useQuery({
+    queryKey: ['budgetCategoryInventory'],
+    queryFn: () => api.listBudgetCategoryInventory(),
+  })
+
+  const categoryInventoryItemsQuery = useQuery({
+    queryKey: ['budgetCategoryInventoryItems', expandedCategoryLabel],
+    queryFn: () => api.listBudgetCategoryInventoryItems(expandedCategoryLabel!),
+    enabled: expandedCategoryLabel != null,
+  })
+
+  const updateCategoryLineMut = useMutation({
+    mutationFn: ({ line, replacement }: { line: BudgetCategoryLinkedAllocationItem; replacement: string }) =>
+      api.updateBudgetAllocationItem(line.plan_id, line.id, { category: replacement }),
+    onSuccess: (_item, vars) => {
+      setCategoryLineDrafts(cur => {
+        const next = { ...cur }
+        delete next[vars.line.id]
+        return next
+      })
+      invalidateAll()
+      queryClient.invalidateQueries({ queryKey: ['budgetCategoryInventoryItems'] })
+    },
+    onSettled: () => {
+      setUpdatingCategoryLineId(null)
+    },
+  })
+
+  const categoryPickerLabels = useMemo(
+    () => categoryOptionsQuery.data?.labels ?? [],
+    [categoryOptionsQuery.data],
+  )
+
+  const addCatalogMut = useMutation({
+    mutationFn: (label: string) => api.createBudgetCategoryCatalogEntry({ label }),
+    onSuccess: () => {
+      setNewCatalogLabel('')
+      invalidateAll()
+    },
+  })
+
+  const deleteCatalogMut = useMutation({
+    mutationFn: (id: number) => api.deleteBudgetCategoryCatalogEntry(id),
+    onSuccess: () => invalidateAll(),
+  })
 
   const summaryQuery = useQuery({
     queryKey: ['budgetSummary', selectedPlanId],
@@ -415,6 +474,14 @@ export function BudgetPage() {
         <BudgetDocsSectionLink section="monthAndPlans" label="Months & plans ›" />
         <BudgetDocsSectionLink section="cashFlowMap" label="Cash flow visualization ›" />
         <BudgetDocsSectionLink section="unifiedSync" label="Unified view sync ›" />
+        {plans.length > 0 && (
+          <a
+            href={`#${BUDGET_SCROLL_ANCHORS.categories}`}
+            className="font-semibold text-teal-700 hover:text-teal-900"
+          >
+            Categories ›
+          </a>
+        )}
       </div>
 
       {plansQuery.isLoading && <div className="h-32 rounded-xl bg-slate-100 animate-pulse" />}
@@ -624,6 +691,230 @@ export function BudgetPage() {
             </div>
           )}
 
+          <datalist id={BUDGET_CATEGORY_DATALIST_ID}>
+            {categoryPickerLabels.map(label => (
+              <option key={label} value={label} />
+            ))}
+          </datalist>
+
+          <div id={BUDGET_SCROLL_ANCHORS.categories} className="scroll-mt-24">
+            <SectionTitle>Categories</SectionTitle>
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Each row is a category string. <strong>Lines</strong> counts allocation rows using that category
+                (all plans). <strong>Saved</strong> means the label is stored for quick pick — new lines and budget
+                seeding add categories here automatically. Open a nonzero line count to reassign individual lines;
+                delete is available once no allocation lines use the saved category.
+              </p>
+              {categoryOptionsQuery.isError && (
+                <p className="text-xs text-red-700" role="alert">
+                  Could not load merged category suggestions.
+                </p>
+              )}
+              {categoryInventoryQuery.isError && (
+                <p className="text-xs text-red-700" role="alert">
+                  Could not load category inventory.
+                </p>
+              )}
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="flex flex-col gap-1 text-sm min-w-[12rem] flex-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                    Add saved category
+                  </span>
+                  <input
+                    type="text"
+                    value={newCatalogLabel}
+                    onChange={e => setNewCatalogLabel(e.target.value)}
+                    placeholder="e.g. Childcare"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                    list={BUDGET_CATEGORY_DATALIST_ID}
+                    maxLength={100}
+                    aria-label="New saved category name"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = newCatalogLabel.trim()
+                    if (!t) return
+                    addCatalogMut.mutate(t)
+                  }}
+                  disabled={addCatalogMut.isPending || !newCatalogLabel.trim()}
+                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  {addCatalogMut.isPending ? 'Adding…' : 'Add'}
+                </button>
+              </div>
+              {addCatalogMut.isError && (
+                <p className="text-xs text-red-700" role="alert">
+                  {addCatalogMut.error instanceof Error ? addCatalogMut.error.message : 'Add failed'}
+                </p>
+              )}
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <table className="w-full text-sm min-w-[28rem]">
+                  <thead>
+                    <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50/90 border-b border-slate-100">
+                      <th className="px-3 py-2">Category</th>
+                      <th className="px-3 py-2 tabular-nums">Lines</th>
+                      <th className="px-3 py-2">Saved</th>
+                      <th className="px-3 py-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryInventoryQuery.isLoading ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-400">
+                          Loading…
+                        </td>
+                      </tr>
+                    ) : (categoryInventoryQuery.data?.items.length ?? 0) === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-500">
+                          No categories yet. Add a saved name or create allocation lines.
+                        </td>
+                      </tr>
+                    ) : (
+                      (categoryInventoryQuery.data?.items ?? []).map(row => {
+                        const isExpanded = expandedCategoryLabel === row.label
+                        const linkedLines = categoryInventoryItemsQuery.data?.items ?? []
+                        return (
+                          <Fragment key={row.label}>
+                            <tr className="border-b border-slate-50 last:border-0">
+                              <td className="px-3 py-2 font-medium text-slate-800">{row.label}</td>
+                              <td className="px-3 py-2 tabular-nums text-slate-700">
+                                {row.allocation_item_count > 0 ? (
+                                  <button
+                                    type="button"
+                                    className="font-semibold text-teal-700 underline decoration-dotted underline-offset-2 hover:text-teal-900"
+                                    aria-expanded={isExpanded}
+                                    onClick={() =>
+                                      setExpandedCategoryLabel(cur => (cur === row.label ? null : row.label))
+                                    }
+                                  >
+                                    {row.allocation_item_count}
+                                  </button>
+                                ) : (
+                                  row.allocation_item_count
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-slate-600">{row.catalog_id != null ? 'Yes' : '—'}</td>
+                              <td className="px-3 py-2 text-right whitespace-nowrap space-x-2">
+                                {row.catalog_id != null && row.allocation_item_count === 0 && (
+                                  <button
+                                    type="button"
+                                    className="text-xs font-semibold text-red-700 hover:text-red-900"
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          `Delete saved category "${row.label}" from the list? (No allocation lines use it.)`,
+                                        )
+                                      ) {
+                                        deleteCatalogMut.mutate(row.catalog_id!)
+                                      }
+                                    }}
+                                    disabled={deleteCatalogMut.isPending}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr className="border-b border-slate-100 bg-slate-50/60">
+                                <td colSpan={4} className="px-3 py-3">
+                                  {categoryInventoryItemsQuery.isLoading ? (
+                                    <p className="text-xs text-slate-400">Loading linked lines…</p>
+                                  ) : categoryInventoryItemsQuery.isError ? (
+                                    <p className="text-xs text-red-700" role="alert">
+                                      Could not load linked allocation lines.
+                                    </p>
+                                  ) : linkedLines.length === 0 ? (
+                                    <p className="text-xs text-slate-500">No linked lines remain for this category.</p>
+                                  ) : (
+                                    <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white">
+                                      <table className="w-full min-w-[42rem] text-xs">
+                                        <thead>
+                                          <tr className="bg-white text-left text-[10px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                            <th className="px-3 py-2">Plan</th>
+                                            <th className="px-3 py-2">Line</th>
+                                            <th className="px-3 py-2 tabular-nums">Monthly</th>
+                                            <th className="px-3 py-2">Current</th>
+                                            <th className="px-3 py-2">Replacement</th>
+                                            <th className="px-3 py-2 text-right">Action</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {linkedLines.map(line => {
+                                            const draft = categoryLineDrafts[line.id] ?? ''
+                                            const replacement = draft.trim()
+                                            return (
+                                              <tr key={line.id} className="border-b border-slate-50 last:border-0">
+                                                <td className="px-3 py-2 text-slate-600">
+                                                  <div className="font-medium text-slate-800">{line.plan_name}</div>
+                                                  <div>{formatPlanPeriodLabel(line.period_month)}</div>
+                                                </td>
+                                                <td className="px-3 py-2 text-slate-700">
+                                                  <div className="font-medium text-slate-800">{line.item_name}</div>
+                                                  <div className="text-slate-500">{line.cadence.replace(/_/g, ' ')}</div>
+                                                </td>
+                                                <td className="px-3 py-2 tabular-nums text-slate-700">
+                                                  {formatUsd(line.monthly_amount)}
+                                                </td>
+                                                <td className="px-3 py-2 text-slate-600">{line.category}</td>
+                                                <td className="px-3 py-2">
+                                                  <input
+                                                    className="w-full rounded border border-slate-200 px-2 py-1"
+                                                    value={draft}
+                                                    onChange={e =>
+                                                      setCategoryLineDrafts(cur => ({
+                                                        ...cur,
+                                                        [line.id]: e.target.value,
+                                                      }))
+                                                    }
+                                                    list={BUDGET_CATEGORY_DATALIST_ID}
+                                                    placeholder="New category"
+                                                    maxLength={100}
+                                                    aria-label={`Replacement category for ${line.item_name}`}
+                                                  />
+                                                </td>
+                                                <td className="px-3 py-2 text-right">
+                                                  <button
+                                                    type="button"
+                                                    disabled={
+                                                      updateCategoryLineMut.isPending ||
+                                                      !replacement ||
+                                                      replacement === line.category
+                                                    }
+                                                    className="text-xs font-semibold text-teal-700 hover:text-teal-900 disabled:opacity-50"
+                                                    onClick={() => {
+                                                      if (!replacement || replacement === line.category) return
+                                                      setUpdatingCategoryLineId(line.id)
+                                                      updateCategoryLineMut.mutate({ line, replacement })
+                                                    }}
+                                                  >
+                                                    {updatingCategoryLineId === line.id ? 'Saving…' : 'Relink'}
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            )
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           {itemsQuery.isError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               Could not load items: {itemsErr}
@@ -696,6 +987,8 @@ export function BudgetPage() {
                               className="w-full rounded border border-slate-200 px-2 py-1"
                               value={editDraft.category}
                               onChange={e => setEditDraft({ ...editDraft, category: e.target.value })}
+                              list={BUDGET_CATEGORY_DATALIST_ID}
+                              aria-label="Category"
                             />
                           </td>
                           <td className="px-3 py-2">
@@ -874,6 +1167,8 @@ export function BudgetPage() {
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
                   value={newItem.category}
                   onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                  list={BUDGET_CATEGORY_DATALIST_ID}
+                  aria-label="Category"
                 />
                 <input
                   placeholder="Amount"
@@ -942,7 +1237,9 @@ export function BudgetPage() {
             deletePlanMut.error ||
             createItemMut.error ||
             updateItemMut.error ||
-            deleteItemMut.error) && (
+            deleteItemMut.error ||
+            deleteCatalogMut.error ||
+            updateCategoryLineMut.error) && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
               {[
                 createPlanMut.error,
@@ -951,6 +1248,8 @@ export function BudgetPage() {
                 createItemMut.error,
                 updateItemMut.error,
                 deleteItemMut.error,
+                deleteCatalogMut.error,
+                updateCategoryLineMut.error,
               ]
                 .filter(Boolean)
                 .map(e => (e instanceof Error ? e.message : String(e)))

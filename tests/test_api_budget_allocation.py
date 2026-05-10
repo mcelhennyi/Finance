@@ -223,3 +223,133 @@ def test_allocation_auto_template_off_when_disabled(
     r = c.get("/api/budget-allocation/plans", params={"month": "2033-04-10"})
     assert r.status_code == 200
     assert r.json()["items"] == []
+
+
+@pytest.mark.unit
+def test_budget_category_catalog_and_options_merge(allocation_api_client: TestClient) -> None:
+    c = allocation_api_client
+    r = c.get("/api/budget-allocation/category-options")
+    assert r.status_code == 200
+    assert r.json()["labels"] == []
+
+    r = c.get("/api/budget-allocation/category-inventory")
+    assert r.status_code == 200
+    assert r.json()["items"] == []
+
+    r = c.post("/api/budget-allocation/category-catalog", json={"label": "  Kids  "})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["label"] == "Kids"
+    label_id = body["id"]
+
+    r = c.get("/api/budget-allocation/category-inventory")
+    kids_row = next(x for x in r.json()["items"] if x["label"] == "Kids")
+    assert kids_row["allocation_item_count"] == 0
+    assert kids_row["catalog_id"] == label_id
+
+    r = c.post("/api/budget-allocation/category-catalog", json={"label": "Kids"})
+    assert r.status_code == 409
+
+    r = c.post("/api/budget-allocation/plans", json={"period_month": "2026-11-01"})
+    plan_id = r.json()["id"]
+    c.post(
+        f"/api/budget-allocation/plans/{plan_id}/items",
+        json={
+            "item_name": "Rent",
+            "category": "Living",
+            "planned_amount": "100",
+            "cadence": "monthly",
+            "payment_method": "cash",
+        },
+    )
+
+    r = c.get("/api/budget-allocation/category-options")
+    assert r.status_code == 200
+    labels = r.json()["labels"]
+    assert "Kids" in labels
+    assert "Living" in labels
+
+    inv = c.get("/api/budget-allocation/category-inventory").json()["items"]
+    living_row = next(x for x in inv if x["label"] == "Living")
+    assert living_row["allocation_item_count"] == 1
+    assert living_row["catalog_id"] is not None
+    r = c.delete(f"/api/budget-allocation/category-catalog/{living_row['catalog_id']}")
+    assert r.status_code == 400
+
+    r = c.post(
+        "/api/budget-allocation/category-reassign",
+        json={"from_label": "Living", "replacement_label": "Housing"},
+    )
+    assert r.status_code == 200
+    assert r.json()["items_updated"] == 1
+    items = c.get(f"/api/budget-allocation/plans/{plan_id}/items").json()["items"]
+    assert items[0]["category"] == "Housing"
+
+    r = c.delete(f"/api/budget-allocation/category-catalog/{label_id}")
+    assert r.status_code == 200
+    r = c.delete("/api/budget-allocation/category-catalog/99999")
+    assert r.status_code == 404
+
+    r = c.get("/api/budget-allocation/category-options")
+    assert "Kids" not in r.json()["labels"]
+    assert "Living" not in r.json()["labels"]
+    assert "Housing" in r.json()["labels"]
+
+
+@pytest.mark.unit
+def test_budget_category_inventory_lists_linked_lines(allocation_api_client: TestClient) -> None:
+    c = allocation_api_client
+    r = c.post("/api/budget-allocation/plans", json={"period_month": "2026-11-01"})
+    november_plan = r.json()
+    r = c.post("/api/budget-allocation/plans", json={"period_month": "2026-12-01"})
+    december_plan = r.json()
+
+    r = c.post(
+        f"/api/budget-allocation/plans/{november_plan['id']}/items",
+        json={
+            "item_name": "Rent",
+            "category": "Living",
+            "planned_amount": "2100",
+            "cadence": "monthly",
+            "payment_method": "cash",
+        },
+    )
+    rent = r.json()
+    c.post(
+        f"/api/budget-allocation/plans/{december_plan['id']}/items",
+        json={
+            "item_name": "Utilities",
+            "category": "Living",
+            "planned_amount": "240",
+            "cadence": "monthly",
+            "payment_method": "credit",
+        },
+    )
+
+    r = c.get("/api/budget-allocation/category-inventory/items", params={"label": "Living"})
+    assert r.status_code == 200
+    lines = r.json()["items"]
+    assert [line["item_name"] for line in lines] == ["Utilities", "Rent"]
+    assert lines[0]["plan_name"] == "December 2026"
+    assert lines[0]["period_month"] == "2026-12-01"
+    assert lines[0]["plan_id"] == december_plan["id"]
+    assert lines[1]["planned_amount"] == pytest.approx(2100.0)
+
+    r = c.put(
+        f"/api/budget-allocation/plans/{november_plan['id']}/items/{rent['id']}",
+        json={"category": "Housing"},
+    )
+    assert r.status_code == 200
+
+    living_lines = c.get(
+        "/api/budget-allocation/category-inventory/items", params={"label": "Living"}
+    ).json()["items"]
+    housing_lines = c.get(
+        "/api/budget-allocation/category-inventory/items", params={"label": "Housing"}
+    ).json()["items"]
+    assert [line["item_name"] for line in living_lines] == ["Utilities"]
+    assert [line["item_name"] for line in housing_lines] == ["Rent"]
+
+    inv = c.get("/api/budget-allocation/category-inventory").json()["items"]
+    assert next(x for x in inv if x["label"] == "Living")["allocation_item_count"] == 1
+    assert next(x for x in inv if x["label"] == "Housing")["allocation_item_count"] == 1

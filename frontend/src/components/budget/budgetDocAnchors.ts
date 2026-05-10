@@ -23,6 +23,7 @@ export const BUDGET_SCROLL_ANCHORS = {
   planMoneyFlows: 'budget-anchor-plan-money-flows',
   lines: 'budget-anchor-lines',
   add: 'budget-anchor-add',
+  categories: 'budget-anchor-categories',
 } as const
 
 export function budgetDocsScrollStorageKey(version = 'v1'): string {

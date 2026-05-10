@@ -34,8 +34,15 @@ def get_plan_graph(session: Session, plan_id: int) -> CashFlowGraphDocument | No
             display_name=n.display_name,
             kind=CashNodeKind(n.kind),
             institution=n.institution,
+            parent_ref=n.parent_ref,
             layout_x=n.layout_x,
             layout_y=n.layout_y,
+            currency=n.currency,
+            current_balance=n.current_balance,
+            balance_as_of=n.balance_as_of,
+            account_mask=n.account_mask,
+            notes=n.notes,
+            is_active=n.is_active,
         )
         for n in nodes
     ]
@@ -101,8 +108,15 @@ def replace_plan_graph(session: Session, plan_id: int, payload: CashFlowGraphDoc
             display_name=spec.display_name,
             kind=spec.kind.value,
             institution=spec.institution,
+            parent_ref=spec.parent_ref,
             layout_x=spec.layout_x,
             layout_y=spec.layout_y,
+            currency=spec.currency,
+            current_balance=spec.current_balance,
+            balance_as_of=spec.balance_as_of,
+            account_mask=spec.account_mask,
+            notes=spec.notes,
+            is_active=spec.is_active,
             created_at=now,
             updated_at=now,
         )

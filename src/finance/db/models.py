@@ -172,6 +172,22 @@ class MerchantDisplayOverride(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class BudgetCategoryLabel(Base):
+    """User-saved category name for the budget allocation category picker.
+
+    Merged at read time with distinct ``Transaction.category`` and ``AllocationItem.category``
+    values so pickers stay aligned with ingested data and existing lines.
+
+    See Also: finance.allocation.category_catalog
+    """
+
+    __tablename__ = "budget_category_labels"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    label: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class CategoryOverride(Base):
     """Merchant-pattern-based category override rule."""
 
@@ -275,8 +291,15 @@ class CashFlowNode(Base):
     display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     kind: Mapped[str] = mapped_column(String(32), nullable=False)
     institution: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    parent_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
     layout_x: Mapped[float | None] = mapped_column(Float, nullable=True)
     layout_y: Mapped[float | None] = mapped_column(Float, nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    current_balance: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    balance_as_of: Mapped[date | None] = mapped_column(nullable=True)
+    account_mask: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow

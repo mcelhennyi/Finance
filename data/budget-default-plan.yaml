@@ -254,7 +254,8 @@ items:
     notes: Auto transfer from wells to frost
 
 # Example cash-flow map (persisted with this plan when seeded). Income lands in checking; savings
-# feeds checking; checking pays the Chase household card and sends a monthly sweep to brokerage cash.
+# feeds checking; checking pays each Chase profile (umbrella) and sweeps to brokerage. Card nodes
+# use parent_ref to nest under the household Chase profile (e.g. Sapphire under Ian's Chase).
 cash_flow_graph:
   nodes:
     - ref: payroll
@@ -275,12 +276,34 @@ cash_flow_graph:
       institution: null
       layout_x: 40
       layout_y: 200
-    - ref: chase
-      display_name: Chase (household card)
+    - ref: ian_chase
+      display_name: Ian's Chase
       kind: liability_surrogate
       institution: Chase
-      layout_x: 480
-      layout_y: 200
+      parent_ref: null
+      layout_x: 520
+      layout_y: 120
+    - ref: ian_chase_sapphire
+      display_name: Sapphire (Ian)
+      kind: liability_surrogate
+      institution: Chase
+      parent_ref: ian_chase
+      layout_x: 520
+      layout_y: 240
+    - ref: natalie_chase
+      display_name: Natalie's Chase
+      kind: liability_surrogate
+      institution: Chase
+      parent_ref: null
+      layout_x: 680
+      layout_y: 120
+    - ref: natalie_chase_freedom
+      display_name: Freedom (Natalie)
+      kind: liability_surrogate
+      institution: Chase
+      parent_ref: natalie_chase
+      layout_x: 680
+      layout_y: 240
     - ref: brokerage
       display_name: Taxable brokerage cash
       kind: brokerage_cash
@@ -306,12 +329,21 @@ cash_flow_graph:
       percent_of_inflow: null
       cadence: monthly
       day_of_month: null
-    - ref: edge_checking_to_chase
+    - ref: edge_checking_to_ian_chase
       from_ref: checking
-      to_ref: chase
-      label: Chase card autopay from checking (example)
+      to_ref: ian_chase
+      label: Ian's Chase autopay from checking (example)
       amount_rule: fixed
       fixed_amount: "3000.00"
+      percent_of_inflow: null
+      cadence: monthly
+      day_of_month: null
+    - ref: edge_checking_to_natalie_chase
+      from_ref: checking
+      to_ref: natalie_chase
+      label: Natalie's Chase autopay from checking (example)
+      amount_rule: fixed
+      fixed_amount: "800.00"
       percent_of_inflow: null
       cadence: monthly
       day_of_month: null

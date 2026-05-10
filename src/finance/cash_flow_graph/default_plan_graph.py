@@ -1,7 +1,7 @@
 """Default cash-flow graph for newly seeded allocation plans.
 
 Seeded plans attach a small graph so the Budget page map shows checking, savings,
-the Chase card surrogate, and income, with savings feeding checking.
+income, and a Chase umbrella with one linked card node, with savings feeding checking.
 
 See Also:
     docs/design/budget-cash-flow-graph.md
@@ -46,12 +46,22 @@ def default_seeded_plan_cash_flow_graph(plan_id: int) -> CashFlowGraphDocument:
                 layout_y=200.0,
             ),
             CashFlowNodeSpec(
-                ref="chase",
-                display_name="Chase",
+                ref="ian_chase",
+                display_name="Ian's Chase",
                 kind=CashNodeKind.LIABILITY_SURROGATE,
                 institution="Chase",
+                parent_ref=None,
                 layout_x=400.0,
-                layout_y=200.0,
+                layout_y=160.0,
+            ),
+            CashFlowNodeSpec(
+                ref="ian_chase_sapphire",
+                display_name="Sapphire (Ian)",
+                kind=CashNodeKind.LIABILITY_SURROGATE,
+                institution="Chase",
+                parent_ref="ian_chase",
+                layout_x=400.0,
+                layout_y=260.0,
             ),
         ],
         edges=[

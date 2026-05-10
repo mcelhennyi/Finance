@@ -32,12 +32,12 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 /** Table / KPI shorthand for the account implied by each payment method. */
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Checking',
-  credit: 'Chase',
+  credit: 'Credit card',
 }
 
-/** Cash-flow graph node ref tied to each payment method (default graph refs). */
-export function graphNodeRefForPaymentMethod(pm: PaymentMethod): 'checking' | 'chase' {
-  return pm === 'credit' ? 'chase' : 'checking'
+/** Cash-flow graph node ref tied to each payment method (must exist in the plan graph). */
+export function graphNodeRefForPaymentMethod(pm: PaymentMethod): string {
+  return pm === 'credit' ? 'ian_chase_sapphire' : 'checking'
 }
 
 export function formatUsd(n: number): string {

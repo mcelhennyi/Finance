@@ -25,6 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from finance.allocation.cadence import normalize_period_month
+from finance.allocation.category_catalog import ensure_budget_category_labels_from_strings
 from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
 from finance.allocation.schemas import AllocationItemCreate, AllocationPlanCreate
 from finance.allocation.service import (
@@ -203,6 +204,7 @@ def apply_budget_seed_yaml(session: Session, yaml_path: Path) -> tuple[int, date
     plan_row = create_allocation_plan(session, plan_create)
     for payload in item_creates:
         create_allocation_item(session, plan_row.id, payload)
+    ensure_budget_category_labels_from_strings(session, [ic.category for ic in item_creates])
     if doc.cash_flow_graph is not None:
         replace_plan_graph(
             session,

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from finance.allocation.cadence import normalize_period_month
 from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
 from finance.cash_flow_graph.service import get_plan_graph
-from finance.db.models import AllocationPlan
+from finance.db.models import AllocationPlan, BudgetCategoryLabel
 from finance.db.session import get_session, init_db
 from finance.seed_budget_allocation_yaml import (
     apply_budget_seed_yaml,
@@ -91,13 +91,16 @@ def test_tracked_example_yaml_loads(repo_root: Path) -> None:
     assert doc.version == 1
     assert len(doc.items) == 45
     assert doc.cash_flow_graph is not None
-    assert len(doc.cash_flow_graph.nodes) == 5
-    assert len(doc.cash_flow_graph.edges) == 4
+    assert len(doc.cash_flow_graph.nodes) == 8
+    assert len(doc.cash_flow_graph.edges) == 5
     assert {n.ref for n in doc.cash_flow_graph.nodes} == {
         "payroll",
         "checking",
         "savings",
-        "chase",
+        "ian_chase",
+        "ian_chase_sapphire",
+        "natalie_chase",
+        "natalie_chase_freedom",
         "brokerage",
     }
 
@@ -134,11 +137,21 @@ def test_apply_budget_seed_yaml_round_trip(isolated_db, tmp_path: Path) -> None:
     assert n == 1
     assert pm.isoformat() == "2026-05-01"
     assert graph is not None
-    assert {node.ref for node in graph.nodes} == {"payroll", "checking", "savings", "chase"}
+    assert {node.ref for node in graph.nodes} == {
+        "payroll",
+        "checking",
+        "savings",
+        "ian_chase",
+        "ian_chase_sapphire",
+    }
     assert {(e.from_ref, e.to_ref) for e in graph.edges} == {
         ("payroll", "checking"),
         ("savings", "checking"),
     }
+    with get_session() as session:
+        labels = [r.label for r in session.scalars(select(BudgetCategoryLabel)).all()]
+    assert len(labels) >= 1
+    assert "Living" in labels
 
 
 def test_apply_budget_seed_yaml_inline_graph_overrides_default(isolated_db, tmp_path: Path) -> None:

@@ -296,3 +296,63 @@ class UnifiedViewSummaryOut(BaseModel):
     contracts: ContractAggregateOut
     net_worth: NetWorthBreakdownOut
     reconciliation: ReconciliationOut
+
+
+class BudgetCategoryOptionsOut(BaseModel):
+    """Merged category strings for allocation line pickers."""
+
+    labels: list[str]
+
+
+class BudgetCategoryCatalogItemOut(BaseModel):
+    id: int
+    label: str
+
+
+class BudgetCategoryInventoryItemOut(BaseModel):
+    """One category label with allocation usage and optional saved-catalog id."""
+
+    label: str
+    allocation_item_count: int
+    catalog_id: int | None = None
+
+
+class BudgetCategoryInventoryListOut(BaseModel):
+    items: list[BudgetCategoryInventoryItemOut]
+
+
+class BudgetCategoryLinkedAllocationItemOut(BaseModel):
+    """Allocation line shown under an expanded category inventory row."""
+
+    id: int
+    plan_id: int
+    plan_name: str
+    period_month: date
+    item_name: str
+    category: str
+    planned_amount: float
+    cadence: str
+    monthly_amount: float
+    payment_method: str
+    due_day: int | None
+    notes: str
+    sort_order: int
+
+
+class BudgetCategoryLinkedAllocationItemListOut(BaseModel):
+    items: list[BudgetCategoryLinkedAllocationItemOut]
+
+
+class BudgetCategoryLabelCreate(BaseModel):
+    label: str = Field(min_length=1, max_length=100)
+
+
+class BudgetCategoryReassignIn(BaseModel):
+    """Relink all allocation lines from one category string to another."""
+
+    from_label: str = Field(min_length=1, max_length=100)
+    replacement_label: str = Field(min_length=1, max_length=100)
+
+
+class BudgetCategoryReassignOut(BaseModel):
+    items_updated: int

@@ -37,8 +37,14 @@ def test_cash_flow_graph_get_seeds_default_then_put_round_trip(cash_flow_api_cli
     assert g.status_code == 200
     first = g.json()
     assert first["plan_id"] == plan_id
-    assert len(first["nodes"]) == 4
-    assert {n["ref"] for n in first["nodes"]} == {"payroll", "checking", "savings", "chase"}
+    assert len(first["nodes"]) == 5
+    assert {n["ref"] for n in first["nodes"]} == {
+        "payroll",
+        "checking",
+        "savings",
+        "ian_chase",
+        "ian_chase_sapphire",
+    }
     assert len(first["edges"]) == 2
 
     payload = {
@@ -57,6 +63,12 @@ def test_cash_flow_graph_get_seeds_default_then_put_round_trip(cash_flow_api_cli
                 "display_name": "Checking",
                 "kind": CashNodeKind.CHECKING.value,
                 "institution": None,
+                "currency": "USD",
+                "current_balance": "1234.56",
+                "balance_as_of": "2026-06-15",
+                "account_mask": "6789",
+                "notes": "Primary account",
+                "is_active": True,
                 "layout_x": None,
                 "layout_y": 2.0,
             },
@@ -81,6 +93,12 @@ def test_cash_flow_graph_get_seeds_default_then_put_round_trip(cash_flow_api_cli
     assert len(data["nodes"]) == 2
     assert len(data["edges"]) == 1
     assert data["edges"][0]["from_ref"] == "payroll"
+    checking = next(n for n in data["nodes"] if n["ref"] == "checking")
+    assert checking["current_balance"] == "1234.56"
+    assert checking["balance_as_of"] == "2026-06-15"
+    assert checking["account_mask"] == "6789"
+    assert checking["notes"] == "Primary account"
+    assert checking["is_active"] is True
 
     g2 = c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph")
     assert g2.status_code == 200

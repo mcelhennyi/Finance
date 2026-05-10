@@ -1,5 +1,6 @@
 """Contract tests for cash-flow graph Pydantic models (FR-0006)."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -50,6 +51,38 @@ def test_cash_flow_graph_document_round_trip() -> None:
     )
     assert doc.plan_id == 1
     assert len(doc.edges) == 2
+
+
+def test_cash_flow_node_account_metadata() -> None:
+    node = CashFlowNodeSpec(
+        ref="brokerage",
+        display_name="Brokerage Cash",
+        kind=CashNodeKind.BROKERAGE_CASH,
+        institution="Fidelity",
+        currency="usd",
+        current_balance=Decimal("1250.50"),
+        balance_as_of=date(2026, 5, 10),
+        account_mask=" 1234 ",
+        notes="Taxable sweep account",
+        is_active=False,
+    )
+
+    assert node.currency == "USD"
+    assert node.current_balance == Decimal("1250.50")
+    assert node.balance_as_of == date(2026, 5, 10)
+    assert node.account_mask == "1234"
+    assert node.notes == "Taxable sweep account"
+    assert node.is_active is False
+
+
+def test_rejects_balance_without_as_of_date() -> None:
+    with pytest.raises(ValidationError, match="balance_as_of"):
+        CashFlowNodeSpec(
+            ref="checking",
+            display_name="Checking",
+            kind=CashNodeKind.CHECKING,
+            current_balance=Decimal("500.00"),
+        )
 
 
 def test_rejects_duplicate_node_refs() -> None:
@@ -113,3 +146,32 @@ def test_edge_amount_rule_validation() -> None:
 def test_invalid_ref_pattern() -> None:
     with pytest.raises(ValidationError):
         CashFlowNodeSpec(ref="9bad", display_name="X", kind=CashNodeKind.OTHER)
+
+
+def test_rejects_unknown_parent_ref() -> None:
+    with pytest.raises(ValidationError, match="unknown parent_ref"):
+        CashFlowGraphDocument(
+            plan_id=1,
+            nodes=[
+                CashFlowNodeSpec(ref="a", display_name="A", kind=CashNodeKind.OTHER),
+                CashFlowNodeSpec(
+                    ref="b",
+                    display_name="B",
+                    kind=CashNodeKind.OTHER,
+                    parent_ref="missing",
+                ),
+            ],
+            edges=[],
+        )
+
+
+def test_rejects_parent_ref_cycle() -> None:
+    with pytest.raises(ValidationError, match="cycle"):
+        CashFlowGraphDocument(
+            plan_id=1,
+            nodes=[
+                CashFlowNodeSpec(ref="a", display_name="A", kind=CashNodeKind.OTHER, parent_ref="b"),
+                CashFlowNodeSpec(ref="b", display_name="B", kind=CashNodeKind.OTHER, parent_ref="a"),
+            ],
+            edges=[],
+        )

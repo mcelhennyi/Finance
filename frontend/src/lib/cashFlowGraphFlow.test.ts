@@ -27,6 +27,12 @@ describe('cashFlowGraphFlow', () => {
           display_name: 'Checking',
           kind: 'checking',
           institution: null,
+          currency: 'USD',
+          current_balance: '1234.56',
+          balance_as_of: '2026-05-10',
+          account_mask: '6789',
+          notes: 'Primary checking',
+          is_active: true,
           layout_x: 100,
           layout_y: 200,
         },
@@ -53,8 +59,44 @@ describe('cashFlowGraphFlow', () => {
     expect(back.nodes).toHaveLength(2)
     expect(back.edges).toHaveLength(1)
     expect(back.nodes.find(n => n.ref === 'payroll')?.layout_x).toBe(10)
+    expect(back.nodes.find(n => n.ref === 'checking')?.current_balance).toBe('1234.56')
+    expect(back.nodes.find(n => n.ref === 'checking')?.balance_as_of).toBe('2026-05-10')
+    expect(back.nodes.find(n => n.ref === 'checking')?.account_mask).toBe('6789')
+    expect(back.nodes.find(n => n.ref === 'checking')?.notes).toBe('Primary checking')
+    expect(back.nodes.find(n => n.ref === 'checking')?.is_active).toBe(true)
     expect(back.edges[0].fixed_amount).toBe('3000.00')
     expect(back.edges[0].amount_rule).toBe('fixed')
+  })
+
+  it('round-trips parent_ref on nodes', () => {
+    const doc: CashFlowGraphDocument = {
+      plan_id: 3,
+      nodes: [
+        {
+          ref: 'umbrella',
+          display_name: "Ian's Chase",
+          kind: 'liability_surrogate',
+          institution: 'Chase',
+          parent_ref: null,
+          layout_x: 0,
+          layout_y: 0,
+        },
+        {
+          ref: 'card',
+          display_name: 'Sapphire',
+          kind: 'liability_surrogate',
+          institution: 'Chase',
+          parent_ref: 'umbrella',
+          layout_x: 1,
+          layout_y: 1,
+        },
+      ],
+      edges: [],
+    }
+    const { nodes, edges } = graphDocumentToFlowElements(doc)
+    const back = flowElementsToGraphDocument(3, nodes, edges)
+    expect(back.nodes.find(n => n.ref === 'card')?.parent_ref).toBe('umbrella')
+    expect(back.nodes.find(n => n.ref === 'umbrella')?.parent_ref ?? null).toBeNull()
   })
 
   it('edgeSummaryLabel avoids echoing empty label', () => {

@@ -8,6 +8,15 @@ from api.schemas import (
     AllocationItemListResponse,
     AllocationPlanListResponse,
     AllocationSummaryOut,
+    BudgetCategoryCatalogItemOut,
+    BudgetCategoryInventoryItemOut,
+    BudgetCategoryInventoryListOut,
+    BudgetCategoryLabelCreate,
+    BudgetCategoryLinkedAllocationItemListOut,
+    BudgetCategoryLinkedAllocationItemOut,
+    BudgetCategoryOptionsOut,
+    BudgetCategoryReassignIn,
+    BudgetCategoryReassignOut,
 )
 from finance.allocation.cadence import normalize_period_month
 from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
@@ -18,6 +27,14 @@ from finance.allocation.schemas import (
     AllocationPlanCreate,
     AllocationPlanOut,
     AllocationPlanUpdate,
+)
+from finance.allocation.category_catalog import (
+    create_budget_category_label,
+    delete_budget_category_label,
+    list_allocation_items_for_category,
+    list_budget_category_inventory,
+    merged_budget_category_labels,
+    reassign_allocation_category_and_drop_catalog,
 )
 from finance.allocation.service import (
     create_allocation_item,
@@ -39,6 +56,115 @@ from finance.db.models import AllocationItem, AllocationPlan
 from finance.db.session import get_session
 
 router = APIRouter(tags=["budget-allocation"])
+
+
+@router.get(
+    "/budget-allocation/category-options",
+    response_model=BudgetCategoryOptionsOut,
+)
+def get_budget_category_options() -> BudgetCategoryOptionsOut:
+    """Distinct categories from transactions, allocation lines, and saved catalog."""
+
+    with get_session() as session:
+        return BudgetCategoryOptionsOut(labels=merged_budget_category_labels(session))
+
+
+@router.get(
+    "/budget-allocation/category-inventory",
+    response_model=BudgetCategoryInventoryListOut,
+)
+def get_budget_category_inventory() -> BudgetCategoryInventoryListOut:
+    """Per-label allocation line counts and optional saved-catalog id (Budget page table)."""
+
+    with get_session() as session:
+        rows = list_budget_category_inventory(session)
+        return BudgetCategoryInventoryListOut(
+            items=[
+                BudgetCategoryInventoryItemOut(
+                    label=label,
+                    allocation_item_count=cnt,
+                    catalog_id=catalog_id,
+                )
+                for label, cnt, catalog_id in rows
+            ]
+        )
+
+
+@router.get(
+    "/budget-allocation/category-inventory/items",
+    response_model=BudgetCategoryLinkedAllocationItemListOut,
+)
+def get_budget_category_inventory_items(
+    label: str = Query(min_length=1, max_length=100),
+) -> BudgetCategoryLinkedAllocationItemListOut:
+    """Allocation lines linked to one category label, across all plans."""
+
+    with get_session() as session:
+        rows = list_allocation_items_for_category(session, label)
+        return BudgetCategoryLinkedAllocationItemListOut(
+            items=[
+                BudgetCategoryLinkedAllocationItemOut(
+                    id=item.id,
+                    plan_id=item.plan_id,
+                    plan_name=plan_name,
+                    period_month=period_month,
+                    item_name=item.item_name,
+                    category=item.category,
+                    planned_amount=float(item.planned_amount),
+                    cadence=item.cadence,
+                    monthly_amount=float(item.monthly_amount),
+                    payment_method=item.payment_method,
+                    due_day=item.due_day,
+                    notes=item.notes,
+                    sort_order=item.sort_order,
+                )
+                for item, plan_name, period_month in rows
+            ]
+        )
+
+
+@router.post(
+    "/budget-allocation/category-catalog",
+    response_model=BudgetCategoryCatalogItemOut,
+)
+def post_budget_category_catalog(payload: BudgetCategoryLabelCreate) -> BudgetCategoryCatalogItemOut:
+    with get_session() as session:
+        try:
+            row = create_budget_category_label(session, payload.label)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return BudgetCategoryCatalogItemOut(id=row.id, label=row.label)
+
+
+@router.post(
+    "/budget-allocation/category-reassign",
+    response_model=BudgetCategoryReassignOut,
+)
+def post_budget_category_reassign(payload: BudgetCategoryReassignIn) -> BudgetCategoryReassignOut:
+    """Move every allocation line off ``from_label``, then drop its saved-catalog row if present."""
+
+    with get_session() as session:
+        try:
+            result = reassign_allocation_category_and_drop_catalog(
+                session,
+                from_label=payload.from_label,
+                replacement_label=payload.replacement_label,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return BudgetCategoryReassignOut(items_updated=result["items_updated"])
+
+
+@router.delete("/budget-allocation/category-catalog/{label_id}")
+def delete_budget_category_catalog_entry(label_id: int) -> dict[str, bool]:
+    with get_session() as session:
+        try:
+            delete_budget_category_label(session, label_id)
+        except ValueError as exc:
+            detail = str(exc)
+            code = 404 if "not found" in detail.lower() else 400
+            raise HTTPException(status_code=code, detail=detail) from exc
+        return {"deleted": True}
 
 
 def _plan_to_out(row: AllocationPlan) -> AllocationPlanOut:

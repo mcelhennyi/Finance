@@ -12,6 +12,7 @@ See Also:
 from __future__ import annotations
 
 import re
+from datetime import date
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -32,8 +33,19 @@ class CashFlowNodeSpec(BaseModel):
     display_name: str = Field(min_length=1, max_length=200)
     kind: CashNodeKind
     institution: str | None = Field(default=None, max_length=200)
+    parent_ref: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Optional parent account ref within the same plan (e.g. card under a Chase profile).",
+    )
     layout_x: float | None = None
     layout_y: float | None = None
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    current_balance: Decimal | None = None
+    balance_as_of: date | None = None
+    account_mask: str | None = Field(default=None, max_length=32)
+    notes: str = Field(default="", max_length=2000)
+    is_active: bool = True
 
     @field_validator("ref")
     @classmethod
@@ -43,6 +55,36 @@ class CashFlowNodeSpec(BaseModel):
                 "ref must start with a letter and contain only letters, digits, underscore, hyphen"
             )
         return value
+
+    @field_validator("parent_ref")
+    @classmethod
+    def parent_ref_format(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        if not _REF_PATTERN.fullmatch(value):
+            raise ValueError(
+                "parent_ref must start with a letter and contain only letters, digits, underscore, hyphen"
+            )
+        return value
+
+    @field_validator("currency")
+    @classmethod
+    def currency_upper(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator("account_mask")
+    @classmethod
+    def account_mask_blank_to_none(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
+
+    @model_validator(mode="after")
+    def balance_date_pair(self) -> CashFlowNodeSpec:
+        if self.current_balance is not None and self.balance_as_of is None:
+            raise ValueError("balance_as_of is required when current_balance is set")
+        return self
 
 
 class CashFlowEdgeSpec(BaseModel):
@@ -138,4 +180,28 @@ class CashFlowGraphDocument(BaseModel):
                     f"edge {edge.ref!r} references unknown node ref "
                     f"({edge.from_ref!r} -> {edge.to_ref!r})"
                 )
+
+        by_ref = {n.ref: n for n in self.nodes}
+        for n in self.nodes:
+            if n.parent_ref is None:
+                continue
+            if n.parent_ref not in node_set:
+                raise ValueError(
+                    f"cash-flow node {n.ref!r} references unknown parent_ref {n.parent_ref!r}"
+                )
+            if n.parent_ref == n.ref:
+                raise ValueError(f"cash-flow node {n.ref!r} must not use itself as parent_ref")
+            visited: set[str] = set()
+            cur: str | None = n.ref
+            for _ in range(len(self.nodes) + 1):
+                node = by_ref.get(cur) if cur else None
+                if node is None or node.parent_ref is None:
+                    break
+                pr = node.parent_ref
+                if pr in visited:
+                    raise ValueError("cash-flow parent_ref forms a cycle")
+                visited.add(cur)
+                if pr == n.ref:
+                    raise ValueError("cash-flow parent_ref forms a cycle")
+                cur = pr
         return self
