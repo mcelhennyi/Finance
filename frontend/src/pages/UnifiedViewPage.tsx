@@ -114,7 +114,7 @@ export function UnifiedViewPage() {
           {summaryIsEffectivelyEmpty(data) && (
             <p className="text-sm text-slate-500 rounded-lg border border-amber-100 bg-amber-50/80 px-4 py-3">
               No card activity, goals, budgets, or contract income/liabilities for this month. Ingest
-              data or add records under Parameters to see this view fill in.
+              data or add records under Settings to see this view fill in.
             </p>
           )}
 

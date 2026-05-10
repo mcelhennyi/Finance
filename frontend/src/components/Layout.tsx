@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { useOptionalBbdDocs } from './bbd/BbdDocsContext'
 
-export type AppPage = 'dashboard' | 'parameters' | 'unified' | 'bbd'
+export type AppPage = 'dashboard' | 'settings' | 'unified' | 'bbd'
 
 interface Props {
   dateRange?: string
@@ -26,7 +26,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center gap-6">
+        <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center gap-6 w-full min-w-0">
           {onNavigate ? (
             <button
               type="button"
@@ -42,7 +42,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
             </div>
           )}
           {onNavigate && (
-            <nav className="flex items-center gap-1 text-sm">
+            <nav className="flex items-center gap-1 text-sm shrink-0">
               <button
                 type="button"
                 onClick={() => onNavigate('dashboard')}
@@ -67,17 +67,6 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('parameters')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                  activePage === 'parameters'
-                    ? 'bg-teal-50 text-teal-800'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                }`}
-              >
-                Parameters
-              </button>
-              <button
-                type="button"
                 onClick={() => onNavigate('bbd')}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   activePage === 'bbd'
@@ -89,8 +78,47 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
               </button>
             </nav>
           )}
-          {dateRange && (
-            <span className="ml-auto text-xs text-slate-400">{dateRange}</span>
+          {(onNavigate || dateRange) && (
+            <div className="ml-auto flex items-center gap-3 shrink-0">
+              {dateRange && <span className="text-xs text-slate-400">{dateRange}</span>}
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('settings')}
+                  className={`p-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${
+                    activePage === 'settings'
+                      ? 'bg-teal-50 text-teal-800'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                  }`}
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="shrink-0"
+                    aria-hidden
+                  >
+                    <path
+                      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -98,7 +126,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
         {children}
       </main>
 
-      {docs ? (
+      {docs && activePage !== 'bbd' ? (
         <button
           type="button"
           onClick={() => docs.openDocs()}
