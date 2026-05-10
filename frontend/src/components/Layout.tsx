@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { useOptionalBbdDocs } from './bbd/BbdDocsContext'
-
-export type AppPage = 'dashboard' | 'settings' | 'unified' | 'bbd'
+export type AppPage = 'dashboard' | 'settings' | 'unified' | 'budget' | 'bbd'
 
 interface Props {
   dateRange?: string
@@ -12,7 +10,6 @@ interface Props {
 }
 
 export function Layout({ dateRange, children, activePage = 'dashboard', onNavigate }: Props) {
-  const docs = useOptionalBbdDocs()
   const brandClass = 'flex items-center gap-2.5 shrink-0'
   const brandMark = (
     <>
@@ -64,6 +61,17 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
                 }`}
               >
                 Unified view
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('budget')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  activePage === 'budget'
+                    ? 'bg-teal-50 text-teal-800'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                Budget
               </button>
               <button
                 type="button"
@@ -125,37 +133,6 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
       <main className="flex-1 max-w-screen-2xl mx-auto w-full px-6 py-6 space-y-5">
         {children}
       </main>
-
-      {docs && activePage !== 'bbd' ? (
-        <button
-          type="button"
-          onClick={() => docs.openDocs()}
-          className="fixed z-[100] flex items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white py-3 pl-3.5 pr-4 shadow-lg shadow-slate-900/12 ring-slate-900/5 transition hover:border-teal-200 hover:bg-teal-50/80 hover:shadow-xl hover:shadow-teal-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
-          style={{
-            bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
-            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
-          }}
-          aria-label="Open Buy Borrow Die projection guide"
-        >
-          <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white shadow-inner"
-            aria-hidden
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="translate-y-[0.5px]">
-              <path
-                d="M8 3.25h9.75a2.25 2.25 0 012.25 2.25V18a3 3 0 01-3 3h-9A3 3 0 016 18v-13a3 3 0 013-1.75z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-              <path d="M8 8.25h8M8 12h8M8 15.75h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="hidden min-[380px]:inline text-sm font-semibold tracking-tight text-slate-800">
-            BBD docs
-          </span>
-        </button>
-      ) : null}
     </div>
   )
 }

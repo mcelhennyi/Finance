@@ -92,11 +92,13 @@ Add **`@xyflow/react`** (or agreed package) to the **Budget** experience: **load
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | FE helpers | Vitest (or agreed) coverage for DTO mapping / graph diff helpers if non-trivial |
-| **DEV** | Implement UI | Panel embedded on `BudgetPage` (or sub-route); API client methods |
-| **VAL** | E2E smoke | `docker compose run … npm run build` passes; manual note: save/reload round-trip |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | FE helpers | Vitest (or agreed) coverage for DTO mapping / graph diff helpers if non-trivial | done |
+| **DEV** | Implement UI | Panel embedded on `BudgetPage` (or sub-route); API client methods | done |
+| **VAL** | E2E smoke | `docker compose run … npm run build` passes; manual note: save/reload round-trip | done |
+
+**VAL notes:** `@xyflow/react` **`CashFlowGraphPanel`** on **`BudgetPage`**; **`api.getBudgetCashFlowGraph`** / **`putBudgetCashFlowGraph`**; **`frontend/src/lib/cashFlowGraphFlow.ts`** + vitest; **`docker compose run --no-deps web npm run build`** + **`npm test`** green.
 
 #### Notes
 

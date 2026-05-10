@@ -50,7 +50,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0006-01 | Define cash-flow graph persistence contracts | done | done | done | `FR-0006`; `finance.cash_flow_graph` Pydantic contracts + `tests/test_cash_flow_graph_contracts.py` |
 | T-FR-0006-02 | Add cash-flow graph migration and ORM models | done | done | done | `FR-0006`; `CashFlowNode`/`CashFlowEdge`, `phase2_cash_flow_graph_stub.sql`, `tests/test_cash_flow_graph_models.py` |
 | T-FR-0006-03 | Expose cash-flow graph CRUD API | done | done | done | `FR-0006`; `GET`/`PUT …/cash-flow-graph`; `finance.cash_flow_graph.service`; `tests/test_api_cash_flow_graph.py`; allocation router + `httpx` |
-| T-FR-0006-04 | Budget React Flow panel wired to graph API | pending | pending | pending | `FR-0006`; deps `T-FR-0006-03` |
+| T-FR-0006-04 | Budget React Flow panel wired to graph API | done | done | done | `FR-0006`; `@xyflow/react`, `CashFlowGraphPanel`, `cashFlowGraphFlow` tests; `docker compose run --no-deps web` build + vitest |
 | T-FR-0006-05 | Cash-flow time scrub and aggregated views | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04` |
 | T-FR-0006-06 | BBD-suggested cash-flow edges | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04`, `T-FR-0003-02` |
 | T-FR-0006-07 | Compose default for allocation auto-template | done | done | done | `FR-0006`; `docker-compose.yml` default `false`; `scripts/README.md` + `budget-plans-roadmap.md` |

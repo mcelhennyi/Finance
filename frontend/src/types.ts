@@ -158,6 +158,94 @@ export interface UnifiedViewSummary {
   reconciliation: Reconciliation
 }
 
+/** --- Budget allocation API (`/api/budget-allocation/*`, T-FR-0002-02) --- */
+
+export interface AllocationPlan {
+  id: number
+  name: string
+  period_month: string
+  currency: string
+  income_amount: number | null
+  income_cadence: string | null
+  income_monthly: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AllocationItem {
+  id: number
+  plan_id: number
+  item_name: string
+  category: string
+  planned_amount: number
+  cadence: string
+  monthly_amount: number
+  payment_method: string
+  due_day: number | null
+  notes: string
+  sort_order: number
+}
+
+export interface AllocationSummary {
+  total_monthly_allocated: number
+  cash_allocated: number
+  credit_allocated: number
+  remaining_income: number | null
+  category_totals: Record<string, number>
+  cadence_totals: Record<string, number>
+}
+
+export interface AllocationPlanListResponse {
+  items: AllocationPlan[]
+}
+
+export interface AllocationItemListResponse {
+  items: AllocationItem[]
+}
+
+/** Cash-flow graph (`/api/budget-allocation/plans/{id}/cash-flow-graph`, T-FR-0006). */
+
+export type CashNodeKind =
+  | 'checking'
+  | 'savings'
+  | 'brokerage_cash'
+  | 'external_pooled'
+  | 'income_source'
+  | 'liability_surrogate'
+  | 'other'
+
+export type CashFlowAmountRuleType = 'fixed' | 'percent_of_inflow' | 'remainder'
+
+export type CashFlowCadenceType = 'daily' | 'weekly' | 'monthly' | 'on_date'
+
+export interface CashFlowNodeSpec {
+  ref: string
+  display_name: string
+  kind: CashNodeKind
+  institution: string | null
+  layout_x: number | null
+  layout_y: number | null
+}
+
+/** API returns decimals as strings in JSON. */
+export interface CashFlowEdgeSpec {
+  ref: string
+  from_ref: string
+  to_ref: string
+  label: string
+  amount_rule: CashFlowAmountRuleType
+  fixed_amount: string | null
+  percent_of_inflow: string | null
+  cadence: CashFlowCadenceType
+  day_of_month: number | null
+}
+
+export interface CashFlowGraphDocument {
+  plan_id: number
+  nodes: CashFlowNodeSpec[]
+  edges: CashFlowEdgeSpec[]
+}
+
 /** One simulation year from `/api/bbd-projection/run` (parity with backend `YearStateRow`). */
 export interface BbdScheduleRow {
   year: number
