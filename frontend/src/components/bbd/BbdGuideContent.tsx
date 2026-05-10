@@ -21,6 +21,13 @@ export function BbdGuideContent() {
           cash-outs versus selling equities for spending.
         </p>
         <p>
+          For the <strong className="font-medium text-slate-800">strategy narrative</strong> (what Borrow means for tax optics,
+          stepped-up basis at death, where interest and margin-call risk bite, crash-survivable debt ceilings versus lender LTV caps),
+          read the{' '}
+          <strong>Strategy appendix</strong> in{' '}
+          <code className={mono}>scripts/bbd-projection/README.md</code>. The same file also has the guided CLI cookbook (exact commands from repo root). Neither is legal or tax advice — they mirror the runnable script beside that file.
+        </p>
+        <p>
           Use it when you already understand that this is illustrative math—not credit approval, underwriting, legal
           structuring, or personalized bracket planning—and you want repeatable scenario comparison against a stylized sell
           heuristic at the horizon.
@@ -104,7 +111,9 @@ export function BbdGuideContent() {
         <h2 className={sectionTitle}>Borrowing &amp; benchmark rates — supply of “tax-light” liquidity</h2>
         <p>
           SBLOC LTV ceilings cap how fast uncollateralized equities can liquefy borrowing before the solver falls through to
-          cash-out refi envelopes. Margin-call thresholds force modeled sales that realize taxable gains—instantiating why stress tests matter.
+          cash-out refi envelopes. Margin-call thresholds force modeled sales that realize taxable gains—instantiating why crash
+          and solvency framing matter (<code className={mono}>scripts/bbd-projection/README.md</code>, Strategy appendix —
+          costs / risks / solvency frontier).
         </p>
         <p>
           HELOC/refi knobs govern cost and capacity on property collateral; SOFR + spreads feed interest capitalization,
@@ -152,6 +161,17 @@ export function BbdGuideContent() {
       <section id={BBD_DOC_SECTION_IDS.engine} className={card}>
         <h2 className={sectionTitle}>Integrated engine storyline</h2>
         <p>
+          The bundled README summarizes <strong className="font-medium text-slate-800">five coupled engines</strong>: real estate
+          (mortgages, rents, depreciation, CRE leverage), taxable portfolio (+ basis), private equity illiquidity,
+          borrowing (SBLOC + HELOC / cash-out), and{' '}
+          <strong className="font-medium text-slate-800">terminal estate</strong> comparisons (BBD vs sell-as-you-go). Finance Hub runs
+          the packaged Python core under{' '}
+          <code className={mono}>src/finance/bbd/engine.py</code> wired through the API — same scenario shape as the{' '}
+          <code className={mono}>scripts/bbd-projection/bbd_projection.py</code> TOML/JSON payloads for parity-oriented tests, although the two code
+          paths can drift over time — open the bundled CLI README when you need every printed diagnostic (especially solvency), and this UI for fast
+          iteration.
+        </p>
+        <p>
           Each timestep walks properties, evolves PE shocks, adjusts wages, computes simplified taxes (including incidental
           forced-sale taxes from margin remediation), allocates draws, grows/mark-to-market taxable sleeves, optionally flags
           margin breaches, snapshots balance sheets, then rolls forward inflation on living expenses — see authoritative code{' '}
@@ -168,7 +188,16 @@ export function BbdGuideContent() {
         </p>
         <p>
           Presets stash named scenarios purely in-browser localStorage—they never sync across devices unless you paste JSON manually.
-          For reproducible scripted runs offline, invoke <span className={mono}>scripts/bbd_projection.py</span> with aligned payloads.
+          For reproducible scripted runs, follow <code className={mono}>scripts/bbd-projection/README.md</code> —
+          starter file via{' '}
+          <code className={mono}>python scripts/bbd-projection/bbd_projection.py --emit-default starter.toml</code>,
+          deterministic run{' '}
+          <code className={mono}>python scripts/bbd-projection/bbd_projection.py starter.toml</code>, optional{' '}
+          <code className={mono}>--montecarlo N</code>, <code className={mono}>--mc-seed 42</code> (parity with Hub’s seeded MC when you match seed and trial count),{' '}
+          <code className={mono}>--csv schedule.csv</code>. Set <code className={mono}>[stress_test]</code> in TOML for the crash magnitude behind the CLI-only{' '}
+          <strong>solvency narrative</strong> (README Strategy appendix — not surfaced as a prose block in this SPA yet).
+          Committed fictional numbers live in{' '}
+          <code className={mono}>scripts/bbd-projection/example-scenario.toml</code>; keep a gitignored workspace copy beside the script if you like.
         </p>
       </section>
 
@@ -187,9 +216,19 @@ export function BbdGuideContent() {
       <section id={BBD_DOC_SECTION_IDS.outputs} className={card}>
         <h2 className={sectionTitle}>Outputs &amp; how to interpret them responsibly</h2>
         <p>
-          Monte cards summarize dispersion of final NW plus stress indicators. Tables sample every fifth year + terminal row —
+          Monte cards summarize dispersion of final NW plus stress indicators (margin/bankruptcy rates). Tables sample every fifth
+          year + terminal row —
           Δ Income reflects modeled cash-receipt deltas (wages + net rental dividends + draws); Δ Taxes compares combined
-          federal/state/dividend/forced-sale stack year over year—first horizon row intentionally blank for deltas.
+          federal/state/dividend/forced-sale stack year over year—first horizon row intentionally blank for deltas. LTV and any
+          margin markers in the sampled grid are abbreviated borrow-stress cues.
+        </p>
+        <p>
+          For the <strong>year-by-year solvency frontier table</strong> with status glyphs ({' '}
+          <strong>[OK]</strong> free-option, <strong>[~]</strong> peak-safe only, <strong>[!]</strong> crash-vulnerable,{' '}
+          <strong>[X]</strong> margin call) described in{' '}
+          <code className={mono}>scripts/bbd-projection/README.md</code> (Strategy appendix — solvency status flags), run{' '}
+          <code className={mono}>scripts/bbd-projection/bbd_projection.py</code>; this page does not
+          yet echo that verbatim narrative (parity focus here is schedules + Monte + terminal estates).
         </p>
         <p>
           Estate tiles juxtapose liquidation heuristics; the advantage line expresses modeled heirs-net difference between pathways,
@@ -202,7 +241,8 @@ export function BbdGuideContent() {
         <p>
           Omitting refinancing constraints, underwriting haircuts, state-specific passive-loss rules, or trust/probate choreography
           can each swing realized cash more than modeled here. Validation belongs with professionals when dollars get real—the UI
-          is for steering intuition and testing hypotheses against transparent JSON + Python source.
+          is for steering intuition and testing hypotheses against transparent JSON + Python source. IRC / Form references at the bottom of{' '}
+          <code className={mono}>scripts/bbd-projection/README.md</code> (References) summarize external reading only; nothing here is individualized tax guidance.
         </p>
       </section>
     </article>

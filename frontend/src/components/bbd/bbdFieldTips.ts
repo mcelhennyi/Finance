@@ -146,5 +146,5 @@ export const BBD_FIELD_TIPS = {
 
 export const BBD_PAGE_HELP = {
   monteCarloTrials:
-    'Runs that many stochastic paths with the same baseline scenario (portfolio vol, stochastic PE exits, SOFR shocks). Zero keeps a single deterministic mean path only—faster but no dispersion bands.',
+    'Runs that many stochastic paths with the same baseline scenario (portfolio vol, stochastic PE exits, SOFR shocks). Zero keeps a single deterministic mean path only—faster but no dispersion bands. This UI pins monte_carlo_seed=42 when trials > 0 — match scripts/bbd-projection/bbd_projection.py --mc-seed 42 when comparing CLI runs per scripts/bbd-projection/README.md.',
 } as const

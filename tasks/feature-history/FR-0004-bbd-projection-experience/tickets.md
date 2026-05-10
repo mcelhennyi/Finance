@@ -70,7 +70,7 @@ Replace table-first layout with a **story dashboard**: composed **`recharts`** f
 
 #### Notes
 
-- Reuse **`BbdGuideContent`** patterns where possible (links to **`HANDOFF.md`**).
+- Reuse **`BbdGuideContent`** patterns where possible (links to **`scripts/bbd-projection/README.md`** Strategy appendix where deep framing helps).
 
 ---
 

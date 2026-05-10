@@ -17,7 +17,8 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
 | Budget allocation contracts | `T-FR-0002-01` | `FR-0002` | `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts` / `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/` | Frontier stream ready to launch |
-| BBD projection (parallel stream) | `T-FR-0003-01` … `T-FR-0003-04` | `FR-0003` | Default branch workspace (no feat worktree reserved) | Shipped module + **`POST /api/bbd-projection/run`** + **BBD** page; see `scripts/README.md` |
+
+**Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md).
 
 ---
 
@@ -40,11 +41,11 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0003-02 | Add BBD projection REST API | done | done | done | `FR-0003`; `POST /api/bbd-projection/run` |
 | T-FR-0003-03 | Deliver BBD projection page | done | done | done | `FR-0003`; **BBD** nav — `frontend/src/pages/BbdProjectionPage.tsx` |
 | T-FR-0003-04 | Validate BBD UX and document operator workflow | done | done | done | `FR-0003`; `scripts/README.md` + pytest / host notes |
-| T-FR-0004-01 | BBD bottom control dock and relocated actions | todo | todo | todo | `FR-0004`; deps none |
-| T-FR-0004-02 | BBD visualization view-model and chart-ready series | todo | todo | todo | `FR-0004`; deps none; parallelizable with `T-FR-0004-01` |
-| T-FR-0004-03 | BBD 2D story dashboard and educational callouts | todo | todo | todo | `FR-0004`; deps `T-FR-0004-01`, `T-FR-0004-02` |
-| T-FR-0004-04 | BBD spatial / 3D–time experience (lazy WebGL) | todo | todo | todo | `FR-0004`; deps `T-FR-0004-02`, `T-FR-0004-03` |
-| T-FR-0004-05 | BBD experience integration VAL and operator docs | todo | todo | todo | `FR-0004`; deps `T-FR-0004-04` |
+| T-FR-0004-01 | BBD bottom control dock and relocated actions | done | done | done | `FR-0004`; dock chrome + Docs label (implemented prior + refined) |
+| T-FR-0004-02 | BBD visualization view-model and chart-ready series | done | done | done | `FR-0004`; `frontend/src/lib/bbdVizModel.ts` + vitest |
+| T-FR-0004-03 | BBD 2D story dashboard and educational callouts | done | done | done | `FR-0004`; `BbdStoryDashboard.tsx` |
+| T-FR-0004-04 | BBD spatial / 3D–time experience (lazy WebGL) | done | done | done | `FR-0004`; `BbdSpatialPanel.tsx`, lazy + reduced-motion |
+| T-FR-0004-05 | BBD experience integration VAL and operator docs | done | done | done | `FR-0004`; Docker lint/test, `scripts/README.md` |
 
 ---
 

@@ -1,5 +1,5 @@
 # Buy, Borrow, Die projection config
-# Edit any value and re-run: python bbd_projection.py <this_file>
+# Edit any value and re-run: python scripts/bbd-projection/bbd_projection.py <this_file>
 # All currency values are in nominal dollars at simulation start.
 
 [timing]

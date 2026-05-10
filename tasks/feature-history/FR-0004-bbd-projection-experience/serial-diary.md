@@ -1,5 +1,15 @@
 # Serial diary — FR-0004
 
+## 2026-05-09 — Implementation (FR-0004 option B)
+
+**Stage:** implementation on feature branch.
+
+**Summary:** Implemented **`bbdVizModel`** + tests; **`BbdStoryDashboard`** (NW area, composition lines, draws vs LTV composed chart); lazy **`BbdSpatialPanel`** (`three`, `@react-three/fiber`, `@react-three/drei`) with year scrubber and reduce-motion gate; extracted **`BBD_OUTPUT_TIPS`**; collapsible detailed table; dock label **Docs**; fixed missing **`</section>`** in **`BbdGuideContent.tsx`** (workflow section). Docker **`web`** image rebuilt; **`docker compose run web npm run lint`** + **`npm test`** green. **`scripts/README.md`** notes SPA visualization stack.
+
+**Next:** PR / merge to default branch; optional **`vite build`** smoke in CI.
+
+---
+
 ## 2026-05-09 — Intake + L0 design + tickets landed
 
 **Stage:** design (registry + **`FR-0004`** folder).

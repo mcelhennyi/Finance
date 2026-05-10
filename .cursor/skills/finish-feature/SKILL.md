@@ -36,7 +36,7 @@ Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets usi
 1. `git push -u origin feat/FR-NNNN-<slug>`
 2. Prefer **`gh pr create`** (base **`main`**, head **`feat/FR-NNNN-<slug>`**) with a summary linking **`tasks/feature-history/FR-NNNN-<slug>/`** and ticket ids.
 3. If a PR already exists, push branch updates and ensure the PR description lists merged tickets.
-4. **PR to `main`:** ensure the description reminds the merger to **delete** repo-root **`CURRENT.md`** when the PR lands on **`main`** (unless the repo documents otherwise) — **`feature-request`** skill **Branch state (`CURRENT.md`)**.
+4. **PR to `main`:** ensure the description reminds the merger to **delete** repo-root **`CURRENT.md`** when the PR lands on **`main`** (unless the repo documents otherwise) — **`feature-request`** skill **Branch state (`CURRENT.md`)**. After merge, **`REGISTRY.md`** should be **`complete`** for this **`FR-NNNN`**; the merger or **`/feature-request-continue`** should run **`feature-request`** **Closeout** hygiene: **`90-closeout.md`**, **retire** this feature from **`tasks/ticket-progress.md` → `Parallel streams`**, and point **Current focus** at the next open ticket.
 
 ## 4 — Feature history bookkeeping
 

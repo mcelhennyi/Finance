@@ -32,7 +32,7 @@ Only contracts: routes unchanged (**`POST /api/bbd-projection/run`**, **`GET /ap
 
 - **2D:** **`recharts`** (already in **`frontend/package.json`**) — line/area/composed charts, responsive containers.
 - **3D / spatial:** **`three`**, **`@react-three/fiber`**, **`@react-three/drei`** — single lazy route section or toggle “Spatial view” to cap main-bundle growth.
-- **Pedagogy:** reuse patterns from **`BbdGuideContent`**, **`bbdFieldTips`**, **`OUTPUT_TIPS`** — extend with **short lesson blocks** and **links** to repo docs (`scripts/bbd-projection/HANDOFF.md`) without duplicating legal disclaimers.
+- **Pedagogy:** reuse patterns from **`BbdGuideContent`**, **`bbdFieldTips`**, **`OUTPUT_TIPS`** — extend with **short lesson blocks** and **links** to repo docs (`scripts/bbd-projection/README.md`, especially the Strategy appendix) without duplicating legal disclaimers.
 
 ## Open questions
 

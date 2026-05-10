@@ -1,10 +1,14 @@
 # AI development context
 
-**Single source of truth for AI-assisted development *process***: session flow, worktrees, tickets, collaboration norms, and how spec ↔ code conflicts are handled. **Cursor** (`.cursor/rules/main.mdc`) and **Claude Code** (`CLAUDE.md`) should reference this file.
+**Single source of truth for AI-assisted development *process***: session flow, worktrees, tickets, collaboration norms, and how spec ↔ code conflicts are handled. **Cursor** (`.cursor/rules/main.mdc`) and **Claude Code** (`CLAUDE.md`) should reference this file **and**, when it exists, the optional companion **`docs/ai-context.project.md`** (see **Project-specific overlays** below and **`docs/skeleton-project-overlays.md`**).
 
 **Product and system design** live under **`docs/design/`** (and, if you publish a docs site from this repo, treat that site as the **primary source of truth** for business + system design the same way you would authoritative pages under **`docs/design/`**). This file does not duplicate those specs; it tells agents how to use them.
 
 This document is **stack-agnostic**. Language-specific rules belong in **`.cursor/rules/stack-conventions.mdc`** (or equivalent) once you choose a stack.
+
+## Project-specific overlays
+
+Repositories may ship **`docs/ai-context.project.md`** beside this file. It is **not** copied or modified by **`./sync-skeleton`**; keep long-lived, repo-only process rules there so the base file can track the skeleton template. Naming rules and examples: **`docs/skeleton-project-overlays.md`**.
 
 ---
 
@@ -12,11 +16,12 @@ This document is **stack-agnostic**. Language-specific rules belong in **`.curso
 
 At session start, load in order:
 
-1. **`docs/ai-context.md`** (this file)
-2. **`tasks/ticket-progress.md`** — queue beacon, optional **Parallel streams**, and **TEST / DEV / VAL** rows
-3. **`docs/design/architecture/overview.md`** when it exists and is populated
-4. **`README.md`**
-5. **`tasks/lessons.md`**
+1. **`docs/ai-context.md`** (this file; refreshed from **`.skeleton/`** on **`./sync-skeleton`** when this path is not syncignored)
+2. **`docs/ai-context.project.md`** when the file exists — repo-local extension; **never** written by **`./sync-skeleton`** (see **Project-specific overlays** above)
+3. **`tasks/ticket-progress.md`** — queue beacon, optional **Parallel streams**, and **TEST / DEV / VAL** rows
+4. **`docs/design/architecture/overview.md`** when it exists and is populated
+5. **`README.md`**
+6. **`tasks/lessons.md`**
 
 Skim **`tasks/handoffs/`** and **`tasks/feature-history/REGISTRY.md`** for recent decisions.
 
@@ -118,7 +123,7 @@ Use planning for multi-step or architectural work.
 ### 2b. Feature request lifecycle (product `FR-NNNN`)
 
 - **Cursor skill:** `feature-request` — **`.cursor/skills/feature-request/SKILL.md`**
-- **Claude command:** `/feature-request` (and **`/feature-request-continue`** to resume). **`/feature-request-continue`** must **`git fetch`** and **verify** an integration PR is still **open** before recommending merge when **`README.md`**, **`90-closeout.md`**, **`handoffs/`**, or **`ticket-progress.md`** still read like a pending PR; if already merged on the remote default branch, apply registry / **`CURRENT.md`** / **`ticket-progress.md`** bookkeeping per that skill so the next step is not stale.
+- **Claude command:** `/feature-request` (and **`/feature-request-continue`** to resume). **`/feature-request-continue`** must **`git fetch`** and **verify** an integration PR is still **open** before recommending merge when **`README.md`**, **`90-closeout.md`**, **`handoffs/`**, or **`ticket-progress.md`** still read like a pending PR; if already merged on the remote default branch, apply registry / **`CURRENT.md`** / **`ticket-progress.md`** bookkeeping per that skill (**`90-closeout.md`**, **retire** the feature from **`Parallel streams`**, **Current focus**) so the next step is not stale.
 - **Registry and history:** **`tasks/feature-history/REGISTRY.md`**, one directory **`tasks/feature-history/FR-NNNN-<slug>/`** per feature (intake, layered design, **`20-tickets-dag.md`**, **`serial-diary.md`** / **`parallel/`**, optional **`DIARY.md`**, **`handoffs/`**, **`90-closeout.md`**). **Reservation rule:** once **`FR-NNNN`** and **`next_id`** are updated and the minimal feature stub exists, **commit and push to `main` right away** so other parallel features see the assignment and do not pick the same id.
 - **Composes** with: **`/identify-frontier`**, **`/develop-frontier`**, **`/finish-feature`** (default for product implementation per **§2d**), **`/finish-frontier`** — the feature request flow **produces and lands** tickets with ids **`T-FR-NNNN-xx`**, then those commands run on the ticket graph. It does **not** replace them.
 - **Disambiguation:** *Identify* in the spoken *identify (FR) → develop → finish* product flow = **register `FR-NNNN` and intake**; **`/identify-frontier`** = parallel **tickets** from all **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** and should run **only after** tickets exist.
@@ -153,6 +158,7 @@ Do not mark **VAL** `done` without meeting the ticket’s verification criteria.
 
 - Update **`tasks/ticket-progress.md`** Progress rows for the ticket you own — **only your row** when multiple agents run in parallel.
 - When several features are active, keep **`Parallel streams`** (in **`ticket-progress.md`**) accurate, or add a dated line to **`tasks/handoffs/`** naming each stream’s **ticket id**, **`FR-NNNN`**, branch, and **`.worktrees/…`** path.
+- When a feature is **`complete`** in **`REGISTRY.md`**, **remove** that **`FR-NNNN`** from **`Parallel streams`** (do not leave it as active work); write or refresh **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`** and align **Current focus** with the next incomplete ticket — same contract as **`feature-request`** skill **Closeout** and **`/feature-request-continue`** post-merge hygiene.
 - When a ticket completes, update the **DAG Overview** **`triadDone`** classes in **`docs/design/tickets-initial.md`** (per **`docs/design/documentation-style.md`** — e.g. `TFR0007_01_TEST` … `triadDone`).
 
 ### 6. Session end
@@ -184,6 +190,8 @@ After merge resolution, run a mandatory full revalidation gate on the **target**
 
 ## Further reading
 
+- **`.skeleton/CHANGELOG.md`** — after **`./sync-skeleton`**, read **After sync: read the changelog** and **`[Unreleased]` → Template** / **Deprecations** for **`Consumer manual:`** / **`[consumer manual]`** follow-ups
+- **`docs/skeleton-project-overlays.md`** — **`*.project.*`** companion files for repo-specific rules next to template-synced paths
 - **`INIT.MD`** — clone, **`init-skeleton`**, **`sync-skeleton`**, **`init-project`**
 - **`sync-skeleton`** skill / **`/sync-skeleton`** — run **`./sync-skeleton`** from the project root (see **`INIT.MD` → *Syncing template updates***)
 - **`docs/design/documentation-style.md`** — ticket ids, traceability, writing rules

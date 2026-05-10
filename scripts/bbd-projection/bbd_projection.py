@@ -1,18 +1,58 @@
-"""Buy, Borrow, Die projection core (scenario, simulation, estate, Monte Carlo).
+#!/usr/bin/env python3
+"""
+Buy, Borrow, Die (BBD) Strategy Projection Model
+=================================================
 
-See Also:
-    docs/design/services/analysis-service/overview.md (API surface consumes this package)
+Projects net worth, cash flow, taxes, and borrowing capacity over a multi-decade
+horizon. Models four coupled engines:
+
+  1. PRIMARY/RENTAL real estate engine
+     - Tracks one or more properties (mortgage paydown, appreciation, rental cash flow)
+     - Handles primary -> rental conversion (Section 121 implications, depreciation)
+     - Tracks tappable equity for HELOC / cash-out refi
+
+  2. TAXABLE INVESTMENT PORTFOLIO engine
+     - Annual contributions (from W-2 surplus + rental cash flow)
+     - Total return with optional volatility (Monte Carlo mode)
+     - Tracks cost basis (for "what if I sold" comparison vs BBD)
+
+  3. PRIVATE EQUITY engine (illiquid startup stock)
+     - Not pledgeable for SBLOC; holds until exit (cash) or death (stepped-up basis)
+     - Stochastic failure / exit modeling in Monte Carlo
+
+  4. BORROWING engine (the "Borrow" in BBD)
+     - SBLOC against public portfolio (margin-style, with LTV cap and margin call risk)
+     - HELOC / cash-out refi against real estate
+     - Interest accrues against drawn balance; configurable to capitalize or pay current
+
+  5. The "Die" terminal scenario
+     - At horizon end, computes:
+         a) Estate value if you SOLD everything today (with cap gains, recapture)
+         b) Estate value under BBD: stepped-up basis, debt repaid from tax-free proceeds
+         c) Heir's net inheritance under each path
+
+USAGE (from Finance Hub repo root)
+----------------------------------
+    python scripts/bbd-projection/bbd_projection.py config.toml                     # deterministic
+    python scripts/bbd-projection/bbd_projection.py config.toml --montecarlo 1000 # Monte Carlo
+    python scripts/bbd-projection/bbd_projection.py config.toml --csv out.csv      # CSV schedule
+    python scripts/bbd-projection/bbd_projection.py --emit-default starter.toml  # starter TOML
+
+Documentation: scripts/bbd-projection/README.md (CLI tutorial plus Strategy appendix for framing).
+All knobs live in the TOML config file. Edit the file and re-run.
+Requires Python 3.11+ for stdlib tomllib.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
-import os
+import math
 import random
 import statistics
 import sys
 import tomllib
-from dataclasses import dataclass, field, fields, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Optional
 
@@ -141,6 +181,13 @@ class Scenario:
     # If set, override with this fixed annual taxable savings figure.
     annual_taxable_savings_override: Optional[float] = None
 
+    # --- STRESS TEST -----------------------------------------------------
+    # Used by the solvency analysis: how big a portfolio crash to assume when
+    # checking the "always-survivable" debt ceiling. 0.50 = 50% drawdown
+    # (roughly 2008-magnitude). Use 0.34 for COVID, 0.57 for the actual 2008,
+    # 0.49 for dotcom.
+    stress_test_crash_pct: float = 0.50
+
 
 # ---------------------------------------------------------------------------
 # 2. CONFIG FILE I/O
@@ -150,7 +197,7 @@ class Scenario:
 # fresh starter config looks like.
 DEFAULT_CONFIG_TEMPLATE = """\
 # Buy, Borrow, Die projection config
-# Edit any value and re-run via `scripts/bbd-projection/bbd_projection.py <this_file>` or the Hub UI API.
+# Edit any value and re-run: python scripts/bbd-projection/bbd_projection.py <this_file>
 # All currency values are in nominal dollars at simulation start.
 
 [timing]
@@ -208,6 +255,16 @@ inflate_drawdown = true             # grow drawdown with inflation
 # convert_primary_to_rental_year = 2027   # uncomment to convert primary to rental
 pe_exit_treatment = "cash"          # "cash" | "stock" | "hold"
 
+[stress_test]
+# Used by the solvency analysis. Asks: "if a crash of this magnitude hit at
+# peak debt, would I still be solvent after a forced liquidation + tax bill?"
+# Below the crash-survivable line, BBD becomes a 'free option' — worst case
+# you pay the deferred tax, you don't go bankrupt.
+#   0.34 ≈ COVID 2020 peak-to-trough
+#   0.49 ≈ dotcom 2000-02
+#   0.57 ≈ GFC 2008
+stress_test_crash_pct = 0.50
+
 # ---------------------------------------------------------------------------
 # Real estate. Add multiple [[properties]] tables for multiple properties.
 # ---------------------------------------------------------------------------
@@ -253,95 +310,41 @@ def emit_default_config(path: str) -> None:
     print(f"Edit it, then run: python {sys.argv[0]} {path}")
 
 
-def scenario_from_mapping(cfg: dict[str, Any], *, source_label: str) -> "Scenario":
-    """Build a Scenario from a nested timing/income/taxes/... mapping (TOML or YAML)."""
+def load_scenario_from_config(path: str) -> "Scenario":
+    """Parse a TOML config file into a Scenario object."""
+    with open(path, "rb") as f:
+        cfg = tomllib.load(f)
 
-    def section(name: str) -> dict[str, Any]:
-        raw = cfg.get(name)
-        if raw is None:
-            return {}
-        if not isinstance(raw, dict):
-            raise ValueError(f"{source_label}: [{name}] must be a mapping, got {type(raw).__name__}")
-        return raw
+    def section(name: str) -> dict:
+        return cfg.get(name, {})
 
-    prop_field_names = {f.name for f in fields(Property)}
-    pe_allow = {f.name for f in fields(PrivateEquity)} - {"has_exited", "is_zero"}
-
-    properties_raw = cfg.get("properties") or []
-    if not isinstance(properties_raw, list):
-        raise ValueError(f"{source_label}: properties must be a list")
-
-    pe_raw = cfg.get("private_equity") or []
-    if not isinstance(pe_raw, list):
-        raise ValueError(f"{source_label}: private_equity must be a list")
-
+    # Build Property objects
     properties: list[Property] = []
-    for prop_cfg in properties_raw:
-        if not isinstance(prop_cfg, dict):
-            raise ValueError(f"{source_label}: each properties[] entry must be a mapping")
-        filtered = {k: prop_cfg[k] for k in prop_field_names if k in prop_cfg}
-        properties.append(Property(**filtered))
+    for prop_cfg in cfg.get("properties", []):
+        properties.append(Property(**prop_cfg))
 
+    # Build PrivateEquity objects
     pe_holdings: list[PrivateEquity] = []
-    for pe_cfg in pe_raw:
-        if not isinstance(pe_cfg, dict):
-            raise ValueError(f"{source_label}: each private_equity[] entry must be a mapping")
-        filtered = {k: pe_cfg[k] for k in pe_allow if k in pe_cfg}
-        pe_holdings.append(PrivateEquity(**filtered))
+    for pe_cfg in cfg.get("private_equity", []):
+        pe_holdings.append(PrivateEquity(**pe_cfg))
 
+    # Flatten config sections into a dict of all Scenario fields
     flat: dict[str, Any] = {}
     for section_name in ("timing", "income", "taxes", "expenses", "savings",
-                         "borrowing", "strategy"):
+                         "borrowing", "strategy", "stress_test"):
         flat.update(section(section_name))
 
     flat["properties"] = properties
     flat["private_equity"] = pe_holdings
 
+    # Defensive: drop any keys not in Scenario (typo protection)
     valid_fields = {f.name for f in Scenario.__dataclass_fields__.values()}
     extras = set(flat.keys()) - valid_fields
     if extras:
         raise ValueError(f"Unknown config keys: {extras}. "
-                         f"Check section names and key spellings in {source_label}")
+                         f"Check section names and key spellings in {path}")
 
     return Scenario(**flat)
-
-
-def load_scenario_from_config(path: str) -> "Scenario":
-    """Parse a TOML config file into a Scenario object."""
-    with open(path, "rb") as f:
-        cfg = tomllib.load(f)
-    return scenario_from_mapping(cfg, source_label=str(path))
-
-
-def load_scenario_from_yaml_path(path: str | Path) -> "Scenario":
-    """Parse a YAML config file using the same nested layout as seed TOML."""
-    try:
-        import yaml  # type: ignore[import-untyped]  # PyYAML dependency
-    except ImportError as e:  # pragma: no cover
-        raise RuntimeError("YAML scenario loading requires PyYAML") from e
-    p = Path(path)
-    with p.open(encoding="utf-8") as f:
-        loaded = yaml.safe_load(f)
-
-    cfg: dict[str, Any] = loaded if isinstance(loaded, dict) else {}
-    return scenario_from_mapping(cfg, source_label=str(p))
-
-
-def load_engine_default_seed_scenario() -> "Scenario":
-    """Load FINANCE_BBD_DEFAULT_YAML (default `/seed/ian.yaml`), or sibling `.toml` if missing."""
-
-    yaml_path = Path(os.environ.get("FINANCE_BBD_DEFAULT_YAML", "/seed/ian.yaml")).expanduser()
-
-    if yaml_path.is_file():
-        return load_scenario_from_yaml_path(yaml_path)
-
-    sibling_toml = yaml_path.with_suffix(".toml")
-    if sibling_toml.is_file():
-        return load_scenario_from_config(str(sibling_toml))
-
-    raise FileNotFoundError(
-        f"No BBD seed file at {yaml_path} (YAML) or {sibling_toml} (TOML)."
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -832,6 +835,214 @@ def monte_carlo(scenario: Scenario, n_trials: int = 1000, seed: int = 42) -> dic
 
 
 # ---------------------------------------------------------------------------
+# 6b. SOLVENCY / "FREE OPTION" ANALYSIS
+# ---------------------------------------------------------------------------
+#
+# Core insight: there exists a debt level low enough that even a forced unwind
+# (margin call + tax bill + crash all simultaneously) leaves you solvent.
+# Below that line, BBD is a "free option" — worst case you just pay the taxes
+# you were trying to defer. Above it, you can be genuinely wiped out.
+#
+# We compute three thresholds:
+#
+#   1. NAIVE LTV CEILING (lender's margin-call line)
+#         D_naive = V × margin_call_ltv          (typically 70%)
+#         At this level, the BANK forces a sale. Says nothing about your solvency.
+#
+#   2. PEAK-VALUE SOLVENCY CEILING (your insight, exact form)
+#         D_peak = V × (1 − τ) + τ × B
+#         At peak portfolio value V with basis B and effective tax rate τ on gains,
+#         this is the maximum debt you can carry and still cover the loan + tax bill
+#         from a forced full liquidation. Above this, sale proceeds don't cover
+#         the loan, and you go bankrupt.
+#
+#   3. CRASH-SURVIVABLE CEILING (the conservative real-world line)
+#         D_safe = V × (1 − c) × (1 − τ) + τ × B
+#         Same formula but assumes V drops by fraction c (e.g. 50%) before the
+#         forced liquidation. This is the "always-survivable" line — below it,
+#         you can ride out any historical-magnitude crash without going broke.
+
+@dataclass
+class SolvencyReport:
+    year: int
+    age: int
+    portfolio_value: float
+    portfolio_basis: float
+    current_debt: float          # SBLOC + RE-extraction debt (BBD-related, not original mortgage)
+    current_ltv: float           # current_debt / portfolio_value
+    # Three ceilings, each as a $ debt amount and as %-of-portfolio
+    naive_ceiling: float         # what the lender would force-sell at
+    naive_ceiling_pct: float
+    peak_solvency_ceiling: float # max debt where after-tax liq covers loan, at peak V
+    peak_solvency_ceiling_pct: float
+    crash_safe_ceiling: float    # max debt that survives a `crash_pct` drop in V
+    crash_safe_ceiling_pct: float
+    # Diagnostic: what would happen if you were forced to liquidate RIGHT NOW
+    forced_liq_proceeds_after_tax: float
+    forced_liq_net_outcome: float  # proceeds_after_tax - debt; negative = bankrupt
+    # Same diagnostic but assuming the crash hit first
+    crash_liq_net_outcome: float
+
+
+def compute_solvency(state: YearState, scenario: Scenario,
+                     crash_pct: float = 0.50) -> SolvencyReport:
+    """Compute solvency thresholds for a single year-state."""
+    s = scenario
+    V = state.portfolio_value
+    B = state.portfolio_basis
+    # BBD-related debt is SBLOC + the cash-out borrowing we did against RE for drawdowns.
+    # The original mortgage isn't BBD debt — it's structural housing debt with its own
+    # collateral (the house) — so we exclude it from this analysis.
+    D = state.sbloc_balance + state.heloc_refi_balance
+    tau = s.ltcg_rate + s.niit_rate + s.state_marginal_rate
+
+    # Lender's margin-call line — purely a function of V and policy
+    naive = V * s.sbloc_margin_call_ltv
+
+    # Peak-value solvency: D ≤ V*(1−τ) + τ*B
+    peak = V * (1 - tau) + tau * B
+    peak = max(peak, 0)
+
+    # Crash-survivable: same formula but V replaced by V*(1−c)
+    V_crash = V * (1 - crash_pct)
+    gain_in_crash = max(0, V_crash - B)
+    crash_safe = V_crash - tau * gain_in_crash
+    crash_safe = max(crash_safe, 0)
+
+    # Forced-liquidation diagnostics
+    gain_now = max(0, V - B)
+    tax_now = gain_now * tau
+    forced_proceeds = V - tax_now
+    forced_net = forced_proceeds - D
+
+    crash_gain = max(0, V_crash - B)
+    crash_tax = crash_gain * tau
+    crash_proceeds = V_crash - crash_tax
+    crash_net = crash_proceeds - D
+
+    return SolvencyReport(
+        year=state.year, age=state.age,
+        portfolio_value=V, portfolio_basis=B,
+        current_debt=D,
+        current_ltv=(D / V) if V > 0 else 0,
+        naive_ceiling=naive,
+        naive_ceiling_pct=(naive / V) if V > 0 else 0,
+        peak_solvency_ceiling=peak,
+        peak_solvency_ceiling_pct=(peak / V) if V > 0 else 0,
+        crash_safe_ceiling=crash_safe,
+        crash_safe_ceiling_pct=(crash_safe / V) if V > 0 else 0,
+        forced_liq_proceeds_after_tax=forced_proceeds,
+        forced_liq_net_outcome=forced_net,
+        crash_liq_net_outcome=crash_net,
+    )
+
+
+def print_solvency_analysis(scenario: Scenario, history: list[YearState],
+                             crash_pct: float = 0.50) -> None:
+    """Pretty-print the solvency story across the full timeline."""
+    print("=" * 78)
+    print("SOLVENCY ANALYSIS — Is your debt below the 'always-survivable' line?")
+    print("=" * 78)
+    print()
+    print("The key insight: there's a debt level low enough that even a forced")
+    print("unwind (margin call + tax bill + crash all at once) leaves you solvent.")
+    print("Below that line, BBD is a 'free option' — worst case you just pay the")
+    print("taxes you were trying to defer. Above it, you can be genuinely wiped out.")
+    print()
+    print(f"  Crash assumption for stress test: {crash_pct:.0%} portfolio drop")
+    print(f"  Effective tax on gains used:      "
+          f"{(scenario.ltcg_rate + scenario.niit_rate + scenario.state_marginal_rate):.1%}")
+    print(f"     ({scenario.ltcg_rate:.0%} LTCG + {scenario.niit_rate:.1%} NIIT + "
+          f"{scenario.state_marginal_rate:.0%} state)")
+    print()
+
+    drawdown_start = scenario.start_year + scenario.drawdown_start_year_offset
+    drawdown_years = [h for h in history if h.year >= drawdown_start
+                      and (h.sbloc_balance + h.heloc_refi_balance) > 0]
+
+    if not drawdown_years:
+        print("  No BBD borrowing occurs in this scenario — solvency analysis N/A.")
+        print()
+        return
+
+    print(f"{'Year':>5} {'Age':>3} {'Portfolio':>10} {'Debt':>10} "
+          f"{'LTV':>5}  {'Naive':>6} {'Peak':>6} {'Crash':>6} {'Status':>22}")
+    print(f"{'':>5} {'':>3} {'':>10} {'':>10} "
+          f"{'':>5}  {'cap':>6} {'safe':>6} {'safe':>6}")
+    print("-" * 92)
+
+    for i, h in enumerate(drawdown_years):
+        if i % 5 == 0 or i == len(drawdown_years) - 1:
+            sr = compute_solvency(h, scenario, crash_pct=crash_pct)
+            if sr.current_debt <= sr.crash_safe_ceiling:
+                status = "[OK] free option"
+            elif sr.current_debt <= sr.peak_solvency_ceiling:
+                status = "[~] peak-safe only"
+            elif sr.current_debt <= sr.naive_ceiling:
+                status = "[!] insolvent if crash"
+            else:
+                status = "[X] MARGIN CALL"
+            print(f"{h.year:>5} {h.age:>3} {fmt_money(sr.portfolio_value):>10} "
+                  f"{fmt_money(sr.current_debt):>10} {sr.current_ltv:>5.1%}  "
+                  f"{sr.naive_ceiling_pct:>5.0%}  "
+                  f"{sr.peak_solvency_ceiling_pct:>5.0%}  "
+                  f"{sr.crash_safe_ceiling_pct:>5.0%}  "
+                  f"{status:>22}")
+
+    # Summary at peak debt year
+    peak_debt_year = max(drawdown_years, key=lambda h: h.sbloc_balance + h.heloc_refi_balance)
+    sr_peak = compute_solvency(peak_debt_year, scenario, crash_pct=crash_pct)
+    print()
+    print(f"  Peak BBD debt year: {peak_debt_year.year} (age {peak_debt_year.age})")
+    print(f"    Portfolio:                    {fmt_money(sr_peak.portfolio_value):>12}")
+    print(f"    Basis:                        {fmt_money(sr_peak.portfolio_basis):>12}")
+    print(f"    BBD debt:                     {fmt_money(sr_peak.current_debt):>12}")
+    print(f"    Current LTV:                  {sr_peak.current_ltv:>12.1%}")
+    print()
+    print(f"  If forced to liquidate AT PEAK VALUE today:")
+    print(f"    Sale proceeds (after-tax):    {fmt_money(sr_peak.forced_liq_proceeds_after_tax):>12}")
+    solvent_now = "[OK] solvent" if sr_peak.forced_liq_net_outcome > 0 else "[X] BANKRUPT"
+    print(f"    Net after debt repay:         {fmt_money(sr_peak.forced_liq_net_outcome):>12} {solvent_now}")
+    print()
+    print(f"  If forced to liquidate AFTER A {crash_pct:.0%} CRASH:")
+    crashed_v = sr_peak.portfolio_value * (1 - crash_pct)
+    crashed_gain = max(0, crashed_v - sr_peak.portfolio_basis)
+    crashed_tax = crashed_gain * (scenario.ltcg_rate + scenario.niit_rate + scenario.state_marginal_rate)
+    print(f"    Crashed portfolio value:      {fmt_money(crashed_v):>12}")
+    print(f"    Sale proceeds (after-tax):    {fmt_money(crashed_v - crashed_tax):>12}")
+    solvent_crash = "[OK] solvent" if sr_peak.crash_liq_net_outcome > 0 else "[X] BANKRUPT"
+    print(f"    Net after debt repay:         {fmt_money(sr_peak.crash_liq_net_outcome):>12} {solvent_crash}")
+    print()
+
+    # Plain-English verdict
+    print("  VERDICT")
+    print("  -------")
+    if sr_peak.current_debt <= sr_peak.crash_safe_ceiling:
+        print(f"  Peak BBD debt of {fmt_money(sr_peak.current_debt)} sits BELOW the")
+        print(f"  crash-survivable line of {fmt_money(sr_peak.crash_safe_ceiling)}. Even a")
+        print(f"  {crash_pct:.0%} crash with forced liquidation leaves you solvent. You're")
+        print(f"  operating BBD as a 'free option' — worst case you pay the deferred")
+        print(f"  tax, you don't go bankrupt.")
+    elif sr_peak.current_debt <= sr_peak.peak_solvency_ceiling:
+        print(f"  Peak debt of {fmt_money(sr_peak.current_debt)} is solvent at PEAK values")
+        print(f"  but EXCEEDS the crash-survivable line of "
+              f"{fmt_money(sr_peak.crash_safe_ceiling)}.")
+        print(f"  A major crash with forced liquidation could push you underwater.")
+        shortfall = sr_peak.current_debt - sr_peak.crash_safe_ceiling
+        print(f"  To get into 'free option' territory, either:")
+        print(f"    - reduce peak debt by {fmt_money(shortfall)}, OR")
+        print(f"    - grow the portfolio so the safe line rises above current debt")
+        print(f"      (need approx. {fmt_money(sr_peak.current_debt / sr_peak.crash_safe_ceiling_pct)}"
+              f" portfolio at peak debt year)")
+    else:
+        print(f"  Peak debt of {fmt_money(sr_peak.current_debt)} EXCEEDS the peak-solvency")
+        print(f"  line of {fmt_money(sr_peak.peak_solvency_ceiling)}. Even at current")
+        print(f"  portfolio values, a forced liquidation wouldn't cover the loan.")
+        print(f"  This scenario is not viable — reduce drawdown or delay drawdown start.")
+    print()
+
+
+# ---------------------------------------------------------------------------
 # 7. REPORTING
 # ---------------------------------------------------------------------------
 
@@ -878,8 +1089,9 @@ def print_summary(scenario: Scenario, history: list[YearState]) -> None:
     print()
 
 
-def cumulative_depreciation_for_estate_approx(scenario: Scenario) -> float:
-    """Approximate cumulative depreciation for terminal estate comparisons."""
+def print_estate(scenario: Scenario, history: list[YearState]) -> None:
+    final = history[-1]
+    # Approximate cumulative depreciation taken
     cumulative_dep = 0.0
     for p in scenario.properties:
         if not p.is_primary and p.rental_start_year is not None:
@@ -889,12 +1101,6 @@ def cumulative_depreciation_for_estate_approx(scenario: Scenario) -> float:
         else:
             years_rented = 0
         cumulative_dep += min(years_rented, 27.5) * p.purchase_price * (1 - p.land_value_pct) / 27.5
-    return cumulative_dep
-
-
-def print_estate(scenario: Scenario, history: list[YearState]) -> None:
-    final = history[-1]
-    cumulative_dep = cumulative_depreciation_for_estate_approx(scenario)
 
     sell_path, bbd = estate_at_horizon(scenario, final, cumulative_dep)
     print("=" * 78)
@@ -935,3 +1141,70 @@ def write_csv(history: list[YearState], path: str) -> None:
     print(f"Wrote yearly schedule to {path}")
 
 
+# ---------------------------------------------------------------------------
+# 8. MAIN
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Buy, Borrow, Die projection (config-file driven)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""\
+examples (repo root):
+  python scripts/bbd-projection/bbd_projection.py --emit-default ian.toml
+  python scripts/bbd-projection/bbd_projection.py ian.toml
+  python scripts/bbd-projection/bbd_projection.py ian.toml --montecarlo 1000
+  python scripts/bbd-projection/bbd_projection.py ian.toml --csv schedule.csv
+""")
+    parser.add_argument("config", nargs="?", default=None,
+                        help="Path to TOML config file")
+    parser.add_argument("--emit-default", metavar="PATH",
+                        help="Write a starter config file to PATH and exit")
+    parser.add_argument("--montecarlo", type=int, default=0, metavar="N",
+                        help="Run N Monte Carlo trials")
+    parser.add_argument("--csv", metavar="PATH",
+                        help="Write yearly schedule to CSV file")
+    parser.add_argument("--mc-seed", type=int, default=42,
+                        help="Random seed for Monte Carlo (default: 42)")
+    args = parser.parse_args()
+
+    # Emit-default mode: write starter config and exit
+    if args.emit_default:
+        emit_default_config(args.emit_default)
+        return
+
+    if args.config is None:
+        parser.error("config file required (or use --emit-default to generate one)")
+
+    if not Path(args.config).exists():
+        parser.error(f"config file not found: {args.config}")
+
+    scenario = load_scenario_from_config(args.config)
+
+    # Deterministic run
+    history = project(scenario)
+    print_summary(scenario, history)
+    print_estate(scenario, history)
+    print_solvency_analysis(scenario, history,
+                            crash_pct=scenario.stress_test_crash_pct)
+
+    if args.csv:
+        write_csv(history, args.csv)
+
+    if args.montecarlo > 0:
+        print("=" * 78)
+        print(f"MONTE CARLO ({args.montecarlo} trials, return vol={scenario.portfolio_volatility})")
+        print("=" * 78)
+        mc = monte_carlo(scenario, n_trials=args.montecarlo, seed=args.mc_seed)
+        print(f"  Final net worth distribution:")
+        print(f"    P10:  {fmt_money(mc['final_nw_p10']):>12}")
+        print(f"    P50:  {fmt_money(mc['final_nw_p50']):>12}")
+        print(f"    P90:  {fmt_money(mc['final_nw_p90']):>12}")
+        print(f"    Mean: {fmt_money(mc['final_nw_mean']):>12}")
+        print(f"  Margin call probability: {mc['margin_call_rate']:.1%}")
+        print(f"  Bankruptcy probability:  {mc['bankrupt_rate']:.1%}")
+        print()
+
+
+if __name__ == "__main__":
+    main()

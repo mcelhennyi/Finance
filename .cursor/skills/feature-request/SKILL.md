@@ -157,7 +157,8 @@ When **`README.md`**, **`90-closeout.md`**, newest **`handoffs/*.md`**, or **`ta
 2. **Verify merge state on the remote default branch** (`main`, `master`, or project convention — use **`docs/ai-context.md`**, **`git remote show origin`**, or **`git symbolic-ref refs/remotes/origin/HEAD`** when unsure) **before** recommending merge in the user-facing close. **Do not** tell the human to merge if the PR is already merged.
    - Examples: **`gh pr view <n> --json state,mergedAt`** (GitHub CLI); or **`git log origin/<default> --oneline --grep 'Merge pull request'`** / confirm the feature tip is an ancestor of **`origin/<default>`** after fetch.
 3. **If already merged:** **`git pull`** the local default branch; set the feature row to **`complete`** in **`tasks/feature-history/REGISTRY.md`**; remove repo-root **`CURRENT.md`** on the default branch if it still exists; refresh **`tasks/ticket-progress.md` → Current focus**; update the feature **`README.md`** and **`90-closeout.md`** so the PR reads as merged, not blocking.
-4. **If still open:** merge + review remains a valid suggested next step; state that verification showed the PR **open** so the handoff is trustworthy.
+4. **Post-merge closeout (standard):** When **`REGISTRY.md`** shows **`complete`** for this **`FR-NNNN`**, ensure **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`** exists (or write it now) with **Executive summary**, artifact links, PR link, ticket title mapping, **Suggested next step**, and **Options** — same contract as **Stage — Closeout, handoff, and index**. **Retire `Parallel streams`:** remove the row for this **`FR-NNNN`** from **`tasks/ticket-progress.md`** (or replace with a one-line **complete** pointer to **`90-closeout.md`** / **`REGISTRY.md`** only if the team wants an audit stub — do **not** leave active branch/worktree language for a closed feature).
+5. **If still open:** merge + review remains a valid suggested next step; state that verification showed the PR **open** so the handoff is trustworthy.
 
 **Slash command text:** **`.claude/commands/feature-request-continue.md`** repeats the fetch + verify step at the top of the step list so orchestrators run it before reading stale merge instructions.
 
@@ -263,6 +264,7 @@ After each develop chunk or when the user returns:
 3. Final **Diary consolidation:** ensure **`DIARY.md`** exists with **newest-first** merged entries from **`serial-diary.md`** + **`parallel/`**; commit on a surviving branch for traceability.
 4. Update **`REGISTRY.md`**: set status **complete** (or `design-only`, `in-progress` as appropriate).
 5. If project rules or commands were updated as part of the feature, list them in **`90-closeout.md`**.
+6. **`tasks/ticket-progress.md` (shared tracker):** Remove this **`FR-NNNN`** from **`Parallel streams`** when status is **`complete`** (do not list closed features as active parallel work). If **Current focus** still names a ticket from this closed **`FR-NNNN`**, move **Current focus** to the **next** incomplete ticket (smallest eligible **`T-…`** per **`tickets.md`** **Deps:**) unless the human intentionally keeps a completed row for audit only — in that case, state so in **`serial-diary.md`** or **`handoffs/`** so **`/feature-request-continue`** does not mis-route.
 
 ---
 
@@ -285,7 +287,8 @@ per **`.cursor/rules/cursor-claude-doc-sync.mdc`**. Otherwise, **no** doc churn.
 - [ ] `serial-diary` (and `parallel/…` if used) have a recap per stage.
 - [ ] `90-closeout.md` links to **every** artifact in the feature folder.
 - [ ] If implementation ran: `develop-frontier` preconditions were satisfied; **`finish-feature`** or **`finish-frontier`** was chosen consistently with **§2d**; **VAL** per **`docs/ai-context.md`** (Docker / Dev Container). **Doc changes:** if **`docs/`** or **`mkdocs.yml`** changed, doc **VAL** used **`./develop build`** or equivalent Docker-based check when **`./develop`** exists.
-- [ ] If multiple streams are active: **`tasks/ticket-progress.md` → Parallel streams** (or a dated **`tasks/handoffs/`** note) lists each ticket (**title** + **`T-FR-NNNN-xx`** + link to **`tickets.md`** where helpful), **`FR-NNNN`** (if any), and worktree path per **`docs/ai-context.md` §2c**.
+- [ ] If **`REGISTRY.md`** status is **`complete`** for this **`FR-NNNN`**: **`90-closeout.md`** exists in **`tasks/feature-history/FR-NNNN-<slug>/`**; **`tasks/ticket-progress.md` → Parallel streams** does **not** list this feature as an active stream (retire the row per **Closeout** step 6); **Current focus** targets a **non-complete** ticket unless explicitly documented otherwise.
+- [ ] If multiple streams are **still active** (incomplete **VAL** on at least one listed ticket): **`tasks/ticket-progress.md` → Parallel streams`** (or a dated **`tasks/handoffs/`** note) lists each ticket (**title** + **`T-FR-NNNN-xx`** + link to **`tickets.md`** where helpful), **`FR-NNNN`** (if any), and worktree path per **`docs/ai-context.md` §2c**.
 - [ ] **CURRENT.md:** every active **`feat/FR-NNNN-<slug>`** and **`feat/FR-NNNN-<slug>/T-…`** implementation branch has an accurate repo-root **`CURRENT.md`** (see **Branch state (`CURRENT.md`)**); after integration to **`main`**, **`CURRENT.md`** is removed or neutralized per policy.
 - [ ] **User-facing close:** the last user-visible reply for the chunk (and matching **`handoffs/`** or **`90-closeout.md`**) includes **Executive summary**, **Suggested next step**, and **Options** when several paths are reasonable (**User-facing close (required)**).
 

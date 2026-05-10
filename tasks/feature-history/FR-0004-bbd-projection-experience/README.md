@@ -1,6 +1,6 @@
 # FR-0004 — BBD projection immersive experience
 
-**Status:** `design`
+**Status:** `in-progress` (implementation on feature branch — immersive charts + lazy 3D spatial panel)
 
 **Depends on:** shipped **`FR-0003`** (**`POST /api/bbd-projection/run`**, existing **`BbdRunResponse`** types); extends **`frontend/src/pages/BbdProjectionPage.tsx`** and related BBD components only unless a **`DESIGN-GAP`** forces API extensions.
 
@@ -13,6 +13,7 @@
 | [`20-tickets-dag.md`](20-tickets-dag.md) | Ticket table + Mermaid DAG (draft; mirrors [`tickets.md`](tickets.md)) |
 | [`tickets.md`](tickets.md) | Canonical **`T-FR-0004-xx`** sections |
 | [`serial-diary.md`](serial-diary.md) | Serial session notes |
+| [`handoffs/2026-05-09-pr-to-master.md`](handoffs/2026-05-09-pr-to-master.md) | PR / merge handoff (**`feat/FR-0004-bbd-projection-experience`** → **`master`**) |
 
 ## Summary
 
