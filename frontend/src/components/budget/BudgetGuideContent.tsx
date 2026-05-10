@@ -30,7 +30,10 @@ export function BudgetGuideContent() {
         <h2 className={sectionTitle}>Month and plans</h2>
         <p>
           Pick a <strong className="font-medium text-slate-800">month</strong> with the date control at the top. The API
-          stores one or more allocation plans per month; if only one exists you will not see a plan picker.
+          stores one or more allocation plans per month. Use the <strong className="font-medium text-slate-800">Budget</strong>{' '}
+          dropdown to switch plans — your choice is remembered for the next visit (same browser). Use{' '}
+          <strong className="font-medium text-slate-800">Add another plan</strong> when you want a second draft for the same month
+          (for example “baseline” vs “tight month”).
         </p>
         <p>
           Use <strong className="font-medium text-slate-800">Create plan</strong> when no plan exists yet for that month.

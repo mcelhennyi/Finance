@@ -21,7 +21,7 @@ Target: **`docker compose run --rm api pytest`** against current tree; **`mkdocs
 
 ## Suggested next step (human reviewer)
 
-Review PR; confirm **`ian.yaml`** sample is acceptable as a committed illustrative fixture (**not** individualized data). Merge to **`master`**. No **`CURRENT.md`** on **`master`** in this snapshot.
+**Update (2026-05-10):** PR #6 is **merged** to **`master`**. Pre-merge checklist for reviewers was: confirm **`ian.yaml`** as committed illustrative fixture (**not** individualized data); merge when satisfied. No **`CURRENT.md`** on **`master`** was expected for this snapshot.
 
 ## Options
 

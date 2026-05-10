@@ -1,0 +1,326 @@
+# Purpose-built budget allocation seed — mirrors Budget page fields (plan + line items).
+# Values reflect an example household plan; edit this file or point FINANCE_BUDGET_DEFAULT_YAML elsewhere.
+version: 1
+period_month: "2026-05-01"
+plan:
+  name: Example allocation plan
+  currency: USD
+  income_amount: "10921.70"
+  income_cadence: monthly
+items:
+  - item_name: Groceries
+    category: Food
+    planned_amount: "350.00"
+    cadence: weekly
+    payment_method: credit
+  - item_name: Restaurants
+    category: Food
+    planned_amount: "150.00"
+    cadence: weekly
+    payment_method: credit
+  - item_name: Mortgage
+    category: Living
+    planned_amount: "2536.09"
+    cadence: monthly
+    payment_method: cash
+    due_day: 1
+  - item_name: HOA
+    category: Living
+    planned_amount: "68.00"
+    cadence: monthly
+    payment_method: cash
+    due_day: 6
+  - item_name: Diesel Food
+    category: Living
+    planned_amount: "120.00"
+    cadence: weekly
+    payment_method: credit
+  - item_name: Phone
+    category: Utilities
+    planned_amount: "188.16"
+    cadence: monthly
+    payment_method: cash
+    due_day: 21
+  - item_name: Internet
+    category: Utilities
+    planned_amount: "73.00"
+    cadence: monthly
+    payment_method: credit
+    notes: Needed prior to the 17th of the month
+  - item_name: Natural Gas
+    category: Utilities
+    planned_amount: "50.00"
+    cadence: monthly
+    payment_method: cash
+    due_day: 9
+  - item_name: Water Bill
+    category: Utilities
+    planned_amount: "40.00"
+    cadence: monthly
+    payment_method: credit
+  - item_name: City Bill
+    category: Utilities
+    planned_amount: "350.00"
+    cadence: monthly
+    payment_method: cash
+    due_day: 29
+  - item_name: Car Gas
+    category: Misc
+    planned_amount: "130.00"
+    cadence: weekly
+    payment_method: credit
+  - item_name: Car Insurance
+    category: Insurance
+    planned_amount: "225.00"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Life Insurance
+    category: Insurance
+    planned_amount: "250.00"
+    cadence: monthly
+    payment_method: cash
+    due_day: 1
+  - item_name: Family Chiropractic
+    category: Insurance
+    planned_amount: "45.00"
+    cadence: weekly
+    payment_method: credit
+    notes: TODO
+  - item_name: Heart and Soil
+    category: Subscriptions
+    planned_amount: "94.00"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Daily Wire
+    category: Subscriptions
+    planned_amount: "259.80"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Geico Identity Protection
+    category: Subscriptions
+    planned_amount: "7.99"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Wyze
+    category: Subscriptions
+    planned_amount: "2.99"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Ring
+    category: Subscriptions
+    planned_amount: "108.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Discovery +
+    category: Subscriptions
+    planned_amount: "5.40"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Sound Cloud
+    category: Subscriptions
+    planned_amount: "6.48"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Spotify - Ian
+    category: Subscriptions
+    planned_amount: "10.81"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Apple Music
+    category: Subscriptions
+    planned_amount: "9.99"
+    cadence: monthly
+    payment_method: credit
+  - item_name: BJJ
+    category: Subscriptions
+    planned_amount: "150.00"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Sam's Club
+    category: Subscriptions
+    planned_amount: "50.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Apple Cloud - Nat
+    category: Subscriptions
+    planned_amount: "5.40"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Apple Cloud - Ian
+    category: Subscriptions
+    planned_amount: "9.99"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Hoffman Welding Tank
+    category: Subscriptions
+    planned_amount: "8.99"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Google Domains
+    category: Subscriptions
+    planned_amount: "60.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Apple Care
+    category: Subscriptions
+    planned_amount: "4.32"
+    cadence: monthly
+    payment_method: credit
+  - item_name: Platinum AE
+    category: Credit Card
+    planned_amount: "695.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Sapphire - Ian
+    category: Credit Card
+    planned_amount: "795.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Marriot
+    category: Credit Card
+    planned_amount: "95.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Southwest - Ian
+    category: Credit Card
+    planned_amount: "169.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Southwest - Natalie
+    category: Credit Card
+    planned_amount: "69.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: Sapphire - Natalie
+    category: Credit Card
+    planned_amount: "99.00"
+    cadence: yearly
+    payment_method: credit
+  - item_name: ADA
+    category: Investment
+    planned_amount: "30.00"
+    cadence: twice_monthly
+    payment_method: cash
+    due_day: 1
+    notes: 1st and 15th
+  - item_name: Doge
+    category: Investment
+    planned_amount: "5.00"
+    cadence: weekly
+    payment_method: cash
+    due_day: 1
+  - item_name: Shiba
+    category: Investment
+    planned_amount: "5.00"
+    cadence: weekly
+    payment_method: cash
+    due_day: 1
+  - item_name: SOL
+    category: Investment
+    planned_amount: "20.00"
+    cadence: weekly
+    payment_method: cash
+    due_day: 1
+  - item_name: Helium
+    category: Investment
+    planned_amount: "5.00"
+    cadence: weekly
+    payment_method: cash
+    due_day: 1
+  - item_name: Truck Payment
+    category: Loan
+    planned_amount: "451.01"
+    cadence: monthly
+    payment_method: cash
+    due_day: 29
+  - item_name: Levi Birth
+    category: Loan
+    planned_amount: "250.00"
+    cadence: monthly
+    payment_method: credit
+  - item_name: 401K Loan
+    category: Loan
+    planned_amount: "495.30"
+    cadence: monthly
+    payment_method: cash
+    due_day: 15
+    notes: Auto transfer from savings to checking
+  - item_name: Savings
+    category: Investment
+    planned_amount: "500.00"
+    cadence: monthly
+    payment_method: cash
+    due_day: 31
+    notes: Auto transfer from wells to frost
+
+# Example cash-flow map (persisted with this plan when seeded). Income lands in checking; savings
+# feeds checking; checking pays the Chase household card and sends a monthly sweep to brokerage cash.
+cash_flow_graph:
+  nodes:
+    - ref: payroll
+      display_name: Payroll & W-2 deposits
+      kind: income_source
+      institution: null
+      layout_x: 260
+      layout_y: 30
+    - ref: checking
+      display_name: Primary checking
+      kind: checking
+      institution: null
+      layout_x: 260
+      layout_y: 200
+    - ref: savings
+      display_name: High-yield savings
+      kind: savings
+      institution: null
+      layout_x: 40
+      layout_y: 200
+    - ref: chase
+      display_name: Chase (household card)
+      kind: liability_surrogate
+      institution: Chase
+      layout_x: 480
+      layout_y: 200
+    - ref: brokerage
+      display_name: Taxable brokerage cash
+      kind: brokerage_cash
+      institution: null
+      layout_x: 260
+      layout_y: 370
+  edges:
+    - ref: edge_income_to_checking
+      from_ref: payroll
+      to_ref: checking
+      label: Direct deposit — income → checking
+      amount_rule: percent_of_inflow
+      fixed_amount: null
+      percent_of_inflow: "100"
+      cadence: monthly
+      day_of_month: null
+    - ref: edge_savings_to_checking
+      from_ref: savings
+      to_ref: checking
+      label: Savings sweep → checking (example $500 / mo)
+      amount_rule: fixed
+      fixed_amount: "500.00"
+      percent_of_inflow: null
+      cadence: monthly
+      day_of_month: null
+    - ref: edge_checking_to_chase
+      from_ref: checking
+      to_ref: chase
+      label: Chase card autopay from checking (example)
+      amount_rule: fixed
+      fixed_amount: "3000.00"
+      percent_of_inflow: null
+      cadence: monthly
+      day_of_month: null
+    - ref: edge_checking_to_brokerage
+      from_ref: checking
+      to_ref: brokerage
+      label: Taxable investing sweep (example)
+      amount_rule: fixed
+      fixed_amount: "200.00"
+      percent_of_inflow: null
+      cadence: monthly
+      day_of_month: null

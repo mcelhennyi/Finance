@@ -184,6 +184,20 @@ def test_allocation_list_filter_by_month(allocation_api_client: TestClient) -> N
 
 
 @pytest.mark.unit
+def test_allocation_list_all_plans_without_month(allocation_api_client: TestClient) -> None:
+    c = allocation_api_client
+    c.post("/api/budget-allocation/plans", json={"period_month": "2026-09-15"})
+    c.post("/api/budget-allocation/plans", json={"period_month": "2026-10-01"})
+    r = c.get("/api/budget-allocation/plans")
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert len(items) >= 2
+    months = {it["period_month"] for it in items}
+    assert "2026-09-01" in months
+    assert "2026-10-01" in months
+
+
+@pytest.mark.unit
 def test_allocation_auto_template_seeds_when_enabled(
     monkeypatch, allocation_api_client: TestClient
 ) -> None:

@@ -6,10 +6,14 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
+COPY docker-entrypoint-dev.sh /usr/local/bin/docker-entrypoint-dev.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint-dev.sh
+
 EXPOSE 3501
 
 ENV VITE_API_TARGET=http://api:8000
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-dev.sh"]
 CMD ["npx", "vite", "--host"]
 
 # ── Build ─────────────────────────────────────────────────────────────────────

@@ -1,5 +1,8 @@
 """Import CSV seed statements from a directory into the configured database.
 
+Also applies the budget allocation seed YAML (see ``finance.seed_budget_allocation_yaml``
+and ``data/budget-default-plan.yaml``) when enabled.
+
 Used by ``scripts/dev.sh --seed``. Set ``FINANCE_SEED_DIR`` (default in Docker:
 ``/seed``) to the directory containing ``*.csv`` files.
 """
@@ -14,6 +17,7 @@ from pathlib import Path
 from finance.db.session import get_session, init_db
 from finance.ingestion.contracts import ingest_income_csv_content, ingest_liability_csv_content
 from finance.ingestion.service import ingest_csv_content
+from finance.seed_budget_allocation_yaml import try_seed_budget_default_yaml
 from finance.seed_merchant_displays import apply_merchant_display_seed, default_seed_path
 
 
@@ -22,8 +26,15 @@ def _seed_dir_from_env() -> Path:
     return Path(raw).expanduser()
 
 
+def _is_non_statement_seed_csv(path: Path) -> bool:
+    """Personal spreadsheets in the seed folder are not bank CSVs — skip ingest."""
+
+    lower = path.name.lower()
+    return "rental plan" in lower and "allocation" in lower
+
+
 def run_seed(directory: Path) -> int:
-    """Ingest every ``*.csv`` in ``directory``, then apply merchant display JSON.
+    """Ingest statement CSVs, merchant displays, and budget default YAML.
 
     Returns process exit code (0 or 1).
     """
@@ -41,6 +52,12 @@ def run_seed(directory: Path) -> int:
 
     if paths:
         for path in paths:
+            if _is_non_statement_seed_csv(path):
+                print(
+                    f"  • {path.name} … (skipped — not a bank statement CSV)",
+                    flush=True,
+                )
+                continue
             print(f"  • {path.name} …", flush=True)
             try:
                 content = path.read_bytes()
@@ -81,6 +98,16 @@ def run_seed(directory: Path) -> int:
             )
     except Exception as exc:
         print(f"  • merchant displays: error: {exc}", file=sys.stderr)
+        errors += 1
+
+    try:
+        with get_session() as session:
+            ran, msg = try_seed_budget_default_yaml(session)
+        print(f"  • {msg}", flush=True)
+        if not ran and "failed" in msg.lower():
+            errors += 1
+    except Exception as exc:
+        print(f"  • budget default seed: error: {exc}", file=sys.stderr)
         errors += 1
 
     if errors:

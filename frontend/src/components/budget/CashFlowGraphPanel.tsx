@@ -54,8 +54,13 @@ const REF_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/
 
 function CashFlowNodeView({ data }: NodeProps<CashFlowRfNode>) {
   const spec = data.spec
+  const ring = data.highlighted
+    ? 'ring-2 ring-teal-500 ring-offset-2 ring-offset-slate-50 shadow-md z-10'
+    : ''
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[7.5rem] max-w-[14rem]">
+    <div
+      className={`rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[7.5rem] max-w-[14rem] ${ring}`}
+    >
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-slate-300 !bg-teal-500" />
       <div className="text-xs font-semibold leading-snug text-slate-800 break-words">{spec.display_name}</div>
       <div className="mt-0.5 text-[10px] capitalize text-slate-500">{spec.kind.replace(/_/g, ' ')}</div>
@@ -70,9 +75,15 @@ interface Props {
   planId: number | null
   /** Used for percent-of-inflow aggregation (plan summary monthly income). */
   planIncomeMonthly?: number | null
+  /** Node refs to emphasize when hovering the allocation Account column. */
+  highlightNodeRefs?: string[]
 }
 
-export function CashFlowGraphPanel({ planId, planIncomeMonthly = null }: Props) {
+export function CashFlowGraphPanel({
+  planId,
+  planIncomeMonthly = null,
+  highlightNodeRefs = [],
+}: Props) {
   const queryClient = useQueryClient()
   const [nodes, setNodes] = useNodesState<CashFlowRfNode>([])
   const [edges, setEdges] = useEdgesState<Edge<CashEdgeData>>([])
@@ -102,6 +113,17 @@ export function CashFlowGraphPanel({ planId, planIncomeMonthly = null }: Props) 
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
   }, [graphQuery.data, setEdges, setNodes])
+
+  const highlightKey = highlightNodeRefs.join('\0')
+  useEffect(() => {
+    const want = new Set(highlightNodeRefs)
+    setNodes(nds =>
+      nds.map(n => ({
+        ...n,
+        data: { ...n.data, highlighted: want.has(n.id) },
+      })),
+    )
+  }, [highlightKey, highlightNodeRefs, setNodes])
 
   const saveMut = useMutation({
     mutationFn: async () => {

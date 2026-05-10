@@ -23,7 +23,7 @@ function stableOffset(ref: string): { x: number; y: number } {
   return { x: (u % 6) * GRID_X, y: ((u / 6) | 0) % 5 * GRID_Y }
 }
 
-export type CashNodeData = { spec: CashFlowNodeSpec }
+export type CashNodeData = { spec: CashFlowNodeSpec; highlighted?: boolean }
 export type CashEdgeData = { spec: CashFlowEdgeSpec }
 
 /** Typed React Flow node for custom `cashNode` renderer. */

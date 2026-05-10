@@ -1,27 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { api } from '../api/client'
 import {
   ALLOCATION_ITEM_CADENCES,
   PLAN_INCOME_CADENCES,
   PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
   allocationItemCreateBody,
   allocationItemPutBody,
   formatUsd,
+  graphNodeRefForPaymentMethod,
   validateItemDraft,
   type AllocationItemCadence,
   type ItemDraftInput,
   type PaymentMethod,
   type PlanIncomeCadence,
 } from '../lib/budgetAllocation'
-import { firstOfMonthFromYm, thisMonthYm } from '../lib/monthRange'
+import { coverageAccountLabelFromGraph, planMoneyFlowPhrases } from '../lib/budgetPlanMoneyFlows'
+import { firstOfMonthFromYm } from '../lib/monthRange'
+import { loadBudgetPagePrefs, persistBudgetPagePrefs } from '../lib/budgetPagePrefs'
 import type { AllocationItem, AllocationPlan } from '../types'
 import { BudgetDocsSectionLink, useBudgetDocs } from '../components/budget/BudgetDocsContext'
 import { BUDGET_FIELD_TIPS } from '../components/budget/budgetFieldTips'
 import { BUDGET_SCROLL_ANCHORS, type BudgetDocsSection } from '../components/budget/budgetDocAnchors'
 import { CashFlowGraphPanel } from '../components/budget/CashFlowGraphPanel'
 import { OutputHoverTip } from '../components/OutputHoverTip'
+
+const EMPTY_GRAPH_HIGHLIGHT_REFS: string[] = []
 
 function FieldLabel(props: { children: string; tip?: string }) {
   const { children, tip } = props
@@ -92,8 +99,8 @@ function emptyDraft(): ItemDraftInput {
 
 export function BudgetPage() {
   const queryClient = useQueryClient()
-  const [ym, setYm] = useState(thisMonthYm)
-  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
+  const [ym, setYm] = useState(() => loadBudgetPagePrefs().ym)
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(() => loadBudgetPagePrefs().planId)
   const [planNameDraft, setPlanNameDraft] = useState('')
   const [incomeAmount, setIncomeAmount] = useState('')
   const [incomeCadence, setIncomeCadence] = useState<PlanIncomeCadence | ''>('')
@@ -101,6 +108,8 @@ export function BudgetPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editDraft, setEditDraft] = useState<ItemDraftInput | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [loadModalOpen, setLoadModalOpen] = useState(false)
+  const [graphPayHoverNodeRef, setGraphPayHoverNodeRef] = useState<string | null>(null)
 
   const { openDocs } = useBudgetDocs()
   const barBottom = 'max(0.75rem, env(safe-area-inset-bottom, 0px))'
@@ -115,8 +124,18 @@ export function BudgetPage() {
     }
   }, [monthIso, ym])
 
+  const graphHighlightNodeRefs = useMemo(
+    () => (graphPayHoverNodeRef ? [graphPayHoverNodeRef] : EMPTY_GRAPH_HIGHLIGHT_REFS),
+    [graphPayHoverNodeRef],
+  )
+
+  useEffect(() => {
+    persistBudgetPagePrefs({ ym, planId: selectedPlanId })
+  }, [ym, selectedPlanId])
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['budgetPlans'] })
+    queryClient.invalidateQueries({ queryKey: ['budgetPlansAll'] })
     queryClient.invalidateQueries({ queryKey: ['budgetItems'] })
     queryClient.invalidateQueries({ queryKey: ['budgetSummary'] })
     queryClient.invalidateQueries({ queryKey: ['budgetCashFlowGraph'] })
@@ -127,6 +146,12 @@ export function BudgetPage() {
     queryKey: ['budgetPlans', monthIso],
     queryFn: () => api.listBudgetAllocationPlans(monthIso),
     enabled: Boolean(monthIso),
+  })
+
+  const allPlansQuery = useQuery({
+    queryKey: ['budgetPlansAll'],
+    queryFn: () => api.listAllBudgetAllocationPlans(),
+    enabled: loadModalOpen,
   })
 
   const plans = useMemo(() => plansQuery.data?.items ?? [], [plansQuery.data])
@@ -165,6 +190,17 @@ export function BudgetPage() {
     enabled: selectedPlanId != null,
   })
 
+  const planGraphQuery = useQuery({
+    queryKey: ['budgetCashFlowGraph', selectedPlanId],
+    queryFn: () => api.getBudgetCashFlowGraph(selectedPlanId!),
+    enabled: selectedPlanId != null,
+  })
+
+  const planMoneyFlows = useMemo(
+    () => planMoneyFlowPhrases(planGraphQuery.data ?? undefined),
+    [planGraphQuery.data],
+  )
+
   const summaryQuery = useQuery({
     queryKey: ['budgetSummary', selectedPlanId],
     queryFn: () => api.budgetAllocationSummary(selectedPlanId!),
@@ -177,7 +213,8 @@ export function BudgetPage() {
         period_month: monthIso,
         currency: 'USD',
       }),
-    onSuccess: () => {
+    onSuccess: (plan: AllocationPlan) => {
+      setSelectedPlanId(plan.id)
       invalidateAll()
     },
   })
@@ -277,13 +314,52 @@ export function BudgetPage() {
     }
   }
 
+  const formatPlanPeriodLabel = (periodMonth: string) => {
+    try {
+      return format(parseISO(periodMonth.slice(0, 10) + 'T12:00:00'), 'MMMM yyyy')
+    } catch {
+      return periodMonth.slice(0, 7)
+    }
+  }
+
+  const handleLoadSavedPlan = (plan: AllocationPlan) => {
+    const ymNext = plan.period_month.slice(0, 7)
+    setYm(ymNext)
+    setSelectedPlanId(plan.id)
+    persistBudgetPagePrefs({ ym: ymNext, planId: plan.id })
+    invalidateAll()
+    setLoadModalOpen(false)
+  }
+
+  useEffect(() => {
+    if (!loadModalOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLoadModalOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [loadModalOpen])
+
   return (
+    <>
     <div id={BUDGET_SCROLL_ANCHORS.top} className="space-y-8 pb-28">
       <div>
         <h1 className="text-xl font-bold text-slate-800">Budget allocation</h1>
         <p className="text-sm text-slate-500 mt-1">
           Plan recurring amounts by category for a month. Totals sync to the unified view as category budgets.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <button
+            type="button"
+            onClick={() => setLoadModalOpen(true)}
+            className="inline-flex items-center rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-900 shadow-sm hover:bg-teal-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+          >
+            Load saved plan…
+          </button>
+          <span className="text-[11px] text-slate-500 max-w-md">
+            Opens the same picker as the floating bar — choose a plan to jump to its month and lines.
+          </span>
+        </div>
         <p className="mt-2 text-[11px] leading-relaxed text-slate-600 border border-slate-100 rounded-lg px-3 py-2.5 bg-slate-50/85">
           <span className="font-semibold text-slate-700">Inline help.</span> Hover underlined labels for short definitions.
           Open the full guide from the floating bar or{' '}
@@ -305,10 +381,12 @@ export function BudgetPage() {
             className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </label>
-        {plans.length > 1 && (
+        {plans.length >= 1 && (
           <label className="flex flex-col gap-1 text-sm min-w-[12rem]">
-            <FieldLabel tip={BUDGET_FIELD_TIPS.planSelect}>Plan</FieldLabel>
+            <FieldLabel tip={BUDGET_FIELD_TIPS.planSelect}>Budget</FieldLabel>
             <select
+              id="budget-plan-select"
+              aria-label="Select allocation plan"
               value={selectedPlanId ?? ''}
               onChange={e => setSelectedPlanId(Number(e.target.value))}
               className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -320,6 +398,16 @@ export function BudgetPage() {
               ))}
             </select>
           </label>
+        )}
+        {plans.length >= 1 && monthIso && (
+          <button
+            type="button"
+            onClick={() => createPlanMut.mutate()}
+            disabled={!monthIso || createPlanMut.isPending}
+            className="mb-0.5 text-sm font-medium text-teal-700 hover:text-teal-900 border border-teal-200 rounded-lg px-3 py-2 disabled:opacity-50 self-end"
+          >
+            {createPlanMut.isPending ? 'Creating…' : 'Add another plan'}
+          </button>
         )}
       </div>
 
@@ -391,26 +479,35 @@ export function BudgetPage() {
                   ))}
                 </select>
               </label>
-              <button
-                type="button"
-                onClick={handleSavePlanMeta}
-                disabled={updatePlanMut.isPending}
-                className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 rounded-lg px-4 py-2"
-              >
-                {updatePlanMut.isPending ? 'Saving…' : 'Save plan'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('Delete this plan and all its allocation lines?')) {
-                    deletePlanMut.mutate()
-                  }
-                }}
-                disabled={deletePlanMut.isPending}
-                className="text-sm font-medium text-red-700 hover:text-red-900 disabled:opacity-50"
-              >
-                Delete plan
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSavePlanMeta}
+                  disabled={updatePlanMut.isPending}
+                  className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 rounded-lg px-4 py-2"
+                >
+                  {updatePlanMut.isPending ? 'Saving…' : 'Save plan'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoadModalOpen(true)}
+                  className="text-sm font-semibold rounded-lg border-2 border-teal-600 bg-white px-4 py-2 text-teal-900 shadow-sm hover:bg-teal-50"
+                >
+                  Load…
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Delete this plan and all its allocation lines?')) {
+                      deletePlanMut.mutate()
+                    }
+                  }}
+                  disabled={deletePlanMut.isPending}
+                  className="text-sm font-medium text-red-700 hover:text-red-900 disabled:opacity-50"
+                >
+                  Delete plan
+                </button>
+              </div>
             </div>
             <p className="text-xs text-slate-400">Period {activePlan.period_month} · currency {activePlan.currency}</p>
           </div>
@@ -439,12 +536,12 @@ export function BudgetPage() {
                   value={formatUsd(summaryQuery.data.total_monthly_allocated)}
                 />
                 <Kpi
-                  label="Cash"
+                  label="Checking"
                   labelTip={BUDGET_FIELD_TIPS.kpi.cash}
                   value={formatUsd(summaryQuery.data.cash_allocated)}
                 />
                 <Kpi
-                  label="Credit"
+                  label="Chase"
                   labelTip={BUDGET_FIELD_TIPS.kpi.credit}
                   value={formatUsd(summaryQuery.data.credit_allocated)}
                 />
@@ -463,8 +560,69 @@ export function BudgetPage() {
 
           <div id={BUDGET_SCROLL_ANCHORS.cashFlowGraph} className="scroll-mt-24">
             <SectionTitle docsSection="cashFlowMap">Cash flow map</SectionTitle>
-            <CashFlowGraphPanel planId={selectedPlanId} planIncomeMonthly={activePlan?.income_monthly ?? null} />
+            <CashFlowGraphPanel
+              planId={selectedPlanId}
+              planIncomeMonthly={activePlan?.income_monthly ?? null}
+              highlightNodeRefs={graphHighlightNodeRefs}
+            />
           </div>
+
+          {activePlan && (
+            <div id={BUDGET_SCROLL_ANCHORS.planMoneyFlows} className="scroll-mt-24">
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+                <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  <OutputHoverTip
+                    tip={BUDGET_FIELD_TIPS.planMoneyFlows}
+                    dashed={false}
+                    placement="below"
+                    className="inline"
+                  >
+                    Plan inflows & outflows
+                  </OutputHoverTip>
+                </h2>
+              </div>
+              {planGraphQuery.isError ? (
+                <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-800">
+                  Could not load the plan graph, so inflows and outflows are unavailable.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 rounded-xl border border-slate-100 bg-white p-4 shadow-sm text-sm">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2">Inflows</div>
+                    {planGraphQuery.isLoading ? (
+                      <p className="text-xs text-slate-400">Loading…</p>
+                    ) : planMoneyFlows.inflows.length === 0 ? (
+                      <p className="text-xs text-slate-400">
+                        No inflow edges in the map yet (e.g. income → checking, savings → checking).
+                      </p>
+                    ) : (
+                      <ul className="list-disc pl-4 space-y-1.5 text-slate-700">
+                        {planMoneyFlows.inflows.map((line, i) => (
+                          <li key={`in-${i}`}>{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2">Outflows</div>
+                    {planGraphQuery.isLoading ? (
+                      <p className="text-xs text-slate-400">Loading…</p>
+                    ) : planMoneyFlows.outflows.length === 0 ? (
+                      <p className="text-xs text-slate-400">
+                        No outflow edges in the map yet (e.g. checking → card or brokerage).
+                      </p>
+                    ) : (
+                      <ul className="list-disc pl-4 space-y-1.5 text-slate-700">
+                        {planMoneyFlows.outflows.map((line, i) => (
+                          <li key={`out-${i}`}>{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {itemsQuery.isError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -505,8 +663,8 @@ export function BudgetPage() {
                         </OutputHoverTip>
                       </th>
                       <th className="px-3 py-3">
-                        <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.pay} dashed={false} placement="below" className="inline font-semibold">
-                          Pay
+                        <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.account} dashed={false} placement="below" className="inline font-semibold">
+                          Account
                         </OutputHoverTip>
                       </th>
                       <th className="px-3 py-3">
@@ -566,7 +724,15 @@ export function BudgetPage() {
                             </select>
                           </td>
                           <td className="px-3 py-2 text-slate-500 tabular-nums">{formatUsd(item.monthly_amount)}</td>
-                          <td className="px-3 py-2">
+                          <td
+                            className="px-3 py-2"
+                            onMouseEnter={() =>
+                              setGraphPayHoverNodeRef(
+                                graphNodeRefForPaymentMethod(editDraft.payment_method),
+                              )
+                            }
+                            onMouseLeave={() => setGraphPayHoverNodeRef(null)}
+                          >
                             <select
                               className="w-full rounded border border-slate-200 px-2 py-1"
                               value={editDraft.payment_method}
@@ -579,7 +745,7 @@ export function BudgetPage() {
                             >
                               {PAYMENT_METHODS.map(c => (
                                 <option key={c} value={c}>
-                                  {c}
+                                  {PAYMENT_METHOD_LABELS[c]}
                                 </option>
                               ))}
                             </select>
@@ -628,7 +794,30 @@ export function BudgetPage() {
                           <td className="px-3 py-2 tabular-nums text-teal-800 font-medium">
                             {formatUsd(item.monthly_amount)}
                           </td>
-                          <td className="px-3 py-2 capitalize text-slate-600">{item.payment_method}</td>
+                          <td
+                            className="px-3 py-2 text-slate-600"
+                            onMouseEnter={() =>
+                              setGraphPayHoverNodeRef(
+                                graphNodeRefForPaymentMethod(
+                                  PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
+                                    ? (item.payment_method as PaymentMethod)
+                                    : 'cash',
+                                ),
+                              )
+                            }
+                            onMouseLeave={() => setGraphPayHoverNodeRef(null)}
+                          >
+                            {(() => {
+                              const pm = PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
+                                ? (item.payment_method as PaymentMethod)
+                                : 'cash'
+                              return (
+                                <span className="font-medium text-slate-800">
+                                  {coverageAccountLabelFromGraph(pm, planGraphQuery.data ?? undefined)}
+                                </span>
+                              )
+                            })()}
+                          </td>
                           <td className="px-3 py-2 text-slate-500">{item.due_day ?? '—'}</td>
                           <td className="px-3 py-2 text-slate-500 max-w-xs truncate" title={item.notes}>
                             {item.notes || '—'}
@@ -706,7 +895,7 @@ export function BudgetPage() {
                   ))}
                 </select>
                 <select
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm capitalize"
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                   value={newItem.payment_method}
                   onChange={e =>
                     setNewItem({ ...newItem, payment_method: e.target.value as PaymentMethod })
@@ -714,7 +903,7 @@ export function BudgetPage() {
                 >
                   {PAYMENT_METHODS.map(c => (
                     <option key={c} value={c}>
-                      {c}
+                      {PAYMENT_METHOD_LABELS[c]}
                     </option>
                   ))}
                 </select>
@@ -771,47 +960,144 @@ export function BudgetPage() {
         </>
       )}
 
-      <div
-        className="fixed inset-x-0 z-[95] flex justify-center pointer-events-none px-2"
-        style={{ bottom: barBottom }}
-        role="region"
-        aria-label="Budget page controls"
-      >
-        <div className="pointer-events-auto flex max-w-[min(56rem,calc(100vw-1rem))] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-slate-200/90 bg-white/95 px-2 py-2 shadow-lg shadow-slate-900/15 backdrop-blur-sm ring-1 ring-slate-900/5 sm:gap-2 sm:px-3 sm:py-2.5">
-          <button
-            type="button"
-            aria-label="Save plan name and income"
-            onClick={handleSavePlanMeta}
-            disabled={!activePlan || updatePlanMut.isPending}
-            className="rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:px-4 sm:text-sm"
-          >
-            {updatePlanMut.isPending ? 'Saving…' : 'Save plan'}
-          </button>
-          <div className="hidden h-7 w-px bg-slate-200 sm:block" aria-hidden />
-          <button
-            type="button"
-            onClick={() => openDocs()}
-            aria-label="Open budget allocation guide"
-            className="flex items-center gap-1.5 rounded-xl border border-transparent px-2 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:gap-2 sm:px-2.5 sm:text-sm"
-          >
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white shadow-inner sm:h-9 sm:w-9"
-              aria-hidden
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="translate-y-[0.5px] sm:h-[18px] sm:w-[18px]">
-                <path
-                  d="M8 3.25h9.75a2.25 2.25 0 012.25 2.25V18a3 3 0 01-3 3h-9A3 3 0 016 18v-13a3 3 0 013-1.75z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                <path d="M8 8.25h8M8 12h8M8 15.75h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </span>
-            <span className="hidden min-[400px]:inline">Docs</span>
-          </button>
-        </div>
-      </div>
     </div>
+    {createPortal(
+      <>
+        <div
+          className="fixed inset-x-0 z-[200] flex justify-center pointer-events-none px-2"
+          style={{ bottom: barBottom }}
+          role="region"
+          aria-label="Budget page controls"
+        >
+          <div className="pointer-events-auto flex max-w-[min(56rem,calc(100vw-1rem))] flex-col items-stretch gap-2 rounded-2xl border border-slate-200/90 bg-white/95 px-2 py-2 shadow-lg shadow-slate-900/15 backdrop-blur-sm ring-1 ring-slate-900/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-2 sm:px-3 sm:py-2.5">
+            <div className="flex min-w-0 flex-1 justify-center gap-2 sm:flex-initial sm:justify-start">
+              <button
+                type="button"
+                aria-label="Save plan name and income"
+                onClick={handleSavePlanMeta}
+                disabled={!activePlan || updatePlanMut.isPending}
+                className="min-w-0 flex-1 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:flex-initial sm:px-4 sm:text-sm"
+              >
+                {updatePlanMut.isPending ? 'Saving…' : 'Save plan'}
+              </button>
+              <button
+                type="button"
+                aria-label="Load a saved allocation plan"
+                onClick={() => setLoadModalOpen(true)}
+                className="min-w-0 flex-1 rounded-xl border-2 border-teal-500 bg-white px-3 py-2 text-xs font-semibold text-teal-900 shadow-sm transition hover:bg-teal-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:flex-initial sm:px-4 sm:text-sm"
+              >
+                Load
+              </button>
+            </div>
+            <div className="hidden h-7 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+            <button
+              type="button"
+              onClick={() => openDocs()}
+              aria-label="Open budget allocation guide"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-transparent px-2 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:gap-2 sm:px-2.5 sm:text-sm"
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white shadow-inner sm:h-9 sm:w-9"
+                aria-hidden
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="translate-y-[0.5px] sm:h-[18px] sm:w-[18px]">
+                  <path
+                    d="M8 3.25h9.75a2.25 2.25 0 012.25 2.25V18a3 3 0 01-3 3h-9A3 3 0 016 18v-13a3 3 0 013-1.75z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M8 8.25h8M8 12h8M8 15.75h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span className="hidden min-[400px]:inline">Docs</span>
+            </button>
+          </div>
+        </div>
+
+        {loadModalOpen && (
+          <div
+            className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="budget-load-plan-title"
+            onClick={e => {
+              if (e.target === e.currentTarget) setLoadModalOpen(false)
+            }}
+          >
+            <div
+              className="flex max-h-[min(70vh,28rem)] w-full max-w-lg flex-col rounded-2xl border border-slate-200 bg-white shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <h2 id="budget-load-plan-title" className="text-lg font-semibold text-slate-800">
+                  Load saved plan
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={() => setLoadModalOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <span aria-hidden className="text-xl leading-none">
+                    ×
+                  </span>
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+                {allPlansQuery.isLoading && (
+                  <p className="px-3 py-6 text-center text-sm text-slate-500">Loading plans…</p>
+                )}
+                {allPlansQuery.isError && (
+                  <p className="px-3 py-4 text-center text-sm text-red-700" role="alert">
+                    Could not load plans.{' '}
+                    {allPlansQuery.error instanceof Error ? allPlansQuery.error.message : 'Unknown error'}
+                  </p>
+                )}
+                {!allPlansQuery.isLoading &&
+                  !allPlansQuery.isError &&
+                  (allPlansQuery.data?.items.length ?? 0) === 0 && (
+                    <p className="px-3 py-6 text-center text-sm text-slate-500">
+                      No saved allocation plans yet. Create one from the Budget page or run a database seed.
+                    </p>
+                  )}
+                {!allPlansQuery.isLoading &&
+                  !allPlansQuery.isError &&
+                  (allPlansQuery.data?.items ?? []).length > 0 && (
+                    <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
+                      {(allPlansQuery.data?.items ?? []).map(plan => (
+                        <li key={plan.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleLoadSavedPlan(plan)}
+                            className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left transition hover:bg-teal-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500"
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-medium text-slate-800">{plan.name}</span>
+                              <span className="mt-0.5 block text-[11px] text-slate-400">
+                                Plan #{plan.id} · {plan.currency}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-xs font-medium tabular-nums text-slate-600">
+                              {formatPlanPeriodLabel(plan.period_month)}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+              </div>
+              <div className="border-t border-slate-100 px-4 py-3">
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  Opens that plan and jumps to its calendar month. Your lines and cash-flow map update automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </>,
+      document.body,
+    )}
+    </>
   )
 }

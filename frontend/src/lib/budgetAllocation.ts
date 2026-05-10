@@ -29,6 +29,17 @@ export const PAYMENT_METHODS = ['cash', 'credit'] as const
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 
+/** Table / KPI shorthand for the account implied by each payment method. */
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Checking',
+  credit: 'Chase',
+}
+
+/** Cash-flow graph node ref tied to each payment method (default graph refs). */
+export function graphNodeRefForPaymentMethod(pm: PaymentMethod): 'checking' | 'chase' {
+  return pm === 'credit' ? 'chase' : 'checking'
+}
+
 export function formatUsd(n: number): string {
   const sign = n < 0 ? '−' : ''
   return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

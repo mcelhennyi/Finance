@@ -1,8 +1,8 @@
 # FR-0003 — BBD projection web UI
 
-**Status:** follow-up **`feat/FR-0003-bbd-ui-followup`** — **planned vs actual**: [`planned-vs-actual.md`](planned-vs-actual.md) · **finish handoff**: [`handoffs/2026-05-02-finish-feature.md`](handoffs/2026-05-02-finish-feature.md) · **PR:** [#6](https://github.com/mcelhennyi/Finance/pull/6) → **`master`**  
+**Status:** **`complete`** per [`REGISTRY.md`](../REGISTRY.md). Baseline tickets **[`T-FR-0003-01`](tickets.md)**–**[`04`](tickets.md)** and follow-up on **`feat/FR-0003-bbd-ui-followup`** are integrated on **`master`**. Follow-up PR **[#6](https://github.com/mcelhennyi/Finance/pull/6)** merged **2026-05-10**. **Closeout:** [`90-closeout.md`](90-closeout.md) · **planned vs actual:** [`planned-vs-actual.md`](planned-vs-actual.md) · **finish handoff:** [`handoffs/2026-05-02-finish-feature.md`](handoffs/2026-05-02-finish-feature.md).
 
-**Earlier tranche:** complete on default branch (**`master`**) prior to modal/preset/hydrate follow-up (**`T-FR-0003-01`**–**`04`** baseline).  
+**Earlier tranche:** landed on default branch (**`master`**) before the modal/preset/hydrate follow-up documented in **`planned-vs-actual.md`**.  
 
 **Script:** [`scripts/bbd_projection.py`](../../../scripts/bbd_projection.py)
 

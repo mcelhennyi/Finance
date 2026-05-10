@@ -24,7 +24,7 @@ def cash_flow_api_client(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_cash_flow_graph_get_empty_then_put_round_trip(cash_flow_api_client: TestClient) -> None:
+def test_cash_flow_graph_get_seeds_default_then_put_round_trip(cash_flow_api_client: TestClient) -> None:
     c = cash_flow_api_client
     r = c.post(
         "/api/budget-allocation/plans",
@@ -35,10 +35,11 @@ def test_cash_flow_graph_get_empty_then_put_round_trip(cash_flow_api_client: Tes
 
     g = c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph")
     assert g.status_code == 200
-    empty = g.json()
-    assert empty["plan_id"] == plan_id
-    assert empty["nodes"] == []
-    assert empty["edges"] == []
+    first = g.json()
+    assert first["plan_id"] == plan_id
+    assert len(first["nodes"]) == 4
+    assert {n["ref"] for n in first["nodes"]} == {"payroll", "checking", "savings", "chase"}
+    assert len(first["edges"]) == 2
 
     payload = {
         "plan_id": plan_id,

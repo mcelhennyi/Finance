@@ -140,6 +140,9 @@ export const api = {
     return get<AllocationPlanListResponse>('/budget-allocation/plans', p)
   },
 
+  /** All allocation plans (newest months first); omit month filter on the API. */
+  listAllBudgetAllocationPlans: () => get<AllocationPlanListResponse>('/budget-allocation/plans'),
+
   createBudgetAllocationPlan: (body: Record<string, unknown>) =>
     postJson<AllocationPlan>('/budget-allocation/plans', body),
 

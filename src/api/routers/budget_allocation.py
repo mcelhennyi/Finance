@@ -34,7 +34,7 @@ from finance.allocation.service import (
 )
 from finance.allocation.summary import AllocationSummary
 from finance.cash_flow_graph.schemas import CashFlowGraphDocument
-from finance.cash_flow_graph.service import get_plan_graph, replace_plan_graph
+from finance.cash_flow_graph.service import ensure_default_cash_flow_graph_if_empty, replace_plan_graph
 from finance.db.models import AllocationItem, AllocationPlan
 from finance.db.session import get_session
 
@@ -218,7 +218,7 @@ def get_plan_cash_flow_graph(plan_id: int) -> CashFlowGraphDocument:
     """Return nodes and edges for the cash-flow graph attached to this allocation plan."""
 
     with get_session() as session:
-        doc = get_plan_graph(session, plan_id)
+        doc = ensure_default_cash_flow_graph_if_empty(session, plan_id)
         if doc is None:
             raise HTTPException(status_code=404, detail="allocation plan not found")
         return doc
@@ -238,6 +238,6 @@ def put_plan_cash_flow_graph(plan_id: int, payload: CashFlowGraphDocument) -> Ca
             detail = str(exc)
             code = 404 if "not found" in detail.lower() else 400
             raise HTTPException(status_code=code, detail=detail) from exc
-        doc = get_plan_graph(session, plan_id)
+        doc = ensure_default_cash_flow_graph_if_empty(session, plan_id)
         assert doc is not None
         return doc

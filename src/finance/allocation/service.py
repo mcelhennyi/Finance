@@ -29,6 +29,8 @@ from finance.allocation.summary import (
     build_allocation_summary,
     item_slice_from_orm,
 )
+from finance.cash_flow_graph.default_plan_graph import default_seeded_plan_cash_flow_graph
+from finance.cash_flow_graph.service import replace_plan_graph
 from finance.db.models import AllocationItem, AllocationPlan
 
 
@@ -142,6 +144,7 @@ def seed_starter_allocation_plan(session: Session, period_month: date) -> Alloca
     plan = create_allocation_plan(session, starter_plan_create(period_month))
     for item_payload in starter_plan_items():
         create_allocation_item(session, plan.id, item_payload)
+    replace_plan_graph(session, plan.id, default_seeded_plan_cash_flow_graph(plan.id))
     return plan
 
 

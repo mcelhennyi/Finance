@@ -9,7 +9,11 @@ from finance.cash_flow_graph.schemas import (
     CashFlowGraphDocument,
     CashFlowNodeSpec,
 )
-from finance.cash_flow_graph.service import get_plan_graph, replace_plan_graph
+from finance.cash_flow_graph.service import (
+    ensure_default_cash_flow_graph_if_empty,
+    get_plan_graph,
+    replace_plan_graph,
+)
 
 __all__ = [
     "CashFlowAmountRule",
@@ -18,6 +22,7 @@ __all__ = [
     "CashFlowEdgeSpec",
     "CashFlowNodeSpec",
     "CashNodeKind",
+    "ensure_default_cash_flow_graph_if_empty",
     "get_plan_graph",
     "replace_plan_graph",
 ]

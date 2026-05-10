@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from finance.cash_flow_graph.default_plan_graph import default_seeded_plan_cash_flow_graph
 from finance.cash_flow_graph.enums import CashFlowAmountRule, CashFlowCadence, CashNodeKind
 from finance.cash_flow_graph.schemas import (
     CashFlowEdgeSpec,
@@ -59,6 +60,21 @@ def get_plan_graph(session: Session, plan_id: int) -> CashFlowGraphDocument | No
         )
 
     return CashFlowGraphDocument(plan_id=plan_id, nodes=node_specs, edges=edge_specs)
+
+
+def ensure_default_cash_flow_graph_if_empty(session: Session, plan_id: int) -> CashFlowGraphDocument | None:
+    """Return the plan graph, inserting the seeded default template when the plan exists but has no nodes.
+
+    Older plans (created before graph seeding) load empty graphs until this runs on first GET.
+    """
+
+    doc = get_plan_graph(session, plan_id)
+    if doc is None:
+        return None
+    if doc.nodes:
+        return doc
+    replace_plan_graph(session, plan_id, default_seeded_plan_cash_flow_graph(plan_id))
+    return get_plan_graph(session, plan_id)
 
 
 def replace_plan_graph(session: Session, plan_id: int, payload: CashFlowGraphDocument) -> None:

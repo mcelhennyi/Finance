@@ -68,6 +68,10 @@ In Docker: `docker compose run --rm api python -m finance.dev_seed --export-merc
 
 Override the path with **`FINANCE_SEED_MERCHANT_DISPLAYS`** (see `docker-compose.yml`).
 
+**Budget default allocation:** the repo ships **`data/budget-default-plan.yaml`** — a purpose-built document matching Budget page fields (`plan` header + `items` with `planned_amount`, `cadence`, `payment_method`, optional `due_day` / `notes`). **`python -m finance.dev_seed`** loads it after CSV ingest (same command as **`./scripts/dev.sh --seed`**). Compose sets **`FINANCE_BUDGET_DEFAULT_YAML`** to **`/app/data/budget-default-plan.yaml`**.
+
+Point **`FINANCE_BUDGET_DEFAULT_YAML`** at another file to customize. **`FINANCE_BUDGET_ALLOCATION_PERIOD_MONTH`** (ISO date) sets the planning month when **`period_month`** is omitted from the YAML. **`FINANCE_BUDGET_DEFAULT_SEED_ENABLED=false`** skips applying the YAML.
+
 ### What it does
 
 1. Builds and starts the **api** and **web** services from `docker-compose.yml` (FastAPI + Vite, with reload)
@@ -79,6 +83,8 @@ Host ports are defined in **[docs/PORTS.md](../docs/PORTS.md)**.
 
 Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, see `docker compose` documentation.
 
+
+- **`FINANCE_BUDGET_DEFAULT_YAML`** — path to the budget allocation seed document (repo default **`data/budget-default-plan.yaml`**; Compose **`/app/data/budget-default-plan.yaml`**).
 - **`FINANCE_ALLOCATION_AUTO_TEMPLATE`** — when `true` / `1` / `yes`, the first **`GET /api/budget-allocation/plans?month=…`** for a month with no plans inserts **Starter cash-flow template** (illustrative lines). Repo **`docker-compose.yml`** defaults to **`false`** (empty month until the user creates a plan); set **`true`** locally when you want the demo seed. See **`docs/design/budget-plans-roadmap.md`**.
 
 ### Access
