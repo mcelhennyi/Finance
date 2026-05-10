@@ -1,7 +1,10 @@
 """Pydantic schemas for the Finance Hub API."""
 
 from datetime import date, datetime
+
 from pydantic import BaseModel, Field
+
+from finance.allocation.schemas import AllocationItemOut, AllocationPlanOut
 
 
 class IngestionResponse(BaseModel):
@@ -190,6 +193,28 @@ class IncomeLiabilityAggregateOut(BaseModel):
     net_cash_after_liabilities: float
     active_income_count: int
     active_liability_count: int
+
+
+# --- Budget allocation (T-FR-0002-02) ---
+
+
+class AllocationSummaryOut(BaseModel):
+    """Derived monthly totals for a plan (Budget page summary)."""
+
+    total_monthly_allocated: float
+    cash_allocated: float
+    credit_allocated: float
+    remaining_income: float | None
+    category_totals: dict[str, float]
+    cadence_totals: dict[str, float]
+
+
+class AllocationPlanListResponse(BaseModel):
+    items: list[AllocationPlanOut]
+
+
+class AllocationItemListResponse(BaseModel):
+    items: list[AllocationItemOut]
 
 
 # --- Unified monthly view (T-FR-0001-04) — stable for Phase 2 dashboard ---

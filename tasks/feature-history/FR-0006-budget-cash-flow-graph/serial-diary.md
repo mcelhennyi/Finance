@@ -1,3 +1,11 @@
+## 2026-05-10 (session) — T-FR-0006-03 cash-flow graph CRUD API
+
+**Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Implemented **`get_plan_graph`** / **`replace_plan_graph`** (flush after replace so same-session reads see edges), **`GET`/`PUT /api/budget-allocation/plans/{plan_id}/cash-flow-graph`**, and **`tests/test_api_cash_flow_graph.py`**. Budget allocation REST (`finance.allocation` + **`budget_allocation`** router) is included as the host module for graph routes. **`httpx`** added for TestClient. Next: [**Budget React Flow panel wired to graph API**](tickets.md) ([`T-FR-0006-04`](tickets.md)).
+
+---
+
 ## 2026-05-10 (session) — T-FR-0006-02 ORM + migration stub
 
 **Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**

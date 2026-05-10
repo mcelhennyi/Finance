@@ -67,11 +67,13 @@ Expose **read** and **replace** (or fine-grained CRUD) endpoints for the graph f
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | API behavior | `httpx` / TestClient tests: empty graph, full replace, validation failures, wrong plan id |
-| **DEV** | Implement router | FastAPI router + service layer; OpenAPI documents payloads |
-| **VAL** | Integration | Tests pass in container; routes registered in **`main.py`** |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | API behavior | `httpx` / TestClient tests: empty graph, full replace, validation failures, wrong plan id | done |
+| **DEV** | Implement router | FastAPI router + service layer; OpenAPI documents payloads | done |
+| **VAL** | Integration | Tests pass in container; routes registered in **`main.py`** | done |
+
+**VAL notes:** `GET`/`PUT /api/budget-allocation/plans/{plan_id}/cash-flow-graph`; `finance.cash_flow_graph.service` (`get_plan_graph`, `replace_plan_graph`); `tests/test_api_cash_flow_graph.py`; requires budget allocation router (`finance.allocation`) for shared **`budget_allocation`** router module.
 
 #### Notes
 

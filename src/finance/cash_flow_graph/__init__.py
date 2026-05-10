@@ -9,6 +9,7 @@ from finance.cash_flow_graph.schemas import (
     CashFlowGraphDocument,
     CashFlowNodeSpec,
 )
+from finance.cash_flow_graph.service import get_plan_graph, replace_plan_graph
 
 __all__ = [
     "CashFlowAmountRule",
@@ -17,4 +18,6 @@ __all__ = [
     "CashFlowEdgeSpec",
     "CashFlowNodeSpec",
     "CashNodeKind",
+    "get_plan_graph",
+    "replace_plan_graph",
 ]
