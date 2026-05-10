@@ -1,0 +1,94 @@
+# Buy, Borrow, Die projection config
+# Edit any value and re-run: python bbd_projection.py <this_file>
+# All currency values are in nominal dollars at simulation start.
+
+[timing]
+start_year = 2026
+horizon_years = 50          # how many years to project (e.g. 50 -> age 35 to 84)
+current_age = 35
+
+[income]
+w2_gross_income = 190000
+w2_growth_rate = 0.03       # annual raise assumption
+w2_retire_year_offset = 30  # years from start until W-2 income stops
+
+[taxes]
+federal_marginal_rate = 0.24
+state_marginal_rate = 0.05
+ltcg_rate = 0.15
+niit_rate = 0.038                    # 3.8% net investment income tax (high earners)
+depreciation_recapture_rate = 0.25   # max for §1250 unrecaptured
+
+[expenses]
+annual_living_expenses = 90000   # everything except housing
+expense_inflation = 0.03
+
+[savings]
+annual_401k_contribution = 23000
+employer_match = 9500
+starting_taxable_portfolio = 0
+starting_portfolio_basis = 0
+portfolio_nominal_return = 0.085   # geometric mean expected total return
+portfolio_volatility = 0.16        # std dev for Monte Carlo
+portfolio_dividend_yield = 0.015   # taxable each year (drag in non-qualified accounts)
+# Optional: override automatic savings calc with a fixed annual figure
+# annual_taxable_savings_override = 30000
+
+[borrowing]
+# SBLOC = Securities-Backed Line of Credit (against your taxable portfolio)
+sbloc_ltv_cap = 0.50              # max % of portfolio you can borrow
+sbloc_margin_call_ltv = 0.70      # forced liquidation threshold
+sbloc_spread_over_sofr = 0.025    # 250 bps spread, typical for $100k–$1M tier
+sofr_rate = 0.0365                # current SOFR (Apr 2026: ~3.63%)
+sofr_long_run = 0.030             # long-run mean for rate mean-reversion
+rate_mean_reversion = 0.20        # speed of reversion per year
+
+# Real-estate borrowing (HELOC / cash-out refi)
+heloc_rate_spread_over_prime = 0.005   # HELOC at prime + 0.5%
+cashout_refi_rate = 0.072              # current investment-property cash-out rate
+heloc_max_cltv = 0.85                  # combined LTV cap on primary
+cashout_refi_max_cltv = 0.75           # cap on rental cash-out
+
+[strategy]
+drawdown_start_year_offset = 25     # years until you switch from accumulating to borrowing
+target_annual_drawdown = 120000     # tax-free cash to pull/year in retirement
+capitalize_interest = true          # true BBD: interest adds to loan balance
+inflate_drawdown = true             # grow drawdown with inflation
+# convert_primary_to_rental_year = 2027   # uncomment to convert primary to rental
+pe_exit_treatment = "cash"          # "cash" | "stock" | "hold"
+
+# ---------------------------------------------------------------------------
+# Real estate. Add multiple [[properties]] tables for multiple properties.
+# ---------------------------------------------------------------------------
+[[properties]]
+name = "Primary Home"
+purchase_price = 360000
+purchase_year = 2021
+current_value = 420000
+mortgage_balance = 308000           # current principal remaining
+mortgage_rate = 0.03
+mortgage_term_years = 30
+mortgage_origination_year = 2021
+monthly_piti = 2500                 # all-in: P+I+tax+insurance+PMI
+monthly_market_rent = 2400
+is_primary = true
+appreciation_rate = 0.035
+rent_growth_rate = 0.03
+vacancy_and_mgmt_pct = 0.10
+annual_maintenance_pct = 0.01
+land_value_pct = 0.20
+
+# ---------------------------------------------------------------------------
+# Private equity (startup stock). Add multiple [[private_equity]] tables.
+# Set to [] or omit entirely if you have none.
+# ---------------------------------------------------------------------------
+[[private_equity]]
+name = "Private Startup Equity"
+current_value = 200000
+cost_basis = 0                # what you paid (strike × shares for ISOs/NSOs)
+expected_growth_rate = 0.15   # if the company survives
+volatility = 0.55
+annual_failure_prob = 0.06    # ~50% chance of zero over 10y
+annual_exit_prob = 0.08       # ~55% chance of an exit over 10y
+exit_multiple_mean = 2.5      # if exit, multiple on then-current value
+exit_multiple_vol = 1.5
