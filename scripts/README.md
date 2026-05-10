@@ -88,47 +88,17 @@ Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, 
 
 ---
 
-## `bbd_projection.py` — Buy, Borrow, Die projection (CLI)
+## `bbd-projection/` — Buy, Borrow, Die projection (CLI bundle)
 
-**Purpose:** Runs the same multi-engine projection used by **`POST /api/bbd-projection/run`**: deterministic paths, terminal estate heuristic, CSV export, and optional Monte Carlo. Core logic lives under **`finance.bbd.engine`** (`src/finance/bbd/`); this script stays a thin TOML/CLI façade.
+Standalone TOML-driven projection (**`scripts/bbd-projection/bbd_projection.py`**), **`example-scenario.toml`** (committed teaching numbers), and **`README.md`** (CLI cookbook plus **Strategy appendix** for framing and output semantics).
 
-### Usage
+See **[`bbd-projection/README.md`](bbd-projection/README.md)** for the tutorial, CLI flags, TOML map, CSV/stdout semantics, Hub versus CLI tradeoffs.
 
-```bash
-# After editable install from repo root
-pip install -e .
-python scripts/bbd_projection.py config.toml
-python scripts/bbd_projection.py config.toml --csv schedule.csv
-python scripts/bbd_projection.py config.toml --montecarlo 500
-python scripts/bbd_projection.py --emit-default starter.toml
-```
-
-### Inputs
-
-- **TOML** file covering `[timing]`, `[income]`, `[taxes]`, `[expenses]`, `[savings]`, `[borrowing]`, `[strategy]`, `[[properties]]`, `[[private_equity]]` (see **`--emit-default`** output).
-
-### Outputs
-
-- **Stdout:** Human-readable summaries (deterministic schedule samples + terminal estate comparison + optional Monte Carlo stats).
-- **`--csv PATH`:** Year-by-year numeric schedule.
-
-### Dependencies
-
-- **Python:** 3.11+ (stdlib **`tomllib`**).
-- **`pip install -e .`** so `finance.bbd` is importable.
-
-### Exit codes
-
-- **0:** Success.
-- **Non-zero:** argparse errors, missing config path, **`ValueError`** from unknown TOML keys.
-
-### Related
-
-- **Web UI:** Finance Hub navigation **BBD** (JSON scenario payload to **`/api/bbd-projection/run`**).
-
----
+The SPA **BBD** page (app nav **BBD**) calls the same engine through the Hub API: **`recharts`** story charts (trajectory, composition, borrowing vs LTV), an optional **three.js** spatial trajectory you can expand below the charts (hidden when the OS requests reduced motion), CSV/JSON export from the bottom control bar, and the narrative guide via **Docs**.
 
 ## Adding a New Script
+
+**Subfolder bundles:** When a tool ships with long-form docs beside the entrypoint (see **`bbd-projection/`**), keep **`README.md`**, example inputs, optional **gitignored** personal configs (`ian.toml`), and the script **together** and link from this index.
 
 When you add a script here, document it above with:
 

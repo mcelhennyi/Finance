@@ -1,0 +1,85 @@
+# Synthetic example scenario — illustrative round numbers only, not tuned to anyone’s life.
+# Copy this file when learning the CLI:
+#   cp scripts/bbd-projection/example-scenario.toml my-scenario.toml
+# Uses the same keys as `--emit-default` / the API Scenario shape (typos trigger ValueError).
+
+[timing]
+start_year = 2032
+horizon_years = 35
+current_age = 41
+
+[income]
+w2_gross_income = 148500
+w2_growth_rate = 0.028
+w2_retire_year_offset = 24
+
+[taxes]
+federal_marginal_rate = 0.22
+state_marginal_rate = 0.055
+ltcg_rate = 0.15
+niit_rate = 0.038
+depreciation_recapture_rate = 0.25
+
+[expenses]
+annual_living_expenses = 72000
+expense_inflation = 0.026
+
+[savings]
+annual_401k_contribution = 23500
+employer_match = 6000
+starting_taxable_portfolio = 125000
+starting_portfolio_basis = 92500
+portfolio_nominal_return = 0.075
+portfolio_volatility = 0.14
+portfolio_dividend_yield = 0.012
+
+[borrowing]
+sbloc_ltv_cap = 0.52
+sbloc_margin_call_ltv = 0.68
+sbloc_spread_over_sofr = 0.022
+sofr_rate = 0.041
+sofr_long_run = 0.029
+rate_mean_reversion = 0.22
+heloc_rate_spread_over_prime = 0.004
+cashout_refi_rate = 0.069
+heloc_max_cltv = 0.85
+cashout_refi_max_cltv = 0.72
+
+[strategy]
+drawdown_start_year_offset = 22
+target_annual_drawdown = 95000
+capitalize_interest = true
+inflate_drawdown = true
+pe_exit_treatment = "stock"
+
+[stress_test]
+stress_test_crash_pct = 0.45
+
+[[properties]]
+name = "Riverside Starter Duplex (illustrative)"
+purchase_price = 285000
+purchase_year = 2026
+current_value = 312000
+mortgage_balance = 246000
+mortgage_rate = 0.0625
+mortgage_term_years = 30
+mortgage_origination_year = 2028
+monthly_piti = 2050
+monthly_market_rent = 2550
+is_primary = true
+appreciation_rate = 0.03
+rent_growth_rate = 0.028
+vacancy_and_mgmt_pct = 0.08
+annual_maintenance_pct = 0.012
+land_value_pct = 0.18
+
+[[private_equity]]
+name = "Illustrative Series A paper"
+current_value = 48000
+cost_basis = 5000
+expected_growth_rate = 0.12
+volatility = 0.42
+annual_failure_prob = 0.055
+annual_exit_prob = 0.065
+exit_multiple_mean = 2.0
+exit_multiple_vol = 1.2

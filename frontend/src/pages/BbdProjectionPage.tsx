@@ -1,11 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { api } from '../api/client'
+import { BbdLightModal } from '../components/bbd/BbdLightModal'
 import { BbdScenarioFields } from '../components/bbd/BbdScenarioFields'
 import { BBD_PAGE_HELP } from '../components/bbd/bbdFieldTips'
 import { BbdDocsSectionLink, useBbdDocs } from '../components/bbd/BbdDocsContext'
+import { BbdStoryDashboard } from '../components/bbd/BbdStoryDashboard'
+import { BBD_OUTPUT_TIPS } from '../components/bbd/bbdOutputTips'
 import { OutputHoverTip } from '../components/OutputHoverTip'
+import { buildBbdVizModel, sampleScheduleForTable } from '../lib/bbdVizModel'
 import type { BbdPreset, BbdScenarioState } from '../lib/bbdScenario'
 import {
   cloneScenario,
@@ -17,7 +21,12 @@ import {
   savePresets,
   upsertPreset,
 } from '../lib/bbdScenario'
-import type { BbdRunPayload, BbdRunResponse } from '../types'
+import type { BbdRunPayload, BbdRunResponse, BbdScheduleRow } from '../types'
+
+const BbdSpatialPanel = lazy(() => import('../components/bbd/BbdSpatialPanel'))
+
+/** Alias for hover tips used on this page. */
+const OUTPUT_TIPS = BBD_OUTPUT_TIPS
 
 function fmtUsd(n: number) {
   if (!Number.isFinite(n)) return '—'
@@ -34,54 +43,90 @@ function fmtUsdYoYDelta(delta: number | null | undefined) {
   return fmtUsd(delta)
 }
 
-/** Help copy for abbreviated BBD projection outputs — shown via `OutputHoverTip` only (no native `title`, avoids double tooltips). */
-const OUTPUT_TIPS = {
-  scheduleIntro:
-    'Sampled rows: every fifth simulated year plus final horizon year. Figures are nominal USD from the scenario unless you adjusted inflation assumptions.',
-  monteIntro:
-    'Uses random draws across trials (portfolio, rates where stochastic, PE events). Bands show dispersion of outcomes, not a forecast distribution.',
-  table: {
-    year: 'Calendar year summarized by this modeled annual timestep.',
-    age: 'Modeled age in completed years at the end of that year.',
-    nw: 'Net worth: modeled total assets minus total liabilities.',
-    portfolio: 'Taxable portfolio market value; SBLOC is modeled against this collateral.',
-    pe: 'Private / illiquid equity mark for the year before modeled exits/write-downs crystallize.',
-    re: 'Sum of modeled property appraisals tied to mortgages and rents.',
-    sbloc: 'Outstanding securities-backed line of credit balance.',
-    draw: 'Annual draw modeled as borrowing-based cash extraction in the borrow phase (nominal USD for that row).',
-    incomeYoYDelta:
-      'Change vs prior year in modeled nominal cash receipts: W-2 + net rental ops + portfolio dividends modeled as paid + borrowing draws. First modeled year blank.',
-    taxesYoYDelta:
-      'Change vs prior year in modeled tax outflow (marginal ordinary + modeled dividend/stack taxes, including forced-sale tax if modeled). First year blank.',
-    ltv: 'SBLOC borrowing divided by portfolio collateral in the simulation (borrow stress indicator).',
-  },
-  monte: {
-    p10: '10th percentile of final-year net worth: 10 percent of trials finished below this.',
-    p50: 'Median final-year net worth across trials.',
-    p90: '90th percentile of final NW: most trials landed below this upside tail benchmark.',
-    mean: 'Arithmetic mean of final NW (can differ from median if outcomes are skewed).',
-    margin: 'Fraction of trials with at least one modeled SBLOC margin-style event.',
-    bankrupt: 'Fraction of trials tripping the modeled insolvency / bankrupt heuristic.',
-    trialsLabel: 'Number of independent stochastic paths summarized here.',
-  },
-  estate: {
-    card: 'Heuristic liquidation / step-up story at horizon; not individualized estate planning.',
-    net: 'After modeled debt payoff and liquidation taxes on that path.',
-    debt: 'SBLOC/refi modeled as owing at horizon in that heuristic.',
-    cgt:
-      'Aggregated modeled capital gains tax on appreciating assets crystallized under that heuristic (see raw API for depreciation recapture split-out).',
-    recapture:
-      'Depreciation-recapture bite modeled separately from headline long-term gains in terminal tax stack.',
-  },
-  advantage:
-    'Modeled heirs net under BBD-style terminal story minus stylized sell-and-pay-tax story. Interpret as scenario math only.',
-} satisfies {
-  scheduleIntro: string
-  monteIntro: string
-  table: Record<string, string>
-  monte: Record<string, string>
-  estate: Record<string, string>
-  advantage: string
+type DockPanel = 'presets' | 'run' | 'advanced' | 'export' | null
+
+/** Stable column order for CSV export (full schedule rows). */
+const SCHEDULE_CSV_KEYS: (keyof BbdScheduleRow)[] = [
+  'year',
+  'age',
+  'w2_income',
+  'rental_net_cash_flow',
+  'portfolio_dividends',
+  'drawdown_borrowed',
+  'taxes_paid',
+  'living_expenses',
+  'gross_cash_income',
+  'taxes_delta_yoy',
+  'gross_income_delta_yoy',
+  'portfolio_value',
+  'portfolio_basis',
+  'portfolio_unrealized_gain',
+  'properties_value',
+  'properties_mortgage_balance',
+  'pe_value',
+  'pe_basis',
+  'pe_exited_this_year',
+  'sbloc_balance',
+  'heloc_refi_balance',
+  'total_assets',
+  'total_liabilities',
+  'net_worth',
+  'sbloc_capacity_remaining',
+  'sbloc_ltv',
+  'margin_call',
+  'sofr',
+  'sbloc_rate',
+]
+
+function escapeCsvCell(raw: string): string {
+  if (/[",\r\n]/.test(raw)) return `"${raw.replace(/"/g, '""')}"`
+  return raw
+}
+
+function scheduleCellCsv(row: BbdScheduleRow, key: keyof BbdScheduleRow): string {
+  const v = row[key] as unknown
+  if (v === null || v === undefined) return ''
+  if (typeof v === 'boolean') return v ? 'true' : 'false'
+  if (typeof v === 'number') return Number.isFinite(v) ? String(v) : ''
+  return String(v)
+}
+
+function scheduleToCsv(rows: BbdScheduleRow[]): string {
+  const header = SCHEDULE_CSV_KEYS.map(k => escapeCsvCell(String(k))).join(',')
+  const lines = [header]
+  for (const row of rows) {
+    lines.push(SCHEDULE_CSV_KEYS.map(k => escapeCsvCell(scheduleCellCsv(row, k))).join(','))
+  }
+  return lines.join('\n')
+}
+
+function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.position = 'fixed'
+  ta.style.left = '-9999px'
+  document.body.appendChild(ta)
+  ta.select()
+  const ok = document.execCommand('copy')
+  ta.remove()
+  if (!ok) throw new Error('execCommand copy failed')
 }
 
 export function BbdProjectionPage() {
@@ -123,20 +168,19 @@ export function BbdProjectionPage() {
   const [mcTrials, setMcTrials] = useState('0')
   const [parseError, setParseError] = useState<string | null>(null)
   const [advancedDraft, setAdvancedDraft] = useState('')
+  const [dockPanel, setDockPanel] = useState<DockPanel>(null)
+  const [exportHint, setExportHint] = useState<string | null>(null)
+  const resultsAnchorRef = useRef<HTMLDivElement>(null)
 
   const mutation = useMutation({
     mutationFn: (payload: BbdRunPayload) => api.bbdProjectionRun(payload),
   })
 
   const scheduleRows = mutation.data?.schedule ?? []
-  const displayRows = useMemo(() => {
-    if (!scheduleRows.length) return []
-    const out: typeof scheduleRows = []
-    for (let i = 0; i < scheduleRows.length; i++) {
-      if (i % 5 === 0 || i === scheduleRows.length - 1) out.push(scheduleRows[i])
-    }
-    return out
-  }, [scheduleRows])
+  const displayRows = useMemo(
+    () => sampleScheduleForTable(scheduleRows, 5),
+    [scheduleRows],
+  )
 
   const refreshAdvancedJson = () => {
     setAdvancedDraft(JSON.stringify(scenarioToApiPayload(scenario), null, 2))
@@ -207,19 +251,45 @@ export function BbdProjectionPage() {
     })()
   }
 
+  const buildRunPayload = (): { ok: true; payload: BbdRunPayload } | { ok: false } => {
+    const trials = Number.parseInt(mcTrials, 10)
+    if (Number.isNaN(trials) || trials < 0) return { ok: false }
+    return {
+      ok: true,
+      payload: {
+        scenario: scenarioToApiPayload(scenario),
+        ...(trials === 0 ? {} : { monte_carlo_trials: trials, monte_carlo_seed: 42 }),
+      },
+    }
+  }
+
   const runProjection = () => {
     setParseError(null)
     setPresetMsg(null)
-    const trials = Number.parseInt(mcTrials, 10)
-    if (Number.isNaN(trials) || trials < 0) {
+    const built = buildRunPayload()
+    if (!built.ok) {
       setParseError('Monte Carlo trials must be a non-negative integer.')
       return
     }
-    mutation.mutate({
-      scenario: scenarioToApiPayload(scenario),
-      ...(trials === 0 ? {} : { monte_carlo_trials: trials, monte_carlo_seed: 42 }),
-    })
+    mutation.mutate(built.payload)
   }
+
+  useEffect(() => {
+    if (dockPanel !== 'advanced') return
+    refreshAdvancedJson()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when opening Advanced modal
+  }, [dockPanel])
+
+  const closeDock = useCallback(() => setDockPanel(null), [])
+
+  const scrollToResults = useCallback(() => {
+    const el = resultsAnchorRef.current
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      el.focus({ preventScroll: true })
+    }, 400)
+  }, [])
 
   const selectCls =
     'mt-1 min-w-[12rem] max-w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500'
@@ -230,8 +300,10 @@ export function BbdProjectionPage() {
   const btnMuted =
     'rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40'
 
+  const barBottom = 'max(0.75rem, env(safe-area-inset-bottom, 0px))'
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-[calc(8rem+env(safe-area-inset-bottom,0px))]">
       <div className="rounded-xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-950">
         <strong className="font-semibold">Disclaimer.</strong>{' '}
         This projection is illustrative and depends on simplifying assumptions about taxes,
@@ -252,170 +324,434 @@ export function BbdProjectionPage() {
               GET /api/bbd-projection/default-scenario
             </code>{' '}
             (<code className="text-[11px] bg-slate-100 px-1 rounded">data/seed-statements/ian.yaml</code>
-            ).
-            Optionally merge JSON snippets in <strong className="font-medium">Advanced</strong>.
-            Scenario <strong className="font-medium">presets</strong> are stored locally in{' '}
-            <code className="text-[11px] bg-slate-100 px-1 rounded">localStorage</code> for this browser
-            only. For repeatable TOML runs, continue using{' '}
-            <code className="text-[11px] bg-slate-100 px-1 rounded">scripts/bbd_projection.py</code>.
+            ).{' '}
+            <strong className="font-medium text-slate-700">Presets</strong>,{' '}
+            <strong className="font-medium text-slate-700">Run &amp; Monte Carlo</strong>,{' '}
+            <strong className="font-medium text-slate-700">Advanced JSON</strong>, and{' '}
+            <strong className="font-medium text-slate-700">Export</strong> live in the bottom control bar (small
+            panels). The full narrative guide opens separately.
           </p>
-          <p className="text-sm mt-2 text-slate-600">
-            <button
-              type="button"
-              onClick={() => openDocs()}
-              className="font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
-            >
-              Open full BBD guide
-            </button>
-            <span className="text-slate-500"> — continues where you left off when you reopen (floating docs button).</span>
+          <p className="text-sm text-slate-500 mt-2">
+            Operator depth:{' '}
+            <code className="text-[11px] bg-slate-100 px-1 rounded">scripts/bbd-projection/README.md</code> (CLI cookbook + Strategy appendix). Example TOML:{' '}
+            <code className="text-[11px] bg-slate-100 px-1 rounded">scripts/bbd-projection/example-scenario.toml</code>.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-end">
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              Preset
-            </span>
-            <select
-              value={selectedPresetId}
-              onChange={e => setSelectedPresetId(e.target.value)}
-              className={selectCls}
-            >
-              <option value="">Choose saved…</option>
-              {sortedPresets.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className={btnMuted} onClick={loadPreset}>
-            Load
-          </button>
-          <button
-            type="button"
-            disabled={!selectedPresetId}
-            className={btnMuted}
-            onClick={removePreset}
-          >
-            Delete
-          </button>
-          <label className="block flex-1 min-w-[8rem] max-w-[16rem]">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              Save as
-            </span>
-            <input
-              type="text"
-              placeholder="preset name"
-              value={presetName}
-              maxLength={120}
-              className={`w-full ${inputCls}`}
-              onChange={e => setPresetName(e.target.value)}
-            />
-          </label>
-          <button type="button" className={btnMuted} onClick={savePreset}>
-            Save preset
-          </button>
-          <button type="button" className={btnMuted} onClick={resetBuiltinScenario}>
-            Reset starter
-          </button>
-        </div>
-        <p className="text-[11px] text-slate-500">
-          <BbdDocsSectionLink
-            section="workflow"
-            label="Presets, JSON payloads, CLI scripts ›"
-            className="text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
-          />
-        </p>
-        {presetMsg ? (
-          <p className="text-xs text-teal-800 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2">
-            {presetMsg}
-          </p>
-        ) : null}
-
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-          <div>
-            <label htmlFor="bbd-mc-trials" className="block">
-              <OutputHoverTip
-                tip={BBD_PAGE_HELP.monteCarloTrials}
-                dashed={false}
-                placement="below"
-                className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400"
-              >
-                Monte Carlo trials (0 = deterministic only)
-              </OutputHoverTip>
-              <input
-                id="bbd-mc-trials"
-                type="number"
-                min={0}
-                value={mcTrials}
-                onChange={e => setMcTrials(e.target.value)}
-                className={`w-36 ${inputCls}`}
-              />
-            </label>
-            <div className="mt-1.5">
-              <BbdDocsSectionLink
-                section="monteCarlo"
-                label="Monte Carlo vs deterministic path ›"
-                className="text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={runProjection}
-            disabled={mutation.isPending}
-            className="rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 shrink-0"
-          >
-            {mutation.isPending ? 'Running…' : 'Run projection'}
-          </button>
-        </div>
-
-        {(parseError || mutation.isError) && (
+        {(parseError || mutation.isError) && dockPanel !== 'run' && (
           <div className="rounded-lg bg-red-50 border border-red-100 text-red-800 text-sm px-4 py-3">
             {parseError ??
               (mutation.error instanceof Error ? mutation.error.message : 'Request failed.')}
           </div>
         )}
 
-        <BbdScenarioFields scenario={scenario} setScenario={setScenario} />
+        {mutation.isPending ? (
+          <div className="rounded-lg border border-teal-100 bg-teal-50/80 text-teal-900 text-sm px-4 py-3">
+            Running projection — you can keep editing; open <strong className="font-medium">Run</strong> in
+            the bar below for status.
+          </div>
+        ) : null}
 
-        <details
-          className="rounded-xl border border-slate-100 bg-slate-50/50 p-5"
-          onToggle={ev => {
-            const el = ev.currentTarget
-            if (el.open) refreshAdvancedJson()
-          }}
-        >
-          <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-800 selection:bg-teal-100 [&::-webkit-details-marker]:hidden">
-            <span>Advanced: raw scenario JSON (API payload mirrors form)</span>
+        <BbdScenarioFields scenario={scenario} setScenario={setScenario} />
+      </section>
+
+      <div
+        id="bbd-results-anchor"
+        ref={resultsAnchorRef}
+        tabIndex={-1}
+        className="space-y-6 scroll-mt-8 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 focus-visible:ring-offset-2"
+      >
+        {mutation.data ? <Results data={mutation.data} displayRows={displayRows} /> : (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center text-sm text-slate-500">
+            Results appear here after a successful run. Use{' '}
+            <strong className="font-medium text-slate-700">Jump to results</strong> in the bottom bar to
+            scroll back quickly.
+          </div>
+        )}
+      </div>
+
+      <BbdLightModal
+        open={dockPanel === 'presets'}
+        onClose={closeDock}
+        title="Presets and starter"
+        description="Load and save named scenarios in this browser only, or pull the server seed again."
+      >
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3 items-end">
+            <label className="block min-w-[12rem] flex-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Preset
+              </span>
+              <select
+                value={selectedPresetId}
+                onChange={e => setSelectedPresetId(e.target.value)}
+                className={selectCls}
+              >
+                <option value="">Choose saved…</option>
+                {sortedPresets.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className={btnMuted} onClick={loadPreset}>
+              Load
+            </button>
+            <button
+              type="button"
+              disabled={!selectedPresetId}
+              className={btnMuted}
+              onClick={removePreset}
+            >
+              Delete
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-3 items-end">
+            <label className="block min-w-[10rem] flex-1 max-w-xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Save as
+              </span>
+              <input
+                type="text"
+                placeholder="preset name"
+                value={presetName}
+                maxLength={120}
+                className={`w-full ${inputCls}`}
+                onChange={e => setPresetName(e.target.value)}
+              />
+            </label>
+            <button type="button" className={btnMuted} onClick={savePreset}>
+              Save preset
+            </button>
+            <button type="button" className={btnMuted} onClick={resetBuiltinScenario}>
+              Reset starter
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            <BbdDocsSectionLink
+              section="workflow"
+              label="Presets, JSON payloads, CLI scripts ›"
+              className="text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
+            />
+          </p>
+          {presetMsg ? (
+            <p className="text-xs text-teal-800 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2">
+              {presetMsg}
+            </p>
+          ) : null}
+        </div>
+      </BbdLightModal>
+
+      <BbdLightModal
+        open={dockPanel === 'run'}
+        onClose={closeDock}
+        title="Run projection"
+        description="Monte Carlo trial count and generate the on-page report (same request as POST /api/bbd-projection/run)."
+      >
+        <div className="space-y-4">
+          <label htmlFor="bbd-mc-trials-modal" className="block">
+            <OutputHoverTip
+              tip={BBD_PAGE_HELP.monteCarloTrials}
+              dashed={false}
+              placement="below"
+              className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400"
+            >
+              Monte Carlo trials (0 = deterministic only)
+            </OutputHoverTip>
+            <input
+              id="bbd-mc-trials-modal"
+              type="number"
+              min={0}
+              value={mcTrials}
+              onChange={e => setMcTrials(e.target.value)}
+              className={`w-40 ${inputCls}`}
+            />
+          </label>
+          <div>
+            <BbdDocsSectionLink
+              section="monteCarlo"
+              label="Monte Carlo vs deterministic path ›"
+              className="text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
+            />
+          </div>
+          {mutation.isPending ? (
+            <div className="flex items-center gap-2 rounded-lg border border-teal-100 bg-teal-50/90 px-3 py-2 text-sm text-teal-900">
+              <span
+                className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+                aria-hidden
+              />
+              Generating report…
+            </div>
+          ) : null}
+          {(parseError || mutation.isError) ? (
+            <div className="rounded-lg bg-red-50 border border-red-100 text-red-800 text-sm px-3 py-2">
+              {parseError ??
+                (mutation.error instanceof Error ? mutation.error.message : 'Request failed.')}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={runProjection}
+            disabled={mutation.isPending}
+            className="w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+          >
+            {mutation.isPending ? 'Running…' : 'Generate report'}
+          </button>
+        </div>
+      </BbdLightModal>
+
+      <BbdLightModal
+        open={dockPanel === 'advanced'}
+        onClose={closeDock}
+        title="Advanced: scenario JSON"
+        description="Edit the API payload shape; refresh pulls from the form, apply merges into the form."
+        variant="wide"
+      >
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={btnMuted} onClick={refreshAdvancedJson}>
+              Refresh from form
+            </button>
+            <button type="button" className={btnMuted} onClick={applyAdvancedJson}>
+              Apply JSON → form
+            </button>
             <BbdDocsSectionLink
               section="workflow"
               label="Workflow & APIs ›"
-              className="text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2 shrink-0"
-            />
-          </summary>
-          <div className="mt-4 space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className={btnMuted} onClick={refreshAdvancedJson}>
-                Refresh from form
-              </button>
-              <button type="button" className={btnMuted} onClick={applyAdvancedJson}>
-                Apply JSON → form
-              </button>
-            </div>
-            <textarea
-              spellCheck={false}
-              rows={18}
-              value={advancedDraft}
-              onChange={e => setAdvancedDraft(e.target.value)}
-              className="w-full font-mono text-xs leading-relaxed rounded-lg border border-slate-200 p-4 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="inline-flex items-center text-[11px] font-semibold text-teal-700 hover:text-teal-900 underline decoration-dotted underline-offset-2"
             />
           </div>
-        </details>
-      </section>
+          <textarea
+            spellCheck={false}
+            rows={14}
+            value={advancedDraft}
+            onChange={e => setAdvancedDraft(e.target.value)}
+            className="w-full min-h-[12rem] font-mono text-xs leading-relaxed rounded-lg border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+          />
+        </div>
+      </BbdLightModal>
 
-      {mutation.data ? <Results data={mutation.data} displayRows={displayRows} /> : null}
+      <BbdLightModal
+        open={dockPanel === 'export'}
+        onClose={() => {
+          setExportHint(null)
+          closeDock()
+        }}
+        title="Export"
+        description="Download or copy CSV / JSON from the current form and the last successful run."
+      >
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <button
+              type="button"
+              className={`${btnMuted} inline-flex flex-1 items-center justify-center`}
+              disabled={!mutation.data?.schedule?.length}
+              onClick={() => {
+                if (!mutation.data?.schedule?.length) return
+                const csv = scheduleToCsv(mutation.data.schedule)
+                const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+                downloadBlob(`bbd-schedule-${stamp}.csv`, new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+                setExportHint('Downloaded full yearly schedule as CSV.')
+              }}
+            >
+              Download schedule CSV
+            </button>
+            <button
+              type="button"
+              aria-label="Copy schedule CSV to clipboard"
+              className={`${btnMuted} inline-flex shrink-0 items-center justify-center px-4 sm:min-w-[5.5rem]`}
+              disabled={!mutation.data?.schedule?.length}
+              onClick={() => {
+                void (async () => {
+                  if (!mutation.data?.schedule?.length) return
+                  const csv = scheduleToCsv(mutation.data.schedule)
+                  try {
+                    await copyTextToClipboard(csv)
+                    setExportHint('Schedule CSV copied to clipboard.')
+                  } catch {
+                    setExportHint('Clipboard unavailable — use Download or allow clipboard access for this site.')
+                  }
+                })()
+              }}
+            >
+              Copy
+            </button>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <button
+              type="button"
+              className={`${btnMuted} inline-flex flex-1 items-center justify-center`}
+              disabled={!mutation.data}
+              onClick={() => {
+                if (!mutation.data) return
+                const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+                const text = JSON.stringify(mutation.data, null, 2)
+                downloadBlob(
+                  `bbd-run-response-${stamp}.json`,
+                  new Blob([text], { type: 'application/json;charset=utf-8' }),
+                )
+                setExportHint('Downloaded last API response JSON.')
+              }}
+            >
+              Download last run JSON
+            </button>
+            <button
+              type="button"
+              aria-label="Copy last run response JSON to clipboard"
+              className={`${btnMuted} inline-flex shrink-0 items-center justify-center px-4 sm:min-w-[5.5rem]`}
+              disabled={!mutation.data}
+              onClick={() => {
+                void (async () => {
+                  if (!mutation.data) return
+                  const text = JSON.stringify(mutation.data, null, 2)
+                  try {
+                    await copyTextToClipboard(text)
+                    setExportHint('Last run response JSON copied to clipboard.')
+                  } catch {
+                    setExportHint('Clipboard unavailable — use Download or allow clipboard access for this site.')
+                  }
+                })()
+              }}
+            >
+              Copy
+            </button>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <button
+              type="button"
+              className={`${btnMuted} inline-flex flex-1 items-center justify-center`}
+              onClick={() => {
+                const built = buildRunPayload()
+                if (!built.ok) {
+                  setExportHint('Fix Monte Carlo trials (non-negative integer) before exporting request JSON.')
+                  return
+                }
+                const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+                const text = JSON.stringify(built.payload, null, 2)
+                downloadBlob(
+                  `bbd-run-request-${stamp}.json`,
+                  new Blob([text], { type: 'application/json;charset=utf-8' }),
+                )
+                setExportHint('Downloaded request body JSON (scenario + optional Monte Carlo options).')
+              }}
+            >
+              Download request JSON
+            </button>
+            <button
+              type="button"
+              aria-label="Copy request JSON to clipboard"
+              className={`${btnMuted} inline-flex shrink-0 items-center justify-center px-4 sm:min-w-[5.5rem]`}
+              onClick={() => {
+                void (async () => {
+                  const built = buildRunPayload()
+                  if (!built.ok) {
+                    setExportHint('Fix Monte Carlo trials (non-negative integer) before copying request JSON.')
+                    return
+                  }
+                  const text = JSON.stringify(built.payload, null, 2)
+                  try {
+                    await copyTextToClipboard(text)
+                    setExportHint('Request JSON copied to clipboard.')
+                  } catch {
+                    setExportHint('Clipboard unavailable — use Download or allow clipboard access for this site.')
+                  }
+                })()
+              }}
+            >
+              Copy
+            </button>
+          </div>
+          {exportHint ? <p className="text-xs text-slate-600">{exportHint}</p> : null}
+        </div>
+      </BbdLightModal>
+
+      <div
+        className="fixed inset-x-0 z-[95] flex justify-center pointer-events-none px-2"
+        style={{ bottom: barBottom }}
+        role="region"
+        aria-label="BBD page actions"
+      >
+        <div className="pointer-events-auto flex max-w-[min(56rem,calc(100vw-1rem))] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-slate-200/90 bg-white/95 px-2 py-2 shadow-lg shadow-slate-900/15 backdrop-blur-sm ring-1 ring-slate-900/5 sm:gap-2 sm:px-3 sm:py-2.5">
+          <button
+            type="button"
+            onClick={() => openDocs()}
+            aria-label="Open BBD guide"
+            className="flex items-center gap-1.5 rounded-xl border border-transparent px-2 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:gap-2 sm:px-2.5 sm:text-sm"
+          >
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white shadow-inner sm:h-9 sm:w-9"
+              aria-hidden
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="translate-y-[0.5px] sm:h-[18px] sm:w-[18px]">
+                <path
+                  d="M8 3.25h9.75a2.25 2.25 0 012.25 2.25V18a3 3 0 01-3 3h-9A3 3 0 016 18v-13a3 3 0 013-1.75z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+                <path d="M8 8.25h8M8 12h8M8 15.75h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="hidden min-[400px]:inline">Docs</span>
+          </button>
+          <div className="hidden h-7 w-px bg-slate-200 sm:block" aria-hidden />
+          <button
+            type="button"
+            aria-label="Presets and starter scenario"
+            onClick={() => setDockPanel('presets')}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:text-sm"
+          >
+            Presets
+          </button>
+          <button
+            type="button"
+            aria-label="Run projection and Monte Carlo options"
+            onClick={() => setDockPanel('run')}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:text-sm"
+          >
+            Run
+          </button>
+          <button
+            type="button"
+            aria-label="Advanced JSON editor"
+            onClick={() => setDockPanel('advanced')}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:text-sm"
+          >
+            JSON
+          </button>
+          <button
+            type="button"
+            aria-label="Export CSV or JSON"
+            onClick={() => {
+              setExportHint(null)
+              setDockPanel('export')
+            }}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:text-sm"
+          >
+            Export
+          </button>
+          <button
+            type="button"
+            aria-label="Jump to results section"
+            onClick={scrollToResults}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:text-sm"
+          >
+            <span className="hidden min-[420px]:inline">Jump to results</span>
+            <span className="min-[420px]:hidden">Results</span>
+          </button>
+          <div className="hidden h-7 w-px bg-slate-200 sm:block" aria-hidden />
+          <button
+            type="button"
+            aria-label="Generate projection report"
+            onClick={runProjection}
+            disabled={mutation.isPending}
+            className="rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:px-4 sm:text-sm"
+          >
+            {mutation.isPending ? 'Generating…' : 'Generate'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -427,9 +763,49 @@ function Results({
   data: BbdRunResponse
   displayRows: BbdRunResponse['schedule']
 }) {
+  const vizModel = useMemo(() => buildBbdVizModel(data), [data])
+  const [spatialOpen, setSpatialOpen] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const apply = () => setReducedMotion(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
   const mc = data.monte_carlo
   return (
     <div className="space-y-6">
+      <BbdStoryDashboard data={data} />
+
+      {vizModel.schedule.length >= 2 && !reducedMotion ? (
+        <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <button
+            type="button"
+            className="rounded-lg text-sm font-semibold text-teal-800 underline decoration-dotted underline-offset-2 hover:bg-teal-50/80 hover:text-teal-950 px-2 py-1 -mx-2"
+            onClick={() => setSpatialOpen(o => !o)}
+          >
+            {spatialOpen ? 'Hide spatial trajectory (3D)' : 'Show spatial trajectory (3D)'}
+          </button>
+          {spatialOpen ? (
+            <div className="mt-4">
+              <Suspense fallback={<p className="text-sm text-slate-500">Loading spatial view…</p>}>
+                <BbdSpatialPanel model={vizModel} />
+              </Suspense>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {reducedMotion ? (
+        <p className="text-xs text-slate-500 px-1">
+          Full spatial 3D view stays off while system{' '}
+          <strong className="font-medium text-slate-700">Reduce motion</strong> is enabled — charts above remain available.
+        </p>
+      ) : null}
+
       {mc ? (
         <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 space-y-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -488,11 +864,22 @@ function Results({
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-5 py-4">
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-            <OutputHoverTip tip={OUTPUT_TIPS.scheduleIntro}>Year-by-year (every 5th year + final)</OutputHoverTip>
-          </h2>
+      <details className="group rounded-xl border border-slate-100 bg-white shadow-sm open:ring-1 open:ring-teal-100">
+        <summary className="cursor-pointer list-none border-b border-slate-100 px-5 py-4 marker:content-none [&::-webkit-details-marker]:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Detailed schedule table (expand)
+            </span>
+            <span className="text-xs font-medium text-teal-700 group-open:hidden">Tap to expand rows</span>
+            <span className="hidden text-xs font-medium text-teal-700 group-open:inline">Tap to collapse</span>
+          </div>
+        </summary>
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-50 px-5 pb-3 pt-2">
+          <p className="max-w-prose text-xs text-slate-500">
+            <OutputHoverTip tip={OUTPUT_TIPS.scheduleIntro} dashed={false}>
+              Sampled rows for readability — figures are nominal USD unless you changed inflation in the scenario.
+            </OutputHoverTip>
+          </p>
           <BbdDocsSectionLink
             section="outputs"
             label="Reading the projection table ›"
@@ -623,7 +1010,7 @@ function Results({
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">

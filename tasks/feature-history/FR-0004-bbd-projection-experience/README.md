@@ -1,6 +1,6 @@
 # FR-0004 — BBD projection immersive experience
 
-**Status:** `design`
+**Status:** `in-progress` (implementation on feature branch — immersive charts + lazy 3D spatial panel)
 
 **Depends on:** shipped **`FR-0003`** (**`POST /api/bbd-projection/run`**, existing **`BbdRunResponse`** types); extends **`frontend/src/pages/BbdProjectionPage.tsx`** and related BBD components only unless a **`DESIGN-GAP`** forces API extensions.
 
