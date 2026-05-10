@@ -16,11 +16,13 @@ Lock **DTOs**, **enums** (`CashNode` kinds, amount rules, cadence), and **scope*
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | Freeze contracts | Contract tests / schema examples cover node/edge validation, scope key, and rejection of invalid graphs |
-| **DEV** | Implement shared types | Pydantic models (and any shared TS types or OpenAPI-generated stubs policy) documented; no DB write yet |
-| **VAL** | Cross-team readability | Design doc references updated if contracts differ from sketch; **`tickets.md`** deps still valid |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Freeze contracts | Contract tests / schema examples cover node/edge validation, scope key, and rejection of invalid graphs | done |
+| **DEV** | Implement shared types | Pydantic models (and any shared TS types or OpenAPI-generated stubs policy) documented; no DB write yet | done |
+| **VAL** | Cross-team readability | Design doc references updated if contracts differ from sketch; **`tickets.md`** deps still valid | done |
+
+**VAL notes:** Scope = **`plan_id`** → **`allocation_plans.id`** (`CashFlowGraphDocument`). Implemented `src/finance/cash_flow_graph/`; tests `tests/test_cash_flow_graph_contracts.py`.
 
 #### Notes
 
@@ -147,11 +149,13 @@ Resolve handoff **option A**: align **`docker-compose.yml`** (and **`scripts/REA
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | — | N/A or doc-only |
-| **DEV** | Change defaults/docs | Compose + README reflect chosen default; rationale in commit or feature diary |
-| **VAL** | Verify | `docker compose config` sanity; optional one-line operator note |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | — | N/A or doc-only | done |
+| **DEV** | Change defaults/docs | Compose + README reflect chosen default; rationale in commit or feature diary | done |
+| **VAL** | Verify | `docker compose config` sanity; optional one-line operator note | done |
+
+**VAL notes:** `FINANCE_ALLOCATION_AUTO_TEMPLATE` default **`false`** in `docker-compose.yml`; `scripts/README.md` + `docs/design/budget-plans-roadmap.md` aligned.
 
 #### Notes
 

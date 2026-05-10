@@ -79,6 +79,8 @@ Host ports are defined in **[docs/PORTS.md](../docs/PORTS.md)**.
 
 Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, see `docker compose` documentation.
 
+- **`FINANCE_ALLOCATION_AUTO_TEMPLATE`** — when `true` / `1` / `yes`, the first **`GET /api/budget-allocation/plans?month=…`** for a month with no plans inserts **Starter cash-flow template** (illustrative lines). Repo **`docker-compose.yml`** defaults to **`false`** (empty month until the user creates a plan); set **`true`** locally when you want the demo seed. See **`docs/design/budget-plans-roadmap.md`**.
+
 ### Access
 
 - API: **http://localhost:3500**
@@ -121,6 +123,28 @@ Standalone TOML-driven projection (**`scripts/bbd-projection/bbd_projection.py`*
 See **[`bbd-projection/README.md`](bbd-projection/README.md)** for the tutorial, CLI flags, TOML map, CSV/stdout semantics, Hub versus CLI tradeoffs.
 
 The SPA **BBD** page (app nav **BBD**) calls the same engine through the Hub API: **`recharts`** story charts (trajectory, composition, borrowing vs LTV), an optional **three.js** spatial trajectory you can expand below the charts (hidden when the OS requests reduced motion), CSV/JSON export from the bottom control bar, and the narrative guide via **Docs**.
+
+---
+
+## Budget allocation validation (FR-0002)
+
+Use these checks before merging or when validating the **Budget** page and **`/api/budget-allocation/*`** stack.
+
+**Backend (API image, repo mounted at `/app`):**
+
+```bash
+docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/ -q"
+```
+
+**Frontend (web dev image, `frontend/` mounted at `/app`):**
+
+```bash
+docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test"
+```
+
+**Manual smoke:** start **`./scripts/dev.sh`**, open **Budget**, create a plan and a line, confirm **Unified view** shows matching category budget after save.
+
+---
 
 ## Adding a New Script
 

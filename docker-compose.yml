@@ -19,6 +19,8 @@ services:
       # Merchant display overrides (git-tracked); API rewrites this on Save/Clear in Parameters
       FINANCE_SEED_MERCHANT_DISPLAYS: "/app/data/seed-merchant-displays.json"
       CORS_ORIGINS: "http://localhost:3501,http://localhost:3502"
+      # Opt-in: set "true" to auto-seed "Starter cash-flow template" on first list for an empty month
+      FINANCE_ALLOCATION_AUTO_TEMPLATE: "false"
     # Re-link editable install to mounted tree (fast when unchanged); uvicorn watches /app/src
     command: >
       sh -c "pip install -e /app --no-cache-dir -q &&
