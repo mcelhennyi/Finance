@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | [**Add cash-flow graph migration and ORM models**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-02`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
+| **Active ticket** | [**Expose cash-flow graph CRUD API**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-03`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
 | **Active phase** | — |
 | **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** |
 | **Session status** | `ready` |
-| **Next agent should** | Continue **`FR-0006`** on feature branch; see [`tasks/handoffs/2026-05-10-parallel-frontier.md`](handoffs/2026-05-10-parallel-frontier.md). |
+| **Next agent should** | Implement [**T-FR-0006-03**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) on **`feat/FR-0006-budget-cash-flow-graph`**; open/refresh PR to **`master`** (see `CURRENT.md`). |
 
 ### Parallel streams (optional)
 
@@ -48,7 +48,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0004-05 | BBD experience integration VAL and operator docs | done | done | done | `FR-0004`; Docker lint/test, `scripts/README.md` |
 | T-FR-0005-01 | Budget page in-app guide, field annotations, and floating dock | done | done | done | `FR-0005`; `BudgetDocsProvider`, `budgetFieldTips`, `BudgetPage` dock — `docker compose run web npm run build` |
 | T-FR-0006-01 | Define cash-flow graph persistence contracts | done | done | done | `FR-0006`; `finance.cash_flow_graph` Pydantic contracts + `tests/test_cash_flow_graph_contracts.py` |
-| T-FR-0006-02 | Add cash-flow graph migration and ORM models | pending | pending | pending | `FR-0006`; deps `T-FR-0006-01` |
+| T-FR-0006-02 | Add cash-flow graph migration and ORM models | done | done | done | `FR-0006`; `CashFlowNode`/`CashFlowEdge`, `phase2_cash_flow_graph_stub.sql`, `tests/test_cash_flow_graph_models.py` |
 | T-FR-0006-03 | Expose cash-flow graph CRUD API | pending | pending | pending | `FR-0006`; deps `T-FR-0006-02` |
 | T-FR-0006-04 | Budget React Flow panel wired to graph API | pending | pending | pending | `FR-0006`; deps `T-FR-0006-03` |
 | T-FR-0006-05 | Cash-flow time scrub and aggregated views | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04` |

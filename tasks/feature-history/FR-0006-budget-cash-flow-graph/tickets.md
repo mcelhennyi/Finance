@@ -42,11 +42,13 @@ Persist **`CashNode`** and **`CashFlowEdge`** per **T-FR-0006-01** contracts wit
 
 #### Phases
 
-| Phase | Goal | Exit criteria |
-|-------|------|----------------|
-| **TEST** | Model behavior | Unit tests cover model constraints, cascades, and round-trip fixture inserts |
-| **DEV** | Implement persistence | Migration + SQLAlchemy models registered; matches contracts |
-| **VAL** | DB hygiene | Migration applies cleanly in Docker/CI init path; no regression on existing tables |
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Model behavior | Unit tests cover model constraints, cascades, and round-trip fixture inserts | done |
+| **DEV** | Implement persistence | Migration + SQLAlchemy models registered; matches contracts | done |
+| **VAL** | DB hygiene | Migration applies cleanly in Docker/CI init path; no regression on existing tables | done |
+
+**VAL notes:** `CashFlowNode` / `CashFlowEdge` on `Base`; stub SQL `phase2_cash_flow_graph_stub.sql`; `tests/test_cash_flow_graph_models.py`; `docker compose run … pytest` green.
 
 #### Notes
 
