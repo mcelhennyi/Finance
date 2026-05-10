@@ -1,6 +1,6 @@
 # Next-step handoff — parallel frontier (2026-05-10)
 
-**Audience:** Next agent or maintainer picking up work from `main` / **`feat/FR-0006-budget-cash-flow-graph`**.
+**Audience:** Next agent or maintainer picking up work from **`feat/FR-0006-budget-cash-flow-graph`** (draft PR → **`master`**).
 **Authority:** `tasks/feature-history/**/tickets.md`, `tasks/ticket-progress.md`, `docs/design/tickets-initial.md` (DAG), `docs/ai-context.md`.
 
 ---
@@ -9,15 +9,15 @@
 
 | Field | Value (as of this handoff) |
 |------|----------------------------|
-| **Active ticket** | Continue **`FR-0006`** with [**Add cash-flow graph migration and ORM models**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-02`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) after merging contract work |
+| **Active ticket** | [**Budget React Flow panel wired to graph API**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
 | **Active phase** | — |
-| **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** (feature integration); ticket branches optional per **`develop-frontier`** |
-| **Session status** | `developing` → advance to `ready` after next merge checkpoint |
-| **Next agent should** | Merge or continue on feature branch; run **`/identify-frontier`** after **`T-FR-0006-02`** VAL |
+| **Branch / worktree** | Feature integration **`feat/FR-0006-budget-cash-flow-graph`**; ticket worktree optional under **`.worktrees/FR-0006-budget-cash-flow-graph/`** |
+| **Session status** | `developing` (single-stream **`FR-0006`** frontier) |
+| **Next agent should** | Implement **`T-FR-0006-04`** (TEST→DEV→VAL); validate with **`docker compose run … npm run build`** on **`web`** and Vitest as per ticket; merge ticket branch → **`feat/FR-0006-budget-cash-flow-graph`**; do **not** finish-feature to **`master`** until **`FR-0006`** **`tickets.md`** is complete |
 
-**Triad-complete (summary):** All tickets through **`T-FR-0005-01`** plus **`T-FR-0006-01`** (**Define cash-flow graph persistence contracts**) and **`T-FR-0006-07`** (**Compose default for allocation auto-template**) once this session’s commits land and **`ticket-progress.md`** is updated.
+**Triad-complete (summary):** Through **`T-FR-0006-03`** (**Expose cash-flow graph CRUD API**) inclusive, plus **`T-FR-0006-07`**.
 
-**Still incomplete (summary):** **`T-FR-0006-02`** … **`T-FR-0006-06`** (graph persistence, API, React Flow, time scrub, BBD suggestions).
+**Still incomplete (summary):** **`T-FR-0006-04`** … **`T-FR-0006-06`**.
 
 ---
 
@@ -25,22 +25,20 @@
 
 **Eligibility rule:** Every ticket in **Deps:** has **VAL** = `done` in `tasks/ticket-progress.md`.
 
-After **`T-FR-0006-01`** reaches **VAL** `done`, **`T-FR-0006-02`** becomes eligible (**Deps:** `T-FR-0006-01`). **`T-FR-0006-07`** had **`Deps: none`** and was parallel with **`T-FR-0006-01`** (same feature **`FR-0006`**, global graph §2c).
+With **`T-FR-0006-03`** **VAL** `done`, only **`T-FR-0006-04`** is newly eligible among **`FR-0006`** backlog items. No other global **`FR-NNNN`** tickets are incomplete in **`ticket-progress.md`**.
 
-**Wave just executed (dependency-valid):**
+**Current parallel-capable set (single ticket):**
 
 | Ticket | Title | Deps |
 |--------|-------|------|
-| [T-FR-0006-01](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | Define cash-flow graph persistence contracts | `T-FR-0002-02` (VAL done) |
-| [T-FR-0006-07](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | Compose default for allocation auto-template | none |
+| [T-FR-0006-04](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | Budget React Flow panel wired to graph API | `T-FR-0006-03` |
 
-So **up to 2 parallel streams** were valid: both under **`feat/FR-0006-budget-cash-flow-graph`** / **`.worktrees/FR-0006-budget-cash-flow-graph/...`** per policy.
+So **one** dependency-valid stream: child worktree **`feat/FR-0006-budget-cash-flow-graph/T-FR-0006-04-<short-name>/`** under **`.worktrees/FR-0006-budget-cash-flow-graph/`**, branch from **`feat/FR-0006-budget-cash-flow-graph`**.
 
-**Examples of what stays blocked until more VAL-done rows exist:**
+**Examples of what stays blocked:**
 
-- **`T-FR-0006-03`** (CRUD API) until **`T-FR-0006-02`** is triad-complete.
-- **`T-FR-0006-04`** until **`T-FR-0006-03`**.
-- **`T-FR-0006-05`** / **`T-FR-0006-06`** until **`T-FR-0006-04`** (and **`T-FR-0003-02`** for **06**).
+- **`T-FR-0006-05`** until **`T-FR-0006-04`** is triad-complete.
+- **`T-FR-0006-06`** until **`T-FR-0006-04`** and **`T-FR-0003-02`** (**already VAL done**).
 
 Full **Deps:** edges: `tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md`; global mermaid in `docs/design/tickets-initial.md`.
 
@@ -48,30 +46,30 @@ Full **Deps:** edges: `tasks/feature-history/FR-0006-budget-cash-flow-graph/tick
 
 ## Process note (queue vs graph)
 
-**`ticket-progress.md`** is updated when **`T-FR-0006-01`** and **`T-FR-0006-07`** are marked **done** for all three phases. **`Parallel streams`** can list both ticket ids while open, then clear when merged to the feature branch.
+Update **`tasks/ticket-progress.md`** **only** for **`T-FR-0006-04`** rows while this ticket is active. After **VAL** `done`, add **`triadDone`** for **`TFR0006_04_*`** in **`docs/design/tickets-initial.md`**.
 
 ---
 
 ## Cross-cutting work (parallel to tickets)
 
-- **`CURRENT.md`** on **`feat/FR-0006-budget-cash-flow-graph`** should reflect the merged tip after this wave.
-- Run **`docker compose run … pytest`** (or CI equivalent) for **`tests/test_cash_flow_graph_contracts.py`** and existing allocation tests after Compose default change.
+- **`GET`/`PUT`** graph API: `/api/budget-allocation/plans/{plan_id}/cash-flow-graph` ( **`finance.cash_flow_graph.service`** ).
+- Design reference: [`docs/design/budget-cash-flow-graph.md`](../../docs/design/budget-cash-flow-graph.md).
+- Uncommitted **Budget** SPA work may exist on developer machines from **`FR-0002`**/**`FR-0005`** — reconcile with **`feat/FR-0006-budget-cash-flow-graph`** tip (**`9cae57c`**+) before large UI merges.
 
 ---
 
 ## First concrete steps (primary next ticket)
 
-1. Implement [**Add cash-flow graph migration and ORM models**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-02`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)): tables keyed by **`allocation_plans.id`**, FK to **`T-FR-0006-01`** contracts.
-2. Refresh repo-root **`CURRENT.md`** on **`feat/FR-0006-budget-cash-flow-graph`** after **`T-FR-0006-02`** **DEV** / **VAL**.
-3. Re-run **`/identify-frontier`** — expect **`T-FR-0006-03`** alone unless other global tickets become eligible.
+1. Create feature integration checkout / worktree for **`feat/FR-0006-budget-cash-flow-graph`** if missing; branch **`feat/FR-0006-budget-cash-flow-graph/T-FR-0006-04-<slug>`** from it for isolated **`TEST→DEV→VAL`**.
+2. Implement [**Budget React Flow panel wired to graph API**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md): **`@xyflow/react`** (or agreed), load/save via API client, embedded on **`BudgetPage`** per ticket phases.
+3. Run **`docker compose run … npm run build`** ( **`web`** ) for **VAL**; update **`tickets.md`** phase table and **`serial-diary.md`** on completion.
 
 ---
 
 ## Related files
 
 - `tasks/ticket-progress.md`
-- `tasks/feature-history/**/tickets.md`
-- `tasks/feature-history/TICKET-SOURCES.md`
+- `tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md`
+- `CURRENT.md` (feature branch)
+- `frontend/` — Budget page, API client (`cash-flow-graph` routes)
 - `docs/design/tickets-initial.md` (global DAG + triadDone)
-- `src/finance/cash_flow_graph/` (contracts from **T-FR-0006-01**)
-- `docker-compose.yml`, `scripts/README.md`, `docs/design/budget-plans-roadmap.md` (**T-FR-0006-07**)
