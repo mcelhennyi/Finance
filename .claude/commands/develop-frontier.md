@@ -9,7 +9,7 @@ description: >-
 
 Follow the Cursor project skill **`develop-frontier`** (`.cursor/skills/develop-frontier/SKILL.md`).
 
-End-to-end: discover parallel-capable tickets (**global** graph — may span **multiple** **`FR-NNNN`** features per **`docs/ai-context.md` §2c**), run one subagent per ticket in a dedicated child worktree under **`.worktrees/FR-NNNN-<slug>/`**, execute **TEST → DEV → VAL** serially per ticket, then run **`finish-feature`** (feature branch → **PR to `main`**) **or** **`finish-frontier`** (merge into **`main`**) per **`docs/ai-context.md` §2d**.
+End-to-end: discover parallel-capable tickets (**global** graph — may span **multiple** **`FR-NNNN`** features per **`docs/ai-context.md` §2c**), run one subagent per ticket in a dedicated child worktree under **`.worktrees/FR-NNNN-<slug>/`**, execute **TEST → DEV → VAL** serially per ticket, then run **`finish-feature`** (ticket branches merged **into** **`feat/FR-NNNN-<slug>`**, then **PR `feat/…` → `main`** when the **feature** is **complete**) **or** **`finish-frontier`** (**non-default**, direct **`main`**) per **`docs/ai-context.md` §2d**.
 
 ## Preconditions
 
@@ -47,8 +47,8 @@ Each subagent must:
 
 ## 4 — Finish integration
 
-- **Default for a single `FR-NNNN` product line:** run **`finish-feature`** — merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, revalidate there, push the feature branch, open **PR → `main`**. Do **not** push **`main`** from automation.
-- **Direct-to-main frontier:** run **`finish-frontier`** — merge into **`main`**, union `triadDone` and shared files, mandatory revalidation, then push **`main`** or **`broken-main`** per that skill.
+- **Default:** run **`finish-feature`** — merge ticket branches **into** **`feat/FR-NNNN-<slug>`**, revalidate, push **`feat/…`**, open **PR → `main`** **only** when the **feature** is **complete** per **`tickets.md`**. Do **not** push **`main`** from automation.
+- **Direct-to-main frontier:** run **`finish-frontier`** — **non-default**; only when explicit policy merges ticket branches into **`main`**.
 
 Do **not** auto-delete remote **`feat/*`** branches (**`docs/ai-context.md` §2d**).
 

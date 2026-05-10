@@ -26,13 +26,23 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 
 **Scope:** skip the full block only for **non-FR** one-offs (e.g. a one-line fix unrelated to the feature); any work under **`FR-NNNN`** still gets at least a one-line summary + next step.
 
+## Canonical branching (Finance Hub default)
+
+Per **`docs/ai-context.md` §2d**:
+
+1. **`feat/FR-NNNN-<slug>`** — feature integration branch (one per **`FR-NNNN`**).
+2. **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-…`** — ticket branches from the feature branch; merge **into** **`feat/…`** when the ticket is **VAL** `done` (**PR** base = feature branch).
+3. **`feat/FR-NNNN-<slug>` → `main`** — **only** via **`finish-feature`** when the **feature** is **complete** per **`tickets.md`** / **`REGISTRY.md`**; **avoid** merging partial features to **`main`**.
+
+**Do not** merge ticket branches straight to **`main`** in normal work. **`finish-frontier`** (direct-to-**`main`**) is non-default and requires explicit policy.
+
 ## Related local commands (compose, do not fork)
 
 | Step | Command / skill | Role |
 |------|------------------|------|
 | Parallel handoff for **tickets** (`T-FR-NNNN-xx`) | `identify-frontier` / `/identify-frontier` | Recomputes who can run in parallel from **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** (DAG hints in **`tickets-initial.md`**). |
 | Implement parallel set | `develop-frontier` / `/develop-frontier` | One child worktree per ticket under **`.worktrees/FR-NNNN-<slug>/`**; **TEST→DEV→VAL** per ticket. |
-| Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, **PR to `main`** for human review; **never** auto-deletes remote branches. |
+| Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges ticket branches **into** **`feat/FR-NNNN-<slug>`**; **PR `feat/…` → `main`** **only** when the **feature** is **complete**; **never** auto-deletes remote branches. |
 | Merge to `main` (integration) | `finish-frontier` / `/finish-frontier` | Direct integration of parallel ticket/stage branches into **`main`** when not using the feature-branch line. |
 | Commits (optional) | `commit-with-ai-metrics` / `/commit-with-metrics` | Conventional commit + optional metrics footer. |
 | Doc site (MkDocs) — preview / static build | **`./develop`** (`./develop help`) | When **`docs/`** or **`mkdocs.yml`** change: use **`./develop up`** (Docker Compose, bind-mounted repo, live reload) or **`./develop local`** (host venv via **`./scripts/serve-docs.sh`**). Run **`./develop build`** for a containerized static build before closeout or as doc **VAL** when tickets touch docs. Set **`DEVELOP_*`** in optional **`develop.conf`** (from **`develop.conf.example`**) if service names or ports differ. **Aligns** with **Docker for VAL** in **`docs/ai-context.md`**. |

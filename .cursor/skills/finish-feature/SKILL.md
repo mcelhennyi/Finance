@@ -15,6 +15,7 @@ Close **implementation** for a **single** product feature that used a **feature 
 
 - **`FR-NNNN`** and **`<slug>`** known; **`tasks/feature-history/FR-NNNN-<slug>/`** exists with **`tickets.md`**, diaries, and **`handoffs/`** as needed.
 - **Feature integration branch** exists on the remote, e.g. **`feat/FR-0007-auth-overhaul`**, and is checked out at **`.worktrees/FR-0007-auth-overhaul/feature/`** (or an explicit equivalent path). Ticket/stage branches exist and are pushed.
+- **Completeness:** Open or refresh the **PR `feat/…` → `main`** only when the **feature** is **complete** per agreed **`tickets.md`** scope (all required **`T-FR-NNNN-xx`** merged into **`feat/…`**). Do **not** use this skill to rush **`main`** with a partial feature unless the human explicitly overrides.
 - **Integration policy:** Do **not** push to **`main`** from this skill — only **PR** (or draft PR) for final human review unless the user explicitly overrides.
 
 ## 1 — Ensure ticket work is merged into the feature branch
