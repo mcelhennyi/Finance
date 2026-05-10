@@ -19,6 +19,7 @@
 
 - Feature integration branch (historical): **`feat/FR-0004-bbd-projection-experience`**
 - Integrated PR: **[#7](https://github.com/mcelhennyi/Finance/pull/7)** → **`master`**
+- Bookkeeping PR (registry + closeout files): **[#8](https://github.com/mcelhennyi/Finance/pull/8)** → **`master`**
 - No repo-root **`CURRENT.md`** required cleanup on **`master`** for this feature (none was committed on default branch).
 
 ## Ticket mapping (title first)
@@ -31,7 +32,7 @@
 
 ## Suggested next step
 
-Resume **`FR-0002`** from **`tasks/ticket-progress.md` → Current focus** (**`T-FR-0002-01`**) or run **`/identify-frontier`** when ready to batch parallel tickets.
+Merge bookkeeping **[PR #8](https://github.com/mcelhennyi/Finance/pull/8)**; then resume **`FR-0002`** from **`tasks/ticket-progress.md` → Current focus**.
 
 ## Options
 

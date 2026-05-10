@@ -20,7 +20,7 @@ No separate **`feat/FR-0004-bbd-projection-experience/T-FR-…`** ticket branche
 
 ## Suggested next step
 
-Merge the small bookkeeping PR that adds **`90-closeout.md`**, registry **`complete`**, and **`README.md`** / **`ticket-progress.md`** pointers—then archive or ignore the feature branch per policy.
+Merge the bookkeeping PR: **[#8](https://github.com/mcelhennyi/Finance/pull/8)** (this change set).
 
 ## Options
 
