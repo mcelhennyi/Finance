@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
-import type { MerchantNameRow } from '../types'
+import { api } from '../../api/client'
+import type { MerchantNameRow } from '../../types'
 
 function MerchantTable({
   title,
@@ -53,9 +53,7 @@ function MerchantTable({
           <tbody>
             {rows.map(row => {
               const inputVal =
-                drafts[row.merchant_key] ??
-                row.override_display ??
-                row.auto_pretty
+                drafts[row.merchant_key] ?? row.override_display ?? row.auto_pretty
               return (
                 <tr key={row.merchant_key} className="border-b border-slate-50 hover:bg-slate-50/60 align-top">
                   <td className="px-4 py-2.5 text-slate-700 font-mono text-xs break-all max-w-md">
@@ -106,9 +104,18 @@ function MerchantTable({
   )
 }
 
-export function ParametersPage() {
+export type MerchantNamesMode = 'outstanding' | 'all'
+
+export function MerchantNamesSettings({
+  mode,
+  drafts,
+  setDrafts,
+}: {
+  mode: MerchantNamesMode
+  drafts: Record<string, string>
+  setDrafts: Dispatch<SetStateAction<Record<string, string>>>
+}) {
   const queryClient = useQueryClient()
-  const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [seedSyncWarning, setSeedSyncWarning] = useState<string | null>(null)
 
@@ -157,7 +164,7 @@ export function ParametersPage() {
     [rows],
   )
 
-  const onDraft = (key: string, value: string) => {
+  const handleDraft = (key: string, value: string) => {
     setDrafts(d => ({ ...d, [key]: value }))
   }
 
@@ -182,14 +189,19 @@ export function ParametersPage() {
     }
   }
 
+  const heading =
+    mode === 'outstanding' ? 'Outstanding merchant names' : 'All merchant names'
+  const intro =
+    mode === 'outstanding'
+      ? 'Merchants flagged by heuristics that likely need a hand-written display label. Saving or clearing rewrites '
+      : 'Every distinct stored merchant string, sorted by transaction count. Saving or clearing rewrites '
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">Parameters</h1>
+        <h1 className="text-xl font-bold text-slate-800 tracking-tight">{heading}</h1>
         <p className="text-sm text-slate-500 mt-1 max-w-3xl">
-          Each row is a distinct stored merchant string from your transactions. Auto pretty is generated locally;
-          set a hand-written display name to lock how it appears in the transaction list. Outstanding rows are
-          likely to need a custom label. Saving or clearing rewrites{' '}
+          {intro}
           <code className="text-xs bg-slate-100 px-1 rounded">data/seed-merchant-displays.json</code> so your
           mappings stay in sync with git-tracked seed data.
         </p>
@@ -213,36 +225,34 @@ export function ParametersPage() {
         <div className="py-20 text-center text-slate-400 animate-pulse">Loading merchant names…</div>
       ) : q.isError ? (
         <div className="py-20 text-center text-red-600 text-sm">{(q.error as Error).message}</div>
+      ) : mode === 'outstanding' ? (
+        <MerchantTable
+          title="Outstanding — needs a hand-written pretty name"
+          subtitle={`${outstanding.length} name${outstanding.length === 1 ? '' : 's'} flagged by heuristics (no override yet).`}
+          rows={outstanding}
+          drafts={drafts}
+          onDraft={handleDraft}
+          onSave={handleSave}
+          onClear={handleClear}
+          savingKey={savingKey}
+          emptyMessage={
+            sortedAll.length
+              ? 'No outstanding rows — heuristics did not flag any merchants without an override.'
+              : 'No merchant strings yet. Ingest a statement to populate this list.'
+          }
+        />
       ) : (
-        <>
-          <MerchantTable
-            title="Outstanding — needs a hand-written pretty name"
-            subtitle={`${outstanding.length} name${outstanding.length === 1 ? '' : 's'} flagged by heuristics (no override yet).`}
-            rows={outstanding}
-            drafts={drafts}
-            onDraft={onDraft}
-            onSave={handleSave}
-            onClear={handleClear}
-            savingKey={savingKey}
-            emptyMessage={
-              sortedAll.length
-                ? 'No outstanding rows — heuristics did not flag any merchants without an override.'
-                : 'No merchant strings yet. Ingest a statement to populate this list.'
-            }
-          />
-
-          <MerchantTable
-            title="All merchant names"
-            subtitle="Complete list sorted by transaction count."
-            rows={sortedAll}
-            drafts={drafts}
-            onDraft={onDraft}
-            onSave={handleSave}
-            onClear={handleClear}
-            savingKey={savingKey}
-            emptyMessage="No non-empty merchant values in the database yet."
-          />
-        </>
+        <MerchantTable
+          title="All merchant names"
+          subtitle="Complete list sorted by transaction count."
+          rows={sortedAll}
+          drafts={drafts}
+          onDraft={handleDraft}
+          onSave={handleSave}
+          onClear={handleClear}
+          savingKey={savingKey}
+          emptyMessage="No non-empty merchant values in the database yet."
+        />
       )}
     </div>
   )

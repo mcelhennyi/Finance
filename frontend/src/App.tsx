@@ -7,7 +7,7 @@ import { FilterBar } from './components/FilterBar'
 import { StatCards } from './components/StatCards'
 import { Charts } from './components/Charts'
 import { TransactionTable } from './components/TransactionTable'
-import { ParametersPage } from './pages/ParametersPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { UnifiedViewPage } from './pages/UnifiedViewPage'
 import { BbdProjectionPage } from './pages/BbdProjectionPage'
 import type { FilterState } from './types'
@@ -46,8 +46,8 @@ export function App() {
 
   return (
     <Layout activePage={page} onNavigate={setPage}>
-      {page === 'parameters' ? (
-        <ParametersPage />
+      {page === 'settings' ? (
+        <SettingsPage />
       ) : page === 'unified' ? (
         <UnifiedViewPage />
       ) : page === 'bbd' ? (

@@ -174,7 +174,8 @@ export function BbdGuideContent() {
         <p>
           Each timestep walks properties, evolves PE shocks, adjusts wages, computes simplified taxes (including incidental
           forced-sale taxes from margin remediation), allocates draws, grows/mark-to-market taxable sleeves, optionally flags
-          margin breaches, snapshots balance sheets, then rolls forward inflation on living expenses.
+          margin breaches, snapshots balance sheets, then rolls forward inflation on living expenses — see authoritative code{' '}
+          under <code className={mono}>src/finance/bbd/engine.py</code>.
         </p>
       </section>
 
