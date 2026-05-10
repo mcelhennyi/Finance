@@ -98,7 +98,7 @@ Add **`@xyflow/react`** (or agreed package) to the **Budget** experience: **load
 | **DEV** | Implement UI | Panel embedded on `BudgetPage` (or sub-route); API client methods | done |
 | **VAL** | E2E smoke | `docker compose run … npm run build` passes; manual note: save/reload round-trip | done |
 
-**VAL notes:** `@xyflow/react` **`CashFlowGraphPanel`** on **`BudgetPage`**; **`api.getBudgetCashFlowGraph`** / **`putBudgetCashFlowGraph`**; **`frontend/src/lib/cashFlowGraphFlow.ts`** + vitest; **`docker compose run --no-deps web npm run build`** + **`npm test`** green.
+**VAL notes:** `@xyflow/react` **`CashFlowGraphPanel`** on **`BudgetPage`**; **`api.getBudgetCashFlowGraph`** / **`putBudgetCashFlowGraph`**; **`frontend/src/lib/cashFlowGraphFlow.ts`** + vitest; **`docker compose run --rm --no-deps web npm run build`** + **`npm test`** in container; root **`docker-compose.yml`** sets **`web.environment.NODE_OPTIONS`** so Vite build does not OOM in typical Docker limits. Manual: **Save graph** then **Reload** for round-trip.
 
 #### Notes
 

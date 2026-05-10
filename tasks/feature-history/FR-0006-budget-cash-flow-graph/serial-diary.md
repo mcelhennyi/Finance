@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-05-10 (session) — T-FR-0006-04 Budget React Flow + graph API
+
+**Stage:** TEST/DEV/VAL on ticket branch **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-04-react-flow`** (worktree **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`**)
+
+**Recap (plain English):** Shipped **`CashFlowGraphPanel`** with **`@xyflow/react`** on **`BudgetPage`**: loads **`GET /api/budget-allocation/plans/{id}/cash-flow-graph`**, edits nodes/edges, saves via **`PUT`** with **`CashFlowGraphDocument`** typing. Added **`cashFlowGraphFlow`** round-trip helpers + Vitest. Compose **`web`** **`NODE_OPTIONS`** avoids Vite OOM during **`docker compose run web npm run build`**. Next: [**Cash-flow time scrub and aggregated views**](tickets.md) ([`T-FR-0006-05`](tickets.md)).
+
+---
+
 ## 2026-05-10 (session) — T-FR-0006-03 cash-flow graph CRUD API
 
 **Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**

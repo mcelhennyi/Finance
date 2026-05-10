@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | [**Budget React Flow panel wired to graph API**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
+| **Active ticket** | [**Cash-flow time scrub and aggregated views**](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) ([`T-FR-0006-05`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)) |
 | **Active phase** | — |
 | **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** |
 | **Session status** | `developing` |
-| **Next agent should** | **`develop-frontier`**:**[`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md)** — worktree **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`**, branch **`feat/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow`** from **`feat/FR-0006-budget-cash-flow-graph`**; handoff [`tasks/handoffs/2026-05-10-parallel-frontier.md`](handoffs/2026-05-10-parallel-frontier.md); draft PR **#9** stays incomplete until **`finish-feature`**. |
+| **Next agent should** | Pick up **`T-FR-0006-05`** when ready (deps on **`T-FR-0006-04`** are satisfied); see [`tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md). PR for **`T-FR-0006-04`** merges into **`feat/FR-0006-budget-cash-flow-graph`** for review. |
 
 ### Parallel streams (optional)
 
@@ -16,7 +16,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| **FR-0006 graph UI** | [`T-FR-0006-04`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | **`FR-0006`** | **`feat/FR-0006-budget-cash-flow-graph`**, optional **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-04-react-flow/`** | Single eligible frontier ticket after **`T-FR-0006-03`** |
+| **FR-0006 time scrub** | [`T-FR-0006-05`](feature-history/FR-0006-budget-cash-flow-graph/tickets.md) | **`FR-0006`** | **`feat/FR-0006-budget-cash-flow-graph`** | Next after **`T-FR-0006-04`** VAL |
 
 **Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0002`** closeout: [`FR-0002-budget-entry-page/90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
 
