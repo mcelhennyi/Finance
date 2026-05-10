@@ -5,7 +5,7 @@ If **`CLAUDE.project.md`** exists at the repository root, load it **after** this
 ## Claude-specific notes
 
 - Prefer **subagents or delegated tasks** for large exploration or multi-file work; see **`docs/ai-context.md`** §1b.
-- Keep **`tasks/ticket-progress.md`** current when doing ticket work (**Active ticket**, **Branch / worktree**, **Session status**). Worktrees live under **`.worktrees/FR-NNNN-<slug>/`**: `feature/` for **`feat/FR-NNNN-<slug>`**, plus child ticket/stage worktrees on feature-prefixed branches.
+- Keep **`tasks/ticket-progress.md`** current when doing ticket work (**Active ticket**, **Branch / worktree**, **Session status**). Worktrees live under **`.worktrees/FR-NNNN-<slug>/`**: `feature/` for **`feat/FR-NNNN-<slug>`**, plus child ticket/stage worktrees on feature-prefixed branches. **Branch ladder:** ticket branches merge **into** **`feat/…`** first; **`feat/…` → `main`** only when the feature is complete — **`docs/ai-context.md` §2d**.
 - Run development-specific commands (**build**, **test**, **lint**, package-manager scripts, doc builds, and dev servers) inside Docker / Docker Compose / Dev Container / CI images where possible; use **`./develop`** / `docker compose run` before host-local execution, and document host exceptions in ticket diaries or handoffs.
 - **Parallel features:** several **`FR-NNNN`** streams may be active; **`/develop-frontier`** batches **`T-FR-NNNN-xx`** from the **global** graph — see **`docs/ai-context.md` §2c** and **`tasks/ticket-progress.md` → Parallel streams**.
 - When you assign a new **`FR-NNNN`** in **`REGISTRY.md`**, **commit and push to `main` immediately** after the minimal feature stub exists so concurrent work deconflicts ids (**`docs/ai-context.md` §2b**).
@@ -18,7 +18,7 @@ Custom slash commands live in **`.claude/commands/`**:
 | **`/feature-request-continue`** | Resume an in-progress **`FR-NNNN`** from **`tasks/feature-history/`** (read **`CURRENT.md`** when on **`feat/*`**); **`git fetch`** and verify integration PR state before suggesting merge; if merged, apply **Closeout** hygiene (**`90-closeout.md`**, retire **`Parallel streams`** row, **Current focus**). |
 | **`/identify-frontier`** | Parallel-ticket handoff from **`ticket-progress.md`** + **`tasks/feature-history/**/tickets.md`** (+ DAG). Run **after** tickets exist. |
 | **`/develop-frontier`** | One subagent per parallel-capable ticket (**TEST→DEV→VAL** per child worktree under **`.worktrees/FR-NNNN-<slug>/`**). |
-| **`/finish-feature`** | Merge feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → `main`**; do not auto-delete remote **`feat/*`**. |
+| **`/finish-feature`** | Merge ticket branches **into** **`feat/FR-NNNN-<slug>`**, validate, **PR `feat/…` → `main`** when the **feature** is complete; do not auto-delete remote **`feat/*`**. |
 | **`/finish-frontier`** | Merge parallel ticket/stage branches into **`main`** per policy. |
 | **`/commit-with-metrics`** | Commit with optional AI metrics footer — **`.cursor/skills/commit-with-ai-metrics/SKILL.md`**. |
 | **`/add-todo`** | Add a task to **`tasks/todo.md`** under **Active** for lightweight follow-up tracking. |

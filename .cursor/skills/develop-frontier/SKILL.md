@@ -50,8 +50,8 @@ All frontier tickets **VAL** = `done`, branches **pushed**.
 
 ## 4 — Finish integration
 
-- **Feature-branch workflow (preferred for `FR-NNNN` work):** follow **`finish-feature`** — merges ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, opens **PR → `main`** for human review. **No** automatic push to **`main`**.
-- **Direct-to-main frontier:** follow **`finish-frontier`** when integrating parallel tickets straight into **`main`** per existing policy.
+- **Feature-branch workflow (required default for `FR-NNNN` product work):** Each ticket merges **into** **`feat/FR-NNNN-<slug>`** first. Use **`finish-feature`** to open **PR `feat/FR-NNNN-<slug>` → `main`** **only** when the **feature** is **complete** per **`tickets.md`** — **avoid** merging incomplete features to **`main`**. Validates on **`feat/…`**, push, PR for human merge; **no** automatic push to **`main`**.
+- **Direct-to-main frontier:** **`finish-frontier`** — only when **explicit repo policy** allows merging parallel ticket branches straight into **`main`**.
 
 Important gate from **`finish-frontier`**: after merge conflict resolution (including `triadDone` union), integration must revalidate all requirements/tests before any push to `main`.
 

@@ -138,9 +138,18 @@ Use planning for multi-step or architectural work.
 
 ### 2d. Feature integration branch, `finish-feature`, handoffs, diaries, and branch audit
 
+**Canonical branching ladder (default for Finance Hub implementation):**
+
+1. **`main`** — Integration branch; receives work **only** through reviewed PRs.
+2. **`feat/FR-NNNN-<slug>`** — **One feature integration branch per `FR-NNNN`.** All ticket branches for that feature merge **here first**.
+3. **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-…`** — **Ticket branches**, created **from** **`feat/FR-NNNN-<slug>`** (not from **`main`**). When a ticket is **VAL** `done`, merge it **into** **`feat/FR-NNNN-<slug>`** (PR **base** = feature branch, **head** = ticket branch).
+4. **`feat/FR-NNNN-<slug>` → `main`** — **Only** when the **feature** is **complete** per **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, **`REGISTRY.md`**, and team agreement — use **`finish-feature`** (**PR** feature branch → **`main`**). **Avoid** merging incomplete features to **`main`** unless there is a **documented exception** (phased release behind flags, emergency hotfix, or other explicit policy).
+
+**Do not** merge ticket branches directly to **`main`** in normal product work — ticket → **feature** → **`main`**. The **`finish-frontier`** / **direct-to-main** path is **non-default** and must match explicit repo policy.
+
 - **Feature integration branch + worktree:** For each **`FR-NNNN`** in implementation, maintain a long-lived git branch **`feat/FR-NNNN-<slug>`** (same **`<slug>`** as the feature-history folder) checked out at **`.worktrees/FR-NNNN-<slug>/feature/`**.
 - **Ticket/stage branches:** Every worked ticket or stage branches from the feature branch and includes both names, e.g. **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`** (or **`feat/FR-NNNN-<slug>/stage-short-name`** for non-ticket stages). Its worktree lives under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`** and merges **into the feature branch first** — not directly to **`main`** — unless an explicit exception is documented for hotfix flows.
-- **`finish-feature`:** Merges ticket/stage branches into **`feat/FR-NNNN-<slug>`**, runs validation there, pushes the feature branch, and opens (or updates) a **pull request to `main`** for **human** review and merge. It does **not** replace **`finish-frontier`** for workflows that still integrate straight to **`main`**.
+- **`finish-feature`:** Merges ticket/stage branches into **`feat/FR-NNNN-<slug>`**, runs validation there, pushes the feature branch, and opens (or updates) a **pull request to `main`** (**only** for merging the **completed feature** to **`main`** — prefer **draft** PR while tickets remain open). It does **not** replace **`finish-frontier`** for workflows that still integrate straight to **`main`**.
 - **`CURRENT.md`:** keep the feature integration branch’s file accurate through **`finish-feature`**; the **PR merge to `main`** should drop **`CURRENT.md`** from **`main`** so the default branch stays neutral (**`feature-request`** skill).
 - **Continue / milestone handoffs** for a feature belong **primarily** under **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`** (e.g. `YYYY-MM-DD-continue.md`, `YYYY-MM-DD-milestone.md`). Optionally mirror a one-line pointer in **`tasks/handoffs/`** if the team wants a global inbox — the **authoritative** narrative for “what’s next on this feature” stays next to that feature’s artifacts.
 - **Diaries:** **`serial-diary.md`** is one append-only chain for serial work; parallel agents write only under **`parallel/<stream>.md`**. Periodically (and at closeout), produce **`DIARY.md`** in the same feature folder: **merge** content from **`serial-diary.md`** and **`parallel/*.md`** into **one** file ordered as a **stack** — **newest entries at the top** — each block labeled with **source file**, **date**, and **git ref** (branch or SHA) when known so git history stays traceable. **Do not delete** the underlying **`serial-diary.md`** / **`parallel/`** files when generating **`DIARY.md`**; they remain the raw audit log.
@@ -171,7 +180,7 @@ When **TEST/DEV/VAL** are all **`done`**:
 
 1. **Commit** — Conventional message; optional metrics footer per **`.cursor/skills/commit-with-ai-metrics/SKILL.md`** / **`/commit-with-metrics`**.
 2. **Push** — `git push -u origin HEAD` (or as required).
-3. **Open PR** — Prefer `gh pr create`; if unavailable, note what blocked it. Under the **feature-branch workflow** (**§2d**), each completed ticket/stage opens a PR with **base** **`feat/FR-NNNN-<slug>`** and **head** the feature-prefixed ticket/stage branch; after all tickets land, **`finish-feature`** opens (or updates) the **PR** with **base** **`main`** and **head** **`feat/FR-NNNN-<slug>`** — still **no** automated push to **`main`**. For **direct-to-main** integration, use **base** **`main`** for ticket PRs per team policy.
+3. **Open PR** — Prefer `gh pr create`; if unavailable, note what blocked it. **Ticket branches:** PR **base** = **`feat/FR-NNNN-<slug>`**, **head** = the ticket branch (`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-…`). **Feature integration:** after all required tickets are merged into **`feat/FR-NNNN-<slug>`**, **`finish-feature`** opens (or updates) the **PR** with **base** **`main`** and **head** **`feat/FR-NNNN-<slug>`** — **only** when merging the **completed feature** to **`main`** per **§2d**; still **no** automated push to **`main`**. Do **not** treat **base `main`** / **head `feat/…`** PRs as routine until the feature scope for merge is agreed complete. For **direct-to-main** ticket integration (**non-default**), use **base** **`main`** for ticket PRs only per explicit **`finish-frontier`** / policy exception.
 
 ---
 
