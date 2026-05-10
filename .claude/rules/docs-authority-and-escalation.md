@@ -2,7 +2,7 @@
 
 Mirrors **`.cursor/rules/docs-authority-and-escalation.mdc`**. Keep both files aligned when editing.
 
-**Process** (worktrees, tickets, frontier workflow, session bootstrap) lives in **`docs/ai-context.md`**. **Product and system behavior** — interfaces, architecture, testable requirements — lives in **`docs/design/`** and, if published, your **primary docs site** (e.g. MkDocs). Those design artifacts are the **source of truth** for what they specify.
+**Process** (worktrees, tickets, frontier workflow, session bootstrap) lives in **`docs/ai-context.md`**, with optional repo-specific extensions in **`docs/ai-context.project.md`** when that file exists (see **`docs/skeleton-project-overlays.md`**). **Product and system behavior** — interfaces, architecture, testable requirements — lives in **`docs/design/`** and, if published, your **primary docs site** (e.g. MkDocs). Those design artifacts are the **source of truth** for what they specify.
 
 ## Docs are the source of truth (design)
 
