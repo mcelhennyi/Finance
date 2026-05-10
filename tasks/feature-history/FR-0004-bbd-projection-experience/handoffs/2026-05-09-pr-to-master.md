@@ -7,8 +7,7 @@
 
 ## PR
 
-- Create: **`gh pr create --base master --head feat/FR-0004-bbd-projection-experience`**
-- **PR URL:** *(replace after create)*
+- **PR:** https://github.com/mcelhennyi/Finance/pull/7 (**`feat/FR-0004-bbd-projection-experience`** → **`master`**).
 
 ## VAL (2026-05-09)
 
