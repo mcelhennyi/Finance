@@ -18,7 +18,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 |----------------|------------|--------------------|-------------------|--------------|
 | Budget allocation contracts | `T-FR-0002-01` | `FR-0002` | `feat/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts` / `.worktrees/FR-0002-budget-entry-page/T-FR-0002-01-define-budget-allocation-contracts/` | Frontier stream ready to launch |
 
-**Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md).
+**Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
 
 ---
 

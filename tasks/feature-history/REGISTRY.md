@@ -10,7 +10,7 @@
 | FR-0001 | `FR-0001-phase2-goals-unified-view/` | `complete` | **`T-FR-0001-01`** through **`T-FR-0001-05`** in [`FR-0001-phase2-goals-unified-view/tickets.md`](FR-0001-phase2-goals-unified-view/tickets.md) | Merged to default branch (PR #5, 2026-04-27). |
 | FR-0002 | `FR-0002-budget-entry-page/` | `design` | Proposed **`T-FR-0002-01`** through **`T-FR-0002-05`** in [`FR-0002-budget-entry-page/tickets.md`](FR-0002-budget-entry-page/tickets.md) | Manual budget allocation entry page; sample spreadsheet informs content requirements only. |
 | FR-0003 | `FR-0003-bbd-projection-ui/` | `complete` | **`T-FR-0003-01`** through **`T-FR-0003-04`** in [`FR-0003-bbd-projection-ui/tickets.md`](FR-0003-bbd-projection-ui/tickets.md) | `finance.bbd.engine`, `POST /api/bbd-projection/run`, **BBD** SPA page; CLI **`scripts/bbd-projection/`** (`README.md`, `example-scenario.toml`, `bbd_projection.py`). |
-| FR-0004 | `FR-0004-bbd-projection-experience/` | `in-progress` | **`T-FR-0004-01`** through **`T-FR-0004-05`** in [`FR-0004-bbd-projection-experience/tickets.md`](FR-0004-bbd-projection-experience/tickets.md) | Immersive BBD UI shipped on branch: bottom dock, **`recharts`** story dashboard, lazy **`three`** spatial view, **`bbdVizModel`**; builds on **`FR-0003`** API only. |
+| FR-0004 | `FR-0004-bbd-projection-experience/` | `complete` | **`T-FR-0004-01`** through **`T-FR-0004-05`** in [`FR-0004-bbd-projection-experience/tickets.md`](FR-0004-bbd-projection-experience/tickets.md) | Merged to default branch (PR [#7](https://github.com/mcelhennyi/Finance/pull/7), 2026-05-10): immersive BBD UI — dock, **`bbdVizModel`**, story dashboard, lazy **`three`** spatial view, **`scripts/bbd-projection/`**. |
 
 **next_id:** `5`
 

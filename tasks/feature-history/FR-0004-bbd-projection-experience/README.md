@@ -1,6 +1,6 @@
 # FR-0004 — BBD projection immersive experience
 
-**Status:** `in-progress` (implementation on feature branch — immersive charts + lazy 3D spatial panel)
+**Status:** `complete` on **`master`** — integration **[PR #7](https://github.com/mcelhennyi/Finance/pull/7)** · closeout [`90-closeout.md`](90-closeout.md) · finish handoff [`handoffs/2026-05-10-finish-feature.md`](handoffs/2026-05-10-finish-feature.md)
 
 **Depends on:** shipped **`FR-0003`** (**`POST /api/bbd-projection/run`**, existing **`BbdRunResponse`** types); extends **`frontend/src/pages/BbdProjectionPage.tsx`** and related BBD components only unless a **`DESIGN-GAP`** forces API extensions.
 
@@ -13,7 +13,9 @@
 | [`20-tickets-dag.md`](20-tickets-dag.md) | Ticket table + Mermaid DAG (draft; mirrors [`tickets.md`](tickets.md)) |
 | [`tickets.md`](tickets.md) | Canonical **`T-FR-0004-xx`** sections |
 | [`serial-diary.md`](serial-diary.md) | Serial session notes |
-| [`handoffs/2026-05-09-pr-to-master.md`](handoffs/2026-05-09-pr-to-master.md) | PR / merge handoff (**`feat/FR-0004-bbd-projection-experience`** → **`master`**) |
+| [`handoffs/2026-05-09-pr-to-master.md`](handoffs/2026-05-09-pr-to-master.md) | Pre-merge PR handoff |
+| [`handoffs/2026-05-10-finish-feature.md`](handoffs/2026-05-10-finish-feature.md) | **`/finish-feature`** bookkeeping (post-merge) |
+| [`90-closeout.md`](90-closeout.md) | Final synopsis + artifact index |
 
 ## Summary
 

@@ -1,5 +1,15 @@
 # Serial diary — FR-0004
 
+## 2026-05-10 — Merged to master + finish-feature bookkeeping
+
+**Stage:** closeout.
+
+**Summary:** **[PR #7](https://github.com/mcelhennyi/Finance/pull/7)** merged to **`master`** (**`01842f3`**). Added **`90-closeout.md`**, **`handoffs/2026-05-10-finish-feature.md`**, set **`REGISTRY.md`** → **`complete`**, refreshed feature **`README.md`** and **`tasks/ticket-progress.md`** completed-feature pointer.
+
+**Next:** Human merges bookkeeping PR if split; otherwise none.
+
+---
+
 ## 2026-05-09 — Implementation (FR-0004 option B)
 
 **Stage:** implementation on feature branch.
