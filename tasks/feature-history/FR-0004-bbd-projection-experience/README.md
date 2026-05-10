@@ -13,6 +13,7 @@
 | [`20-tickets-dag.md`](20-tickets-dag.md) | Ticket table + Mermaid DAG (draft; mirrors [`tickets.md`](tickets.md)) |
 | [`tickets.md`](tickets.md) | Canonical **`T-FR-0004-xx`** sections |
 | [`serial-diary.md`](serial-diary.md) | Serial session notes |
+| [`handoffs/2026-05-09-pr-to-master.md`](handoffs/2026-05-09-pr-to-master.md) | PR / merge handoff (**`feat/FR-0004-bbd-projection-experience`** → **`master`**) |
 
 ## Summary
 
