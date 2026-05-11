@@ -41,10 +41,27 @@ import {
 } from '../../lib/cashFlowTimeAggregation'
 import { formatUsd } from '../../lib/budgetAllocation'
 import { CASH_NODE_KIND_OPTIONS, CASH_FLOW_REF_PATTERN } from '../../lib/cashFlowGraphKinds'
+import { BUDGET_SCROLL_ANCHORS } from './budgetDocAnchors'
 
 const KIND_OPTIONS: CashNodeKind[] = CASH_NODE_KIND_OPTIONS
 
 const REF_PATTERN = CASH_FLOW_REF_PATTERN
+
+function formatNodeBalance(amount: string | null | undefined): string {
+  const t = amount?.trim()
+  if (!t) return '—'
+  const n = Number(t)
+  return Number.isFinite(n) ? formatUsd(n) : t
+}
+
+function formatBalanceDateLabel(iso: string | null | undefined): string {
+  const t = iso?.trim()
+  if (!t) return '—'
+  const d = new Date(t.includes('T') ? t : `${t}T12:00:00`)
+  return Number.isNaN(d.getTime())
+    ? t
+    : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
 
 function descendantRefs(nodes: CashFlowRfNode[], rootId: string): Set<string> {
   const byParent = new Map<string, string[]>()
@@ -127,12 +144,17 @@ interface Props {
   planIncomeMonthly?: number | null
   /** Node refs to emphasize when hovering the allocation Account column. */
   highlightNodeRefs?: string[]
+  /** Controlled disclosure for the add-account form at the bottom of the accounts list. */
+  addAccountPanelOpen: boolean
+  onAddAccountPanelOpenChange: (open: boolean) => void
 }
 
 export function CashFlowGraphPanel({
   planId,
   planIncomeMonthly = null,
   highlightNodeRefs = [],
+  addAccountPanelOpen,
+  onAddAccountPanelOpenChange,
 }: Props) {
   const queryClient = useQueryClient()
   const [nodes, setNodes] = useNodesState<CashFlowRfNode>([])
@@ -156,6 +178,8 @@ export function CashFlowGraphPanel({
     edges: CashFlowEdgeSpec[]
     meta: { rationale: string }[]
   } | null>(null)
+  /** When set, that account row shows inputs; all other rows are read-only. */
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null)
 
   const graphQuery = useQuery({
     queryKey: ['budgetCashFlowGraph', planId],
@@ -170,7 +194,21 @@ export function CashFlowGraphPanel({
     setEdges(el.edges)
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
+    setEditingAccountId(null)
   }, [graphQuery.data, setEdges, setNodes])
+
+  useEffect(() => {
+    setEditingAccountId(null)
+  }, [planId])
+
+  useEffect(() => {
+    if (editingAccountId == null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEditingAccountId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [editingAccountId])
 
   const highlightKey = highlightNodeRefs.join('\0')
   useEffect(() => {
@@ -588,110 +626,11 @@ export function CashFlowGraphPanel({
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Accounts</div>
               <p className="mt-1 text-xs text-slate-500">
-                Add accounts, nest child accounts under parents, and edit account data. Changes persist when you
-                save the graph.
+                Browse accounts in the table; choose <span className="font-medium text-slate-600">Edit</span> on a row
+                to change fields. Nest children under parents; save the graph to persist. Expand{' '}
+                <span className="font-medium text-slate-600">Add account</span> below to create a new node.
               </p>
             </div>
-            <div className="grid gap-2 md:grid-cols-4">
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                placeholder="ref (id)"
-                value={addRef}
-                onChange={e => setAddRef(e.target.value)}
-                aria-label="New account ref"
-              />
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                placeholder="Display name"
-                value={addName}
-                onChange={e => setAddName(e.target.value)}
-                aria-label="New account display name"
-              />
-              <select
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm capitalize"
-                value={addKind}
-                onChange={e => setAddKind(e.target.value as CashNodeKind)}
-                aria-label="New account kind"
-              >
-                {KIND_OPTIONS.map(k => (
-                  <option key={k} value={k}>
-                    {k.replace(/_/g, ' ')}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                placeholder="Institution"
-                value={addInstitution}
-                onChange={e => setAddInstitution(e.target.value)}
-                aria-label="New account institution"
-              />
-              <select
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                value={addParentRef}
-                onChange={e => setAddParentRef(e.target.value)}
-                aria-label="New account parent"
-              >
-                <option value="">No parent</option>
-                {nodes.map(n => (
-                  <option key={n.id} value={n.id}>
-                    {n.data.spec.display_name} ({n.id})
-                  </option>
-                ))}
-              </select>
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm uppercase"
-                placeholder="USD"
-                value={addCurrency}
-                onChange={e => setAddCurrency(e.target.value)}
-                aria-label="New account currency"
-                maxLength={3}
-              />
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm tabular-nums"
-                placeholder="Current balance"
-                value={addCurrentBalance}
-                onChange={e => setAddCurrentBalance(e.target.value)}
-                aria-label="New account current balance"
-              />
-              <input
-                type="date"
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                value={addBalanceAsOf}
-                onChange={e => setAddBalanceAsOf(e.target.value)}
-                aria-label="New account balance date"
-              />
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                placeholder="Mask (last 4)"
-                value={addAccountMask}
-                onChange={e => setAddAccountMask(e.target.value)}
-                aria-label="New account mask"
-              />
-              <input
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm md:col-span-2"
-                placeholder="Notes"
-                value={addNotes}
-                onChange={e => setAddNotes(e.target.value)}
-                aria-label="New account notes"
-              />
-              <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={addIsActive}
-                  onChange={e => setAddIsActive(e.target.checked)}
-                />
-                Active
-              </label>
-              <button
-                type="button"
-                onClick={handleAddNode}
-                className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
-              >
-                Add account
-              </button>
-            </div>
-            {addError && <p className="text-xs text-red-700">{addError}</p>}
             <div className="overflow-x-auto rounded-lg border border-slate-100">
               <table className="min-w-[64rem] w-full text-xs">
                 <thead>
@@ -704,115 +643,221 @@ export function CashFlowGraphPanel({
                     <th className="px-3 py-2">Mask</th>
                     <th className="px-3 py-2">Notes</th>
                     <th className="px-3 py-2">Active</th>
+                    <th className="px-3 py-2 w-[4.5rem] text-right">
+                      <span className="sr-only">Row actions</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
+                  {accountListRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-3 py-8 text-center text-sm text-slate-400">
+                        No accounts yet. Expand <span className="font-medium text-slate-600">Add account</span> below
+                        to create one.
+                      </td>
+                    </tr>
+                  ) : null}
                   {accountListRows.map(({ node, depth }) => {
                     const spec = node.data.spec
                     const blocked = descendantRefs(nodes, node.id)
                     blocked.add(node.id)
                     const rowParentOptions = nodes.filter(n => !blocked.has(n.id))
+                    const isEditing = editingAccountId === node.id
+                    const parentRef = spec.parent_ref?.trim()
+                    const parentNode = parentRef ? nodes.find(n => n.id === parentRef) : undefined
+                    const parentLabel =
+                      parentNode?.data.spec.display_name?.trim() ||
+                      (parentRef ? parentRef : null)
+                    const balanceStr = spec.current_balance?.trim()
+                    const hasBalance = Boolean(balanceStr)
                     return (
                       <tr
                         key={node.id}
-                        className={`border-b border-slate-50 last:border-0 align-top ${
+                        className={`border-b border-slate-50 last:border-0 align-top transition-colors ${
                           node.id === selectedNodeId ? 'bg-teal-50/40' : ''
-                        }`}
+                        } ${!isEditing ? 'hover:bg-slate-50/50' : 'bg-white'}`}
                       >
-                        <td className="px-3 py-2">
-                          <div style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                            <input
-                              className="w-full rounded border border-slate-200 px-2 py-1 font-medium text-slate-800"
-                              value={spec.display_name}
-                              onChange={e => patchNode(node.id, { display_name: e.target.value })}
-                              aria-label={`Display name for ${node.id}`}
-                            />
-                            <div className="mt-1 text-[10px] text-slate-400">{node.id}</div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <select
-                            className="w-full rounded border border-slate-200 px-2 py-1 capitalize"
-                            value={spec.kind}
-                            onChange={e => patchNode(node.id, { kind: e.target.value as CashNodeKind })}
-                          >
-                            {KIND_OPTIONS.map(k => (
-                              <option key={k} value={k}>
-                                {k.replace(/_/g, ' ')}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-3 py-2">
-                          <input
-                            className="w-full rounded border border-slate-200 px-2 py-1"
-                            value={spec.institution ?? ''}
-                            onChange={e => patchNode(node.id, { institution: e.target.value || null })}
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <select
-                            className="w-full rounded border border-slate-200 px-2 py-1"
-                            value={spec.parent_ref ?? ''}
-                            onChange={e => patchNode(node.id, { parent_ref: e.target.value || null })}
-                          >
-                            <option value="">None</option>
-                            {rowParentOptions.map(n => (
-                              <option key={n.id} value={n.id}>
-                                {n.data.spec.display_name} ({n.id})
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="grid gap-1">
-                            <div className="flex gap-1">
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <div style={{ paddingLeft: `${depth * 1.25}rem` }}>
                               <input
-                                className="w-16 rounded border border-slate-200 px-2 py-1 uppercase"
-                                value={spec.currency ?? 'USD'}
-                                onChange={e => patchNode(node.id, { currency: e.target.value.toUpperCase() })}
-                                maxLength={3}
-                                aria-label={`Currency for ${node.id}`}
+                                className="w-full rounded border border-slate-200 px-2 py-1 font-medium text-slate-800"
+                                value={spec.display_name}
+                                onChange={e => patchNode(node.id, { display_name: e.target.value })}
+                                aria-label={`Display name for ${node.id}`}
                               />
+                              <div className="mt-1 text-[10px] text-slate-400">{node.id}</div>
+                            </div>
+                          ) : (
+                            <div style={{ paddingLeft: `${depth * 1.25}rem` }} className="min-h-[2.25rem]">
+                              <div className="text-sm font-semibold leading-snug text-slate-800">{spec.display_name}</div>
+                              <div className="mt-0.5 font-mono text-[10px] text-slate-400">{node.id}</div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <select
+                              className="w-full rounded border border-slate-200 px-2 py-1 capitalize"
+                              value={spec.kind}
+                              onChange={e => patchNode(node.id, { kind: e.target.value as CashNodeKind })}
+                            >
+                              {KIND_OPTIONS.map(k => (
+                                <option key={k} value={k}>
+                                  {k.replace(/_/g, ' ')}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-sm capitalize text-slate-600">{spec.kind.replace(/_/g, ' ')}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <input
+                              className="w-full rounded border border-slate-200 px-2 py-1"
+                              value={spec.institution ?? ''}
+                              onChange={e => patchNode(node.id, { institution: e.target.value || null })}
+                            />
+                          ) : (
+                            <span className="text-sm text-slate-600">{spec.institution?.trim() || '—'}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <select
+                              className="w-full rounded border border-slate-200 px-2 py-1"
+                              value={spec.parent_ref ?? ''}
+                              onChange={e => patchNode(node.id, { parent_ref: e.target.value || null })}
+                            >
+                              <option value="">None</option>
+                              {rowParentOptions.map(n => (
+                                <option key={n.id} value={n.id}>
+                                  {n.data.spec.display_name} ({n.id})
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-sm text-slate-600">{parentLabel || '—'}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <div className="grid gap-1">
+                              <div className="flex gap-1">
+                                <input
+                                  className="w-16 rounded border border-slate-200 px-2 py-1 uppercase"
+                                  value={spec.currency ?? 'USD'}
+                                  onChange={e => patchNode(node.id, { currency: e.target.value.toUpperCase() })}
+                                  maxLength={3}
+                                  aria-label={`Currency for ${node.id}`}
+                                />
+                                <input
+                                  className="w-28 rounded border border-slate-200 px-2 py-1 tabular-nums"
+                                  value={spec.current_balance ?? ''}
+                                  onChange={e =>
+                                    patchNode(node.id, { current_balance: e.target.value.trim() || null })
+                                  }
+                                  aria-label={`Current balance for ${node.id}`}
+                                />
+                              </div>
                               <input
-                                className="w-28 rounded border border-slate-200 px-2 py-1 tabular-nums"
-                                value={spec.current_balance ?? ''}
-                                onChange={e =>
-                                  patchNode(node.id, { current_balance: e.target.value.trim() || null })
-                                }
-                                aria-label={`Current balance for ${node.id}`}
+                                type="date"
+                                className="w-full rounded border border-slate-200 px-2 py-1"
+                                value={spec.balance_as_of ?? ''}
+                                onChange={e => patchNode(node.id, { balance_as_of: e.target.value || null })}
+                                aria-label={`Balance date for ${node.id}`}
                               />
                             </div>
+                          ) : (
+                            <div className="space-y-0.5 text-sm">
+                              {hasBalance || spec.balance_as_of ? (
+                                <>
+                                  <div className="tabular-nums text-slate-800">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                      {(spec.currency ?? 'USD').toUpperCase()}
+                                    </span>{' '}
+                                    {hasBalance ? formatNodeBalance(spec.current_balance) : '—'}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500">
+                                    {spec.balance_as_of
+                                      ? `As of ${formatBalanceDateLabel(spec.balance_as_of)}`
+                                      : hasBalance
+                                        ? 'No as-of date'
+                                        : ''}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-slate-400">—</span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
                             <input
-                              type="date"
                               className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={spec.balance_as_of ?? ''}
-                              onChange={e => patchNode(node.id, { balance_as_of: e.target.value || null })}
-                              aria-label={`Balance date for ${node.id}`}
+                              value={spec.account_mask ?? ''}
+                              onChange={e => patchNode(node.id, { account_mask: e.target.value || null })}
                             />
-                          </div>
+                          ) : (
+                            <span className="font-mono text-sm text-slate-600">{spec.account_mask?.trim() || '—'}</span>
+                          )}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            className="w-full rounded border border-slate-200 px-2 py-1"
-                            value={spec.account_mask ?? ''}
-                            onChange={e => patchNode(node.id, { account_mask: e.target.value || null })}
-                          />
+                        <td className="max-w-[10rem] px-3 py-2.5">
+                          {isEditing ? (
+                            <input
+                              className="w-full rounded border border-slate-200 px-2 py-1"
+                              value={spec.notes ?? ''}
+                              onChange={e => patchNode(node.id, { notes: e.target.value })}
+                            />
+                          ) : (
+                            <span
+                              className="line-clamp-2 text-sm leading-snug text-slate-600"
+                              title={spec.notes?.trim() || undefined}
+                            >
+                              {spec.notes?.trim() || '—'}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            className="w-full rounded border border-slate-200 px-2 py-1"
-                            value={spec.notes ?? ''}
-                            onChange={e => patchNode(node.id, { notes: e.target.value })}
-                          />
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <input
+                              type="checkbox"
+                              checked={spec.is_active ?? true}
+                              onChange={e => patchNode(node.id, { is_active: e.target.checked })}
+                              aria-label={`Active status for ${node.id}`}
+                            />
+                          ) : (
+                            <span
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                spec.is_active ?? true
+                                  ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100'
+                                  : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200/80'
+                              }`}
+                            >
+                              {spec.is_active ?? true ? 'Active' : 'Inactive'}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={spec.is_active ?? true}
-                            onChange={e => patchNode(node.id, { is_active: e.target.checked })}
-                            aria-label={`Active status for ${node.id}`}
-                          />
+                        <td className="px-3 py-2.5 text-right align-middle">
+                          {isEditing ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingAccountId(null)}
+                              className="rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-slate-900"
+                            >
+                              Done
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditingAccountId(node.id)}
+                              className="text-[11px] font-semibold text-teal-700 hover:text-teal-900"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -820,6 +865,123 @@ export function CashFlowGraphPanel({
                 </tbody>
               </table>
             </div>
+
+            <details
+              id={BUDGET_SCROLL_ANCHORS.addAccount}
+              className="scroll-mt-24 rounded-lg border border-slate-100 bg-slate-50/50"
+              open={addAccountPanelOpen}
+              onToggle={e => onAddAccountPanelOpenChange(e.currentTarget.open)}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
+                <span>Add account</span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  {addAccountPanelOpen ? 'Hide' : 'Expand to add'}
+                </span>
+              </summary>
+              <div className="border-t border-slate-100 bg-white px-4 py-4 space-y-3">
+                <div className="grid gap-2 md:grid-cols-4">
+                  <input
+                    id="budget-add-account-first-field"
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    placeholder="ref (id)"
+                    value={addRef}
+                    onChange={e => setAddRef(e.target.value)}
+                    aria-label="New account ref"
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    placeholder="Display name"
+                    value={addName}
+                    onChange={e => setAddName(e.target.value)}
+                    aria-label="New account display name"
+                  />
+                  <select
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm capitalize"
+                    value={addKind}
+                    onChange={e => setAddKind(e.target.value as CashNodeKind)}
+                    aria-label="New account kind"
+                  >
+                    {KIND_OPTIONS.map(k => (
+                      <option key={k} value={k}>
+                        {k.replace(/_/g, ' ')}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    placeholder="Institution"
+                    value={addInstitution}
+                    onChange={e => setAddInstitution(e.target.value)}
+                    aria-label="New account institution"
+                  />
+                  <select
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    value={addParentRef}
+                    onChange={e => setAddParentRef(e.target.value)}
+                    aria-label="New account parent"
+                  >
+                    <option value="">No parent</option>
+                    {nodes.map(n => (
+                      <option key={n.id} value={n.id}>
+                        {n.data.spec.display_name} ({n.id})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm uppercase"
+                    placeholder="USD"
+                    value={addCurrency}
+                    onChange={e => setAddCurrency(e.target.value)}
+                    aria-label="New account currency"
+                    maxLength={3}
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm tabular-nums"
+                    placeholder="Current balance"
+                    value={addCurrentBalance}
+                    onChange={e => setAddCurrentBalance(e.target.value)}
+                    aria-label="New account current balance"
+                  />
+                  <input
+                    type="date"
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    value={addBalanceAsOf}
+                    onChange={e => setAddBalanceAsOf(e.target.value)}
+                    aria-label="New account balance date"
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    placeholder="Mask (last 4)"
+                    value={addAccountMask}
+                    onChange={e => setAddAccountMask(e.target.value)}
+                    aria-label="New account mask"
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm md:col-span-2"
+                    placeholder="Notes"
+                    value={addNotes}
+                    onChange={e => setAddNotes(e.target.value)}
+                    aria-label="New account notes"
+                  />
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={addIsActive}
+                      onChange={e => setAddIsActive(e.target.checked)}
+                    />
+                    Active
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddNode}
+                    className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
+                  >
+                    Add account
+                  </button>
+                </div>
+                {addError && <p className="text-xs text-red-700">{addError}</p>}
+              </div>
+            </details>
           </div>
 
           {selectedEdge && selectedEdge.data?.spec && (

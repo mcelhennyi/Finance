@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -111,6 +111,12 @@ export function BudgetPage() {
   const [editDraft, setEditDraft] = useState<ItemDraftInput | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [loadModalOpen, setLoadModalOpen] = useState(false)
+  const [addDestinationModalOpen, setAddDestinationModalOpen] = useState(false)
+  const [addLinePanelOpen, setAddLinePanelOpen] = useState(false)
+  const [addCategoryPanelOpen, setAddCategoryPanelOpen] = useState(false)
+  const [addAccountPanelOpen, setAddAccountPanelOpen] = useState(false)
+  const newItemFirstFieldRef = useRef<HTMLInputElement>(null)
+  const newCatalogInputRef = useRef<HTMLInputElement>(null)
   const [graphPayHoverNodeRef, setGraphPayHoverNodeRef] = useState<string | null>(null)
   const [newCatalogLabel, setNewCatalogLabel] = useState('')
   const [expandedCategoryLabel, setExpandedCategoryLabel] = useState<string | null>(null)
@@ -399,6 +405,48 @@ export function BudgetPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [loadModalOpen])
 
+  useEffect(() => {
+    if (!addDestinationModalOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAddDestinationModalOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [addDestinationModalOpen])
+
+  const goToAddAllocationLine = useCallback(() => {
+    setAddDestinationModalOpen(false)
+    setAddLinePanelOpen(true)
+    setAddCategoryPanelOpen(false)
+    setAddAccountPanelOpen(false)
+    window.requestAnimationFrame(() => {
+      document.getElementById(BUDGET_SCROLL_ANCHORS.add)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.requestAnimationFrame(() => newItemFirstFieldRef.current?.focus())
+    })
+  }, [])
+
+  const goToAddSavedCategory = useCallback(() => {
+    setAddDestinationModalOpen(false)
+    setAddCategoryPanelOpen(true)
+    setAddLinePanelOpen(false)
+    setAddAccountPanelOpen(false)
+    window.requestAnimationFrame(() => {
+      document.getElementById(BUDGET_SCROLL_ANCHORS.addCategory)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.requestAnimationFrame(() => newCatalogInputRef.current?.focus())
+    })
+  }, [])
+
+  const goToAddAccount = useCallback(() => {
+    setAddDestinationModalOpen(false)
+    setAddAccountPanelOpen(true)
+    setAddLinePanelOpen(false)
+    setAddCategoryPanelOpen(false)
+    window.requestAnimationFrame(() => {
+      document.getElementById(BUDGET_SCROLL_ANCHORS.addAccount)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.requestAnimationFrame(() => document.getElementById('budget-add-account-first-field')?.focus())
+    })
+  }, [])
+
   return (
     <>
     <div id={BUDGET_SCROLL_ANCHORS.top} className="space-y-8 pb-28">
@@ -631,6 +679,8 @@ export function BudgetPage() {
               planId={selectedPlanId}
               planIncomeMonthly={activePlan?.income_monthly ?? null}
               highlightNodeRefs={graphHighlightNodeRefs}
+              addAccountPanelOpen={addAccountPanelOpen}
+              onAddAccountPanelOpenChange={setAddAccountPanelOpen}
             />
           </div>
 
@@ -714,40 +764,6 @@ export function BudgetPage() {
               {categoryInventoryQuery.isError && (
                 <p className="text-xs text-red-700" role="alert">
                   Could not load category inventory.
-                </p>
-              )}
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="flex flex-col gap-1 text-sm min-w-[12rem] flex-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                    Add saved category
-                  </span>
-                  <input
-                    type="text"
-                    value={newCatalogLabel}
-                    onChange={e => setNewCatalogLabel(e.target.value)}
-                    placeholder="e.g. Childcare"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
-                    list={BUDGET_CATEGORY_DATALIST_ID}
-                    maxLength={100}
-                    aria-label="New saved category name"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const t = newCatalogLabel.trim()
-                    if (!t) return
-                    addCatalogMut.mutate(t)
-                  }}
-                  disabled={addCatalogMut.isPending || !newCatalogLabel.trim()}
-                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
-                >
-                  {addCatalogMut.isPending ? 'Adding…' : 'Add'}
-                </button>
-              </div>
-              {addCatalogMut.isError && (
-                <p className="text-xs text-red-700" role="alert">
-                  {addCatalogMut.error instanceof Error ? addCatalogMut.error.message : 'Add failed'}
                 </p>
               )}
               <div className="overflow-x-auto rounded-lg border border-slate-100">
@@ -912,6 +928,61 @@ export function BudgetPage() {
                   </tbody>
                 </table>
               </div>
+
+              <details
+                id={BUDGET_SCROLL_ANCHORS.addCategory}
+                className="scroll-mt-24 rounded-lg border border-slate-100 bg-slate-50/50"
+                open={addCategoryPanelOpen}
+                onToggle={e => setAddCategoryPanelOpen(e.currentTarget.open)}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
+                  <span>Add saved category</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                    {addCategoryPanelOpen ? 'Hide' : 'Expand to add'}
+                  </span>
+                </summary>
+                <div className="border-t border-slate-100 bg-white px-4 py-4 space-y-3">
+                  <p className="text-[11px] text-slate-500">
+                    Store a label for quick pick on new allocation lines. Lines and seeding can also create categories
+                    automatically.
+                  </p>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="flex flex-col gap-1 text-sm min-w-[12rem] flex-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                        Category name
+                      </span>
+                      <input
+                        ref={newCatalogInputRef}
+                        type="text"
+                        value={newCatalogLabel}
+                        onChange={e => setNewCatalogLabel(e.target.value)}
+                        placeholder="e.g. Childcare"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                        list={BUDGET_CATEGORY_DATALIST_ID}
+                        maxLength={100}
+                        aria-label="New saved category name"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = newCatalogLabel.trim()
+                        if (!t) return
+                        addCatalogMut.mutate(t)
+                      }}
+                      disabled={addCatalogMut.isPending || !newCatalogLabel.trim()}
+                      className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                    >
+                      {addCatalogMut.isPending ? 'Adding…' : 'Add'}
+                    </button>
+                  </div>
+                  {addCatalogMut.isError && (
+                    <p className="text-xs text-red-700" role="alert">
+                      {addCatalogMut.error instanceof Error ? addCatalogMut.error.message : 'Add failed'}
+                    </p>
+                  )}
+                </div>
+              </details>
             </div>
           </div>
 
@@ -1146,83 +1217,98 @@ export function BudgetPage() {
                 </table>
               </div>
               {(itemsQuery.data?.items.length ?? 0) === 0 && !itemsQuery.isLoading && (
-                <p className="px-4 py-8 text-center text-sm text-slate-400">No lines yet. Add one below.</p>
+                <p className="px-4 py-8 text-center text-sm text-slate-400">
+                  No lines yet. Expand <span className="font-medium text-slate-600">Add line</span> below to create one.
+                </p>
               )}
-            </div>
 
-            <div id={BUDGET_SCROLL_ANCHORS.add} className="mt-4 bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-3 scroll-mt-24">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-slate-700">Add line</h3>
-                <BudgetDocsSectionLink section="addLine" label="Line fields ›" className="text-[10px]" />
-              </div>
-              <div className="flex flex-wrap gap-3 items-end">
-                <input
-                  placeholder="Item name"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
-                  value={newItem.item_name}
-                  onChange={e => setNewItem({ ...newItem, item_name: e.target.value })}
-                />
-                <input
-                  placeholder="Category"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
-                  value={newItem.category}
-                  onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-                  list={BUDGET_CATEGORY_DATALIST_ID}
-                  aria-label="Category"
-                />
-                <input
-                  placeholder="Amount"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-24 tabular-nums"
-                  value={newItem.planned_amount}
-                  onChange={e => setNewItem({ ...newItem, planned_amount: e.target.value })}
-                />
-                <select
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={newItem.cadence}
-                  onChange={e =>
-                    setNewItem({ ...newItem, cadence: e.target.value as AllocationItemCadence })
-                  }
-                >
-                  {ALLOCATION_ITEM_CADENCES.map(c => (
-                    <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={newItem.payment_method}
-                  onChange={e =>
-                    setNewItem({ ...newItem, payment_method: e.target.value as PaymentMethod })
-                  }
-                >
-                  {PAYMENT_METHODS.map(c => (
-                    <option key={c} value={c}>
-                      {PAYMENT_METHOD_LABELS[c]}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  placeholder="Due day"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-20"
-                  value={newItem.due_day}
-                  onChange={e => setNewItem({ ...newItem, due_day: e.target.value })}
-                />
-                <input
-                  placeholder="Notes"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm flex-1 min-w-[10rem]"
-                  value={newItem.notes}
-                  onChange={e => setNewItem({ ...newItem, notes: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  disabled={createItemMut.isPending}
-                  className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 rounded-lg px-4 py-2"
-                >
-                  {createItemMut.isPending ? 'Adding…' : 'Add'}
-                </button>
-              </div>
+              <details
+                id={BUDGET_SCROLL_ANCHORS.add}
+                className="scroll-mt-24 border-t border-slate-100 bg-slate-50/50"
+                open={addLinePanelOpen}
+                onToggle={e => setAddLinePanelOpen(e.currentTarget.open)}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
+                  <span className="flex flex-wrap items-center gap-2">
+                    Add line
+                    <BudgetDocsSectionLink section="addLine" label="Line fields ›" className="text-[10px] font-normal" />
+                  </span>
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                    {addLinePanelOpen ? 'Hide' : 'Expand to add'}
+                  </span>
+                </summary>
+                <div className="border-t border-slate-100 bg-white px-4 py-4 space-y-3">
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <input
+                      ref={newItemFirstFieldRef}
+                      placeholder="Item name"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
+                      value={newItem.item_name}
+                      onChange={e => setNewItem({ ...newItem, item_name: e.target.value })}
+                    />
+                    <input
+                      placeholder="Category"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
+                      value={newItem.category}
+                      onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                      list={BUDGET_CATEGORY_DATALIST_ID}
+                      aria-label="Category"
+                    />
+                    <input
+                      placeholder="Amount"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-24 tabular-nums"
+                      value={newItem.planned_amount}
+                      onChange={e => setNewItem({ ...newItem, planned_amount: e.target.value })}
+                    />
+                    <select
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={newItem.cadence}
+                      onChange={e =>
+                        setNewItem({ ...newItem, cadence: e.target.value as AllocationItemCadence })
+                      }
+                    >
+                      {ALLOCATION_ITEM_CADENCES.map(c => (
+                        <option key={c} value={c}>
+                          {c.replace(/_/g, ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={newItem.payment_method}
+                      onChange={e =>
+                        setNewItem({ ...newItem, payment_method: e.target.value as PaymentMethod })
+                      }
+                    >
+                      {PAYMENT_METHODS.map(c => (
+                        <option key={c} value={c}>
+                          {PAYMENT_METHOD_LABELS[c]}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      placeholder="Due day"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-20"
+                      value={newItem.due_day}
+                      onChange={e => setNewItem({ ...newItem, due_day: e.target.value })}
+                    />
+                    <input
+                      placeholder="Notes"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm flex-1 min-w-[10rem]"
+                      value={newItem.notes}
+                      onChange={e => setNewItem({ ...newItem, notes: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddItem}
+                      disabled={createItemMut.isPending}
+                      className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 rounded-lg px-4 py-2"
+                    >
+                      {createItemMut.isPending ? 'Adding…' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -1288,6 +1374,27 @@ export function BudgetPage() {
                 Load
               </button>
             </div>
+            {activePlan ? (
+              <>
+                <div className="hidden h-7 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => setAddDestinationModalOpen(true)}
+                  aria-label="Choose what to add"
+                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-transparent px-2 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:gap-2 sm:px-2.5 sm:text-sm"
+                >
+                  <span
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-teal-800 shadow-inner sm:h-9 sm:w-9"
+                    aria-hidden
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="sm:h-[18px] sm:w-[18px]">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <span className="hidden min-[400px]:inline">Add</span>
+                </button>
+              </>
+            ) : null}
             <div className="hidden h-7 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
             <button
               type="button"
@@ -1389,6 +1496,76 @@ export function BudgetPage() {
               <div className="border-t border-slate-100 px-4 py-3">
                 <p className="text-[11px] leading-relaxed text-slate-500">
                   Opens that plan and jumps to its calendar month. Your lines and cash-flow map update automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {addDestinationModalOpen && (
+          <div
+            className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="budget-add-destination-title"
+            onClick={e => {
+              if (e.target === e.currentTarget) setAddDestinationModalOpen(false)
+            }}
+          >
+            <div
+              className="flex w-full max-w-md flex-col rounded-2xl border border-slate-200 bg-white shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <h2 id="budget-add-destination-title" className="text-lg font-semibold text-slate-800">
+                  Add to this plan
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={() => setAddDestinationModalOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <span aria-hidden className="text-xl leading-none">
+                    ×
+                  </span>
+                </button>
+              </div>
+              <div className="px-4 py-4 space-y-2">
+                <button
+                  type="button"
+                  onClick={goToAddAllocationLine}
+                  className="flex w-full flex-col items-start gap-0.5 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left shadow-sm transition hover:border-teal-200 hover:bg-teal-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                >
+                  <span className="text-sm font-semibold text-slate-800">Allocation line</span>
+                  <span className="text-[11px] text-slate-500">
+                    Opens the add form at the bottom of the allocation lines table.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={goToAddSavedCategory}
+                  className="flex w-full flex-col items-start gap-0.5 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left shadow-sm transition hover:border-teal-200 hover:bg-teal-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                >
+                  <span className="text-sm font-semibold text-slate-800">Saved category</span>
+                  <span className="text-[11px] text-slate-500">
+                    Opens the add panel at the bottom of the Categories section.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={goToAddAccount}
+                  className="flex w-full flex-col items-start gap-0.5 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left shadow-sm transition hover:border-teal-200 hover:bg-teal-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                >
+                  <span className="text-sm font-semibold text-slate-800">Cash flow account</span>
+                  <span className="text-[11px] text-slate-500">
+                    Opens the add form at the bottom of the Accounts list in the cash flow map.
+                  </span>
+                </button>
+              </div>
+              <div className="border-t border-slate-100 px-4 py-3">
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  The page scrolls to the matching section and expands the add controls so you can enter fields right away.
                 </p>
               </div>
             </div>

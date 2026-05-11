@@ -20,9 +20,11 @@ export const BUDGET_SCROLL_ANCHORS = {
   plan: 'budget-anchor-plan',
   summary: 'budget-anchor-summary',
   cashFlowGraph: 'budget-anchor-cash-flow-graph',
+  addAccount: 'budget-anchor-add-account',
   planMoneyFlows: 'budget-anchor-plan-money-flows',
   lines: 'budget-anchor-lines',
   add: 'budget-anchor-add',
+  addCategory: 'budget-anchor-add-category',
   categories: 'budget-anchor-categories',
 } as const
 
