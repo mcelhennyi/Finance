@@ -1,3 +1,11 @@
+## 2026-05-10 (session) — finish-feature handoff + Budget UX
+
+**Stage:** VAL / handoff on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Pushed integration branch; **`docker compose run --rm --no-deps web npm run build`** green; PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) description refreshed; [**`handoffs/2026-05-10-finish-feature.md`**](handoffs/2026-05-10-finish-feature.md) records merge-ready scope and explicit note that **refinements and upgrades** land as **later features**. **`CURRENT.md`** / **`README.md`** updated for the reviewer.
+
+---
+
 ## 2026-05-10 (session) — T-FR-0006-05 / T-FR-0006-06 time scrub + BBD suggestions
 
 **Stage:** TEST/DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**

@@ -1,6 +1,8 @@
 # FR-0006 — Budget cash-flow graph (persisted + React Flow)
 
-**Status:** `in-progress` (see [`REGISTRY.md`](../REGISTRY.md)).
+**Status:** `in-progress` (see [`REGISTRY.md`](../REGISTRY.md)). **PR:** [#9](https://github.com/mcelhennyi/Finance/pull/9) (`feat/FR-0006-budget-cash-flow-graph` → `master`). Finish handoff: [`handoffs/2026-05-10-finish-feature.md`](handoffs/2026-05-10-finish-feature.md).
+
+**Scope note:** Core FR-0006 delivery on the feature branch is **complete enough to merge**; **refinement and upgrades** are expected as **later features** (see handoff).
 
 ## Contents
 

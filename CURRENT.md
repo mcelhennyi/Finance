@@ -13,4 +13,5 @@ Highlights: **`finance.cash_flow_graph`** persistence + API; **`CashFlowGraphPan
 
 ## Next
 
-1. **`/finish-feature`** — PR **`feat/FR-0006-budget-cash-flow-graph` → `master`** for human review (**draft #9**); then **`90-closeout.md`** + **`REGISTRY.md`** → **`complete`** when merged.
+1. **Human review** — PR [#9](https://github.com/mcelhennyi/Finance/pull/9) (**`feat/FR-0006-budget-cash-flow-graph` → `master`**). Merge when satisfied; then **`90-closeout.md`** + **`REGISTRY.md`** → **`complete`**.
+2. **Follow-on work** — The main FR-0006 idea is in place; **polish and deeper upgrades** should be scheduled as **separate features/tickets**, not as blockers for this PR unless the reviewer decides otherwise.
