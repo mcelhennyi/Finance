@@ -16,6 +16,7 @@
 
 - Ticket frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"` - pass, **21** focused tests, existing Vite chunk-size warning.
 - Full frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **62** tests, existing Vite chunk-size warning.
+- Backend full gate: `docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/ -q"` - pass, **96** tests, one existing Starlette/httpx warning.
 - Browser: Budget saved example cash-flow map inspected at desktop and **390px** viewport. The geometry sampler found **8** labels, **8** nodes, **16** edge paths, and **0** label-label, label-node, or label-path collisions in both viewports.
 - Docs/tooling: `git diff --check`, `./scripts/check-frontend-no-merge-markers.sh`, and host `mkdocs build --strict` passed. Docker docs route remains unavailable because this compose file has no `docs` service.
 

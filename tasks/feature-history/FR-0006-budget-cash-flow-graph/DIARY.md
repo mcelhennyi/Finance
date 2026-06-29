@@ -11,7 +11,7 @@ Consolidated newest-first diary for **FR-0006**. Raw source logs remain in [`ser
 
 Completed the post-closeout graph readability expansion. `cashFlowGraphRouting` now returns label geometry, reserves prior edge-label boxes and routed segment boxes, keeps labels clear of their own source/target nodes, and searches farther away from dense corridors before falling back. The Budget React Flow edge renderer uses route-provided fixed-width label positions with truncation, keeping the rendered label footprint aligned with the router reservation.
 
-Validation passed: Docker frontend lint/focused routing tests/build (`21` focused tests), full frontend lint/test/build (`62` tests), strict docs build, diff hygiene, merge-marker scan, and browser VAL on the saved example Budget cash-flow map at desktop and 390px viewport. The browser sampler found `8` labels, `8` nodes, `16` SVG edge paths, and `0` label-label, label-node, or label-path collisions in both viewports.
+Validation passed: Docker frontend lint/focused routing tests/build (`21` focused tests), full frontend lint/test/build (`62` tests), backend full tests (`96` tests, one existing Starlette/httpx warning), strict docs build, diff hygiene, merge-marker scan, and browser VAL on the saved example Budget cash-flow map at desktop and 390px viewport. The browser sampler found `8` labels, `8` nodes, `16` SVG edge paths, and `0` label-label, label-node, or label-path collisions in both viewports.
 
 ---
 
