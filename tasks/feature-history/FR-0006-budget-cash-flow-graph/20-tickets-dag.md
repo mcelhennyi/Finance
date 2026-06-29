@@ -90,3 +90,25 @@ flowchart TB
 **Status:** **T-FR-0006-12** is TEST/DEV/VAL `done`.
 
 **Parallel note:** **T-FR-0006-12** is intentionally serial after the prior routing and cluster tickets because it revises their shared route helper and custom edge renderer.
+
+---
+
+## Expansion addendum - 2026-06-29 allocation controls and graph layout cleanup
+
+Addendum: [`30-expand-2026-06-29-allocation-controls-graph-layout.md`](30-expand-2026-06-29-allocation-controls-graph-layout.md).
+
+| ID | Title (required - human-facing name) | Type | Deps (ticket IDs) | Summary of change (1-2 lines) | Suggested order group | Link |
+|----|----------------------------------------|------|---------------------|------------------------------|------------------------|------|
+| T-FR-0006-13 | Allocation controls and graph layout cleanup | Story | `T-FR-0006-12` | Replace endpoint/payment controls with role-aware account dropdowns, remove plan income and Time view, stack pure sources/sinks, and route around endpoint node bodies | P0 | [tickets.md](tickets.md) |
+
+```mermaid
+flowchart TB
+  T12["Edge and label deconfliction (T-FR-0006-12)"]
+  T13["Allocation controls and graph layout cleanup (T-FR-0006-13)"]
+
+  T12 --> T13
+```
+
+**Status:** **T-FR-0006-13** is TEST/DEV/VAL `done`.
+
+**Parallel note:** **T-FR-0006-13** is intentionally serial because it updates the same allocation UI and routing helpers completed by the earlier FR-0006 expansions.

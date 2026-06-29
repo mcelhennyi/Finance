@@ -10,7 +10,7 @@ import os
 from datetime import date
 from decimal import Decimal
 
-from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import AllocationCadence, AllocationRole, PaymentMethod
 from finance.allocation.schemas import AllocationItemCreate, AllocationPlanCreate
 
 # Human-readable; operators rename after load.
@@ -28,14 +28,12 @@ def allocation_auto_template_enabled() -> bool:
 
 
 def starter_plan_create(period_month: date) -> AllocationPlanCreate:
-    """Illustrative plan: monthly income and category lines users replace with real data."""
+    """Illustrative plan: source and sink lines users replace with real data."""
 
     return AllocationPlanCreate(
         name=STARTER_PLAN_NAME,
         period_month=period_month,
         currency="USD",
-        income_amount=Decimal("8000.00"),
-        income_cadence=PlanIncomeCadence.MONTHLY,
     )
 
 
@@ -44,39 +42,55 @@ def starter_plan_items() -> list[AllocationItemCreate]:
 
     return [
         AllocationItemCreate(
+            item_name="Paycheck",
+            category="Income",
+            planned_amount=Decimal("8000.00"),
+            cadence=AllocationCadence.MONTHLY,
+            allocation_role=AllocationRole.SOURCE,
+            to_account_ref="checking",
+            counterparty="Employer",
+            payment_method=PaymentMethod.CASH,
+            notes="Template — income is modeled as a source allocation into checking.",
+            sort_order=0,
+        ),
+        AllocationItemCreate(
             item_name="Essential spending (bills & lifestyle)",
             category="Essential",
             planned_amount=Decimal("3200.00"),
             cadence=AllocationCadence.MONTHLY,
+            from_account_ref="checking",
             payment_method=PaymentMethod.CASH,
             notes="Template — amounts reflect a generic payroll→checking→spends split.",
-            sort_order=0,
+            sort_order=1,
         ),
         AllocationItemCreate(
             item_name="Long-term savings allocation",
             category="Savings",
             planned_amount=Decimal("1500.00"),
             cadence=AllocationCadence.MONTHLY,
+            from_account_ref="checking",
             payment_method=PaymentMethod.CASH,
             notes="Template — adjust or replace when you map transfers from checking.",
-            sort_order=1,
+            sort_order=2,
         ),
         AllocationItemCreate(
             item_name="Short-term savings / emergency buffer",
             category="Savings",
             planned_amount=Decimal("500.00"),
             cadence=AllocationCadence.MONTHLY,
+            from_account_ref="checking",
             payment_method=PaymentMethod.CASH,
             notes="Template row.",
-            sort_order=2,
+            sort_order=3,
         ),
         AllocationItemCreate(
             item_name="Credit card / revolving cycle",
             category="Credit",
             planned_amount=Decimal("800.00"),
             cadence=AllocationCadence.MONTHLY,
+            from_account_ref="ian_chase_sapphire",
             payment_method=PaymentMethod.CREDIT,
             notes="Template — models monthly carry paid from checking.",
-            sort_order=3,
+            sort_order=4,
         ),
     ]

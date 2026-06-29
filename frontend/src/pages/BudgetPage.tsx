@@ -6,11 +6,11 @@ import { api } from '../api/client'
 import {
   ALLOCATION_ITEM_CADENCES,
   ALLOCATION_ROLES,
-  PLAN_INCOME_CADENCES,
   PAYMENT_METHODS,
-  PAYMENT_METHOD_LABELS,
+  allocationAccountRef,
   allocationItemCreateBody,
   allocationItemPutBody,
+  draftWithAllocationAccount,
   formatUsd,
   graphNodeRefForPaymentMethod,
   validateItemDraft,
@@ -18,7 +18,6 @@ import {
   type AllocationRole,
   type ItemDraftInput,
   type PaymentMethod,
-  type PlanIncomeCadence,
 } from '../lib/budgetAllocation'
 import { coverageAccountLabelFromGraph, planMoneyFlowPhrases } from '../lib/budgetPlanMoneyFlows'
 import { firstOfMonthFromYm } from '../lib/monthRange'
@@ -29,8 +28,6 @@ import { BUDGET_FIELD_TIPS } from '../components/budget/budgetFieldTips'
 import { BUDGET_SCROLL_ANCHORS, type BudgetDocsSection } from '../components/budget/budgetDocAnchors'
 import { CashFlowGraphPanel } from '../components/budget/CashFlowGraphPanel'
 import { OutputHoverTip } from '../components/OutputHoverTip'
-
-const BUDGET_CATEGORY_DATALIST_ID = 'finance-budget-category-datalist'
 
 const EMPTY_GRAPH_HIGHLIGHT_REFS: string[] = []
 
@@ -115,6 +112,14 @@ function CollapsibleSection(props: {
 }
 
 function itemToDraft(item: AllocationItem): ItemDraftInput {
+  const baseRole = item.allocation_role ?? 'sink'
+  const fallbackAccountRef = graphNodeRefForPaymentMethod(
+    PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
+      ? (item.payment_method as PaymentMethod)
+      : 'cash',
+  )
+  const fromAccountRef = item.from_account_ref ?? (baseRole === 'sink' ? fallbackAccountRef : null)
+  const toAccountRef = item.to_account_ref ?? (baseRole === 'source' ? fallbackAccountRef : null)
   return {
     item_name: item.item_name,
     category: item.category,
@@ -122,9 +127,9 @@ function itemToDraft(item: AllocationItem): ItemDraftInput {
     cadence: (ALLOCATION_ITEM_CADENCES.includes(item.cadence as AllocationItemCadence)
       ? item.cadence
       : 'monthly') as AllocationItemCadence,
-    allocation_role: item.allocation_role,
-    from_account_ref: item.from_account_ref,
-    to_account_ref: item.to_account_ref,
+    allocation_role: baseRole,
+    from_account_ref: fromAccountRef,
+    to_account_ref: toAccountRef,
     counterparty: item.counterparty,
     payment_method: (PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
       ? item.payment_method
@@ -150,9 +155,10 @@ function emptyDraft(): ItemDraftInput {
   }
 }
 
-function endpointLabel(ref: string | null | undefined, options: { ref: string; label: string }[]): string {
-  if (!ref) return 'external'
-  return options.find(option => option.ref === ref)?.label ?? ref
+function roleAccountLabel(role: AllocationRole, accountLabel: string): string {
+  return role === 'source'
+    ? `Source into ${accountLabel}`
+    : `Sink from ${accountLabel}`
 }
 
 export function BudgetPage() {
@@ -160,8 +166,6 @@ export function BudgetPage() {
   const [ym, setYm] = useState(() => loadBudgetPagePrefs().ym)
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(() => loadBudgetPagePrefs().planId)
   const [planNameDraft, setPlanNameDraft] = useState('')
-  const [incomeAmount, setIncomeAmount] = useState('')
-  const [incomeCadence, setIncomeCadence] = useState<PlanIncomeCadence | ''>('')
   const [newItem, setNewItem] = useState<ItemDraftInput>(emptyDraft)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editDraft, setEditDraft] = useState<ItemDraftInput | null>(null)
@@ -249,13 +253,9 @@ export function BudgetPage() {
   useEffect(() => {
     if (!activePlan) {
       setPlanNameDraft('')
-      setIncomeAmount('')
-      setIncomeCadence('')
       return
     }
     setPlanNameDraft(activePlan.name)
-    setIncomeAmount(activePlan.income_amount != null ? String(activePlan.income_amount) : '')
-    setIncomeCadence((activePlan.income_cadence as PlanIncomeCadence) || '')
   }, [activePlan])
 
   const itemsQuery = useQuery({
@@ -278,9 +278,31 @@ export function BudgetPage() {
     () => planGraphQuery.data?.nodes.map(node => ({
       ref: node.ref,
       label: node.display_name || node.ref,
+      kind: node.kind,
     })) ?? [],
     [planGraphQuery.data],
   )
+  const graphAccountOptionByRef = useMemo(
+    () => new Map(graphAccountOptions.map(option => [option.ref, option])),
+    [graphAccountOptions],
+  )
+  const fallbackAccountRefForDraft = useCallback((draft: ItemDraftInput) => {
+    const accountRef = allocationAccountRef(draft)
+    if (accountRef) return accountRef
+    const paymentAccountRef = graphNodeRefForPaymentMethod(draft.payment_method)
+    return graphAccountOptionByRef.has(paymentAccountRef)
+      ? paymentAccountRef
+      : graphAccountOptions[0]?.ref ?? ''
+  }, [graphAccountOptionByRef, graphAccountOptions])
+  const paymentMethodForAccount = useCallback((accountRef: string): PaymentMethod => {
+    return graphAccountOptionByRef.get(accountRef)?.kind === 'liability_surrogate' ? 'credit' : 'cash'
+  }, [graphAccountOptionByRef])
+  const setDraftAccount = useCallback((draft: ItemDraftInput, accountRef: string, role = draft.allocation_role ?? 'sink') => {
+    return {
+      ...draftWithAllocationAccount(draft, accountRef, role),
+      payment_method: paymentMethodForAccount(accountRef),
+    }
+  }, [paymentMethodForAccount])
 
   const categoryOptionsQuery = useQuery({
     queryKey: ['budgetCategoryOptions'],
@@ -319,6 +341,19 @@ export function BudgetPage() {
   const categoryPickerLabels = useMemo(
     () => categoryOptionsQuery.data?.labels ?? [],
     [categoryOptionsQuery.data],
+  )
+  const categorySelectOptions = useMemo(
+    () => categoryPickerLabels.length ? categoryPickerLabels : ['Income', 'Savings', 'Housing', 'Groceries', 'Shopping'],
+    [categoryPickerLabels],
+  )
+  const categoryOptionsFor = useCallback(
+    (value: string) => {
+      const trimmed = value.trim()
+      return trimmed && !categorySelectOptions.includes(trimmed)
+        ? [trimmed, ...categorySelectOptions]
+        : categorySelectOptions
+    },
+    [categorySelectOptions],
   )
 
   const addCatalogMut = useMutation({
@@ -401,36 +436,20 @@ export function BudgetPage() {
     const body: Record<string, unknown> = {
       name: planNameDraft.trim() || activePlan?.name || 'Plan',
     }
-    const amt = incomeAmount.trim()
-    const hasIncome = amt !== '' && incomeCadence !== ''
-    if (hasIncome) {
-      const n = Number(amt)
-      if (!Number.isFinite(n) || n <= 0) {
-        setFormError('Income amount must be a positive number when cadence is set.')
-        return
-      }
-      body.income_amount = String(n)
-      body.income_cadence = incomeCadence
-    } else if (amt === '' && incomeCadence === '') {
-      body.income_amount = null
-      body.income_cadence = null
-    } else {
-      setFormError('Set both income amount and cadence, or clear both.')
-      return
-    }
     updatePlanMut.mutate(body)
   }
 
   const handleAddItem = () => {
     if (selectedPlanId == null) return
-    const err = validateItemDraft(newItem)
+    const draft = setDraftAccount(newItem, fallbackAccountRefForDraft(newItem), newItem.allocation_role ?? 'sink')
+    const err = validateItemDraft(draft)
     if (err) {
       setFormError(err)
       return
     }
     setFormError(null)
     try {
-      createItemMut.mutate(allocationItemCreateBody(newItem))
+      createItemMut.mutate(allocationItemCreateBody(draft))
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Invalid item')
     }
@@ -439,7 +458,8 @@ export function BudgetPage() {
   const handleSaveEdit = () => {
     if (selectedPlanId == null || editingId == null || !editDraft) return
     try {
-      const body = allocationItemPutBody(editDraft)
+      const draft = setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), editDraft.allocation_role ?? 'sink')
+      const body = allocationItemPutBody(draft)
       updateItemMut.mutate({ itemId: editingId, body })
       setFormError(null)
     } catch (e) {
@@ -639,7 +659,7 @@ export function BudgetPage() {
           <CollapsibleSection
             id={BUDGET_SCROLL_ANCHORS.plan}
             title="Plan"
-            subtitle="Plan name, income, and saved-plan actions"
+            subtitle="Plan name and saved-plan actions"
             docsSection="planDetails"
             open={openSections.plan}
             onOpenChange={open => setBudgetSectionOpen('plan', open)}
@@ -654,32 +674,6 @@ export function BudgetPage() {
                   onChange={e => setPlanNameDraft(e.target.value)}
                   className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
-              </label>
-              <label className="flex flex-col gap-1 text-sm w-36">
-                <FieldLabel tip={BUDGET_FIELD_TIPS.incomeAmount}>Income (optional)</FieldLabel>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={incomeAmount}
-                  onChange={e => setIncomeAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm min-w-[10rem]">
-                <FieldLabel tip={BUDGET_FIELD_TIPS.incomeCadence}>Income cadence</FieldLabel>
-                <select
-                  value={incomeCadence}
-                  onChange={e => setIncomeCadence(e.target.value as PlanIncomeCadence | '')}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="">—</option>
-                  {PLAN_INCOME_CADENCES.map(c => (
-                    <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
               </label>
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -711,13 +705,15 @@ export function BudgetPage() {
                 </button>
               </div>
             </div>
-            <p className="text-xs text-slate-400">Period {activePlan.period_month} · currency {activePlan.currency}</p>
+            <p className="text-xs text-slate-400">
+              Period {activePlan.period_month} · currency {activePlan.currency} · model income as source allocation rows.
+            </p>
           </CollapsibleSection>
 
           <CollapsibleSection
             id={BUDGET_SCROLL_ANCHORS.summary}
             title="Monthly summary"
-            subtitle="Totals, account split, and remaining income"
+            subtitle="Totals, account split, and source-backed remainder"
             docsSection="summary"
             open={openSections.summary}
             onOpenChange={open => setBudgetSectionOpen('summary', open)}
@@ -777,7 +773,6 @@ export function BudgetPage() {
             <CashFlowGraphPanel
               planId={selectedPlanId}
               allocationItems={itemsQuery.data?.items ?? []}
-              planIncomeMonthly={activePlan?.income_monthly ?? null}
               highlightNodeRefs={graphHighlightNodeRefs}
               addAccountPanelOpen={addAccountPanelOpen}
               onAddAccountPanelOpenChange={setAddAccountPanelOpen}
@@ -835,12 +830,6 @@ export function BudgetPage() {
             </CollapsibleSection>
           )}
 
-          <datalist id={BUDGET_CATEGORY_DATALIST_ID}>
-            {categoryPickerLabels.map(label => (
-              <option key={label} value={label} />
-            ))}
-          </datalist>
-
           {itemsQuery.isError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               Could not load items: {itemsErr}
@@ -891,7 +880,6 @@ export function BudgetPage() {
                           Account
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3">Endpoints</th>
                       <th className="px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.due} dashed={false} placement="below" className="inline font-semibold">
                           Due
@@ -918,13 +906,19 @@ export function BudgetPage() {
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <input
+                            <select
                               className="w-full rounded border border-slate-200 px-2 py-1"
                               value={editDraft.category}
                               onChange={e => setEditDraft({ ...editDraft, category: e.target.value })}
-                              list={BUDGET_CATEGORY_DATALIST_ID}
                               aria-label="Category"
-                            />
+                            >
+                              <option value="">Choose category</option>
+                              {categoryOptionsFor(editDraft.category).map(label => (
+                                <option key={label} value={label}>
+                                  {label}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="px-3 py-2">
                             <input
@@ -955,12 +949,10 @@ export function BudgetPage() {
                             <select
                               className="w-full rounded border border-slate-200 px-2 py-1"
                               value={editDraft.allocation_role ?? 'sink'}
-                              onChange={e =>
-                                setEditDraft({
-                                  ...editDraft,
-                                  allocation_role: e.target.value as AllocationRole,
-                                })
-                              }
+                              onChange={e => {
+                                const role = e.target.value as AllocationRole
+                                setEditDraft(setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), role))
+                              }}
                             >
                               {ALLOCATION_ROLES.map(role => (
                                 <option key={role} value={role}>
@@ -973,68 +965,25 @@ export function BudgetPage() {
                           <td
                             className="px-3 py-2"
                             onMouseEnter={() =>
-                              setGraphPayHoverNodeRef(
-                                graphNodeRefForPaymentMethod(editDraft.payment_method),
-                              )
+                              setGraphPayHoverNodeRef(fallbackAccountRefForDraft(editDraft))
                             }
                             onMouseLeave={() => setGraphPayHoverNodeRef(null)}
                           >
                             <select
                               className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.payment_method}
+                              value={fallbackAccountRefForDraft(editDraft)}
                               onChange={e =>
-                                setEditDraft({
-                                  ...editDraft,
-                                  payment_method: e.target.value as PaymentMethod,
-                                })
+                                setEditDraft(setDraftAccount(editDraft, e.target.value))
                               }
+                              aria-label="Allocation account"
                             >
-                              {PAYMENT_METHODS.map(c => (
-                                <option key={c} value={c}>
-                                  {PAYMENT_METHOD_LABELS[c]}
+                              <option value="">Choose account</option>
+                              {graphAccountOptions.map(option => (
+                                <option key={option.ref} value={option.ref}>
+                                  {roleAccountLabel(editDraft.allocation_role ?? 'sink', option.label)}
                                 </option>
                               ))}
                             </select>
-                          </td>
-                          <td className="px-3 py-2 min-w-[16rem]">
-                            <div className="grid gap-1">
-                              <select
-                                className="w-full rounded border border-slate-200 px-2 py-1"
-                                value={editDraft.from_account_ref ?? ''}
-                                onChange={e =>
-                                  setEditDraft({
-                                    ...editDraft,
-                                    from_account_ref: e.target.value || null,
-                                  })
-                                }
-                                aria-label="Funding account"
-                              >
-                                <option value="">External / none</option>
-                                {graphAccountOptions.map(option => (
-                                  <option key={option.ref} value={option.ref}>
-                                    From {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                className="w-full rounded border border-slate-200 px-2 py-1"
-                                value={editDraft.to_account_ref ?? ''}
-                                onChange={e =>
-                                  setEditDraft({
-                                    ...editDraft,
-                                    to_account_ref: e.target.value || null,
-                                  })
-                                }
-                                aria-label="Destination account"
-                              >
-                                <option value="">External / none</option>
-                                {graphAccountOptions.map(option => (
-                                  <option key={option.ref} value={option.ref}>
-                                    To {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
                           </td>
                           <td className="px-3 py-2">
                             <input
@@ -1101,31 +1050,24 @@ export function BudgetPage() {
                           </td>
                           <td
                             className="px-3 py-2 text-slate-600"
-                            onMouseEnter={() =>
-                              setGraphPayHoverNodeRef(
-                                graphNodeRefForPaymentMethod(
-                                  PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
-                                    ? (item.payment_method as PaymentMethod)
-                                    : 'cash',
-                                ),
-                              )
-                            }
+                            onMouseEnter={() => {
+                              const draft = itemToDraft(item)
+                              setGraphPayHoverNodeRef(fallbackAccountRefForDraft(draft))
+                            }}
                             onMouseLeave={() => setGraphPayHoverNodeRef(null)}
                           >
                             {(() => {
-                              const pm = PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
-                                ? (item.payment_method as PaymentMethod)
-                                : 'cash'
+                              const draft = itemToDraft(item)
+                              const accountRef = fallbackAccountRefForDraft(draft)
+                              const role = item.allocation_role ?? 'sink'
+                              const label = graphAccountOptionByRef.get(accountRef)?.label
+                                ?? coverageAccountLabelFromGraph(draft.payment_method, planGraphQuery.data ?? undefined)
                               return (
                                 <span className="font-medium text-slate-800">
-                                  {coverageAccountLabelFromGraph(pm, planGraphQuery.data ?? undefined)}
+                                  {roleAccountLabel(role, label)}
                                 </span>
                               )
                             })()}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-slate-600 min-w-[12rem]">
-                            {endpointLabel(item.from_account_ref, graphAccountOptions)} →{' '}
-                            {endpointLabel(item.to_account_ref, graphAccountOptions)}
                           </td>
                           <td className="px-3 py-2 text-slate-500">{item.due_day ?? '—'}</td>
                           <td className="px-3 py-2 text-slate-500">{item.counterparty || '—'}</td>
@@ -1192,14 +1134,19 @@ export function BudgetPage() {
                       value={newItem.item_name}
                       onChange={e => setNewItem({ ...newItem, item_name: e.target.value })}
                     />
-                    <input
-                      placeholder="Category"
+                    <select
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[8rem]"
                       value={newItem.category}
                       onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-                      list={BUDGET_CATEGORY_DATALIST_ID}
                       aria-label="Category"
-                    />
+                    >
+                      <option value="">Choose category</option>
+                      {categoryOptionsFor(newItem.category).map(label => (
+                        <option key={label} value={label}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       placeholder="Amount"
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-24 tabular-nums"
@@ -1222,9 +1169,10 @@ export function BudgetPage() {
                     <select
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                       value={newItem.allocation_role ?? 'sink'}
-                      onChange={e =>
-                        setNewItem({ ...newItem, allocation_role: e.target.value as AllocationRole })
-                      }
+                      onChange={e => {
+                        const role = e.target.value as AllocationRole
+                        setNewItem(setDraftAccount(newItem, fallbackAccountRefForDraft(newItem), role))
+                      }}
                       aria-label="Allocation role"
                     >
                       {ALLOCATION_ROLES.map(role => (
@@ -1234,41 +1182,15 @@ export function BudgetPage() {
                       ))}
                     </select>
                     <select
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={newItem.payment_method}
-                      onChange={e =>
-                        setNewItem({ ...newItem, payment_method: e.target.value as PaymentMethod })
-                      }
-                    >
-                      {PAYMENT_METHODS.map(c => (
-                        <option key={c} value={c}>
-                          {PAYMENT_METHOD_LABELS[c]}
-                        </option>
-                      ))}
-                    </select>
-                    <select
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[10rem]"
-                      value={newItem.from_account_ref ?? ''}
-                      onChange={e => setNewItem({ ...newItem, from_account_ref: e.target.value || null })}
-                      aria-label="Funding account"
+                      value={fallbackAccountRefForDraft(newItem)}
+                      onChange={e => setNewItem(setDraftAccount(newItem, e.target.value))}
+                      aria-label="Allocation account"
                     >
-                      <option value="">From external / none</option>
+                      <option value="">Choose account</option>
                       {graphAccountOptions.map(option => (
                         <option key={option.ref} value={option.ref}>
-                          From {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[10rem]"
-                      value={newItem.to_account_ref ?? ''}
-                      onChange={e => setNewItem({ ...newItem, to_account_ref: e.target.value || null })}
-                      aria-label="Destination account"
-                    >
-                      <option value="">To external / none</option>
-                      {graphAccountOptions.map(option => (
-                        <option key={option.ref} value={option.ref}>
-                          To {option.label}
+                          {roleAccountLabel(newItem.allocation_role ?? 'sink', option.label)}
                         </option>
                       ))}
                     </select>
@@ -1487,7 +1409,6 @@ export function BudgetPage() {
                                                         [line.id]: e.target.value,
                                                       }))
                                                     }
-                                                    list={BUDGET_CATEGORY_DATALIST_ID}
                                                     placeholder="New category"
                                                     maxLength={100}
                                                     aria-label={`Replacement category for ${line.item_name}`}
@@ -1558,7 +1479,6 @@ export function BudgetPage() {
                         onChange={e => setNewCatalogLabel(e.target.value)}
                         placeholder="e.g. Childcare"
                         className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
-                        list={BUDGET_CATEGORY_DATALIST_ID}
                         maxLength={100}
                         aria-label="New saved category name"
                       />
@@ -1600,7 +1520,7 @@ export function BudgetPage() {
             <div className="flex min-w-0 flex-1 justify-center gap-2 sm:flex-initial sm:justify-start">
               <button
                 type="button"
-                aria-label="Save plan name and income"
+                aria-label="Save plan name"
                 onClick={handleSavePlanMeta}
                 disabled={!activePlan || updatePlanMut.isPending}
                 className="min-w-0 flex-1 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:flex-initial sm:px-4 sm:text-sm"

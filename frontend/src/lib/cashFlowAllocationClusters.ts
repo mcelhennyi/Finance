@@ -7,8 +7,6 @@
 import type { AllocationItem, CashFlowNodeSpec } from '../types'
 import type { RoutingBox } from './cashFlowGraphRouting'
 
-export type AllocationEndpointRoleFilter = 'any' | 'funds_account' | 'funded_by_account'
-
 export type AllocationClusterFilters = {
   monthlyMin: string
   monthlyMax: string
@@ -17,7 +15,6 @@ export type AllocationClusterFilters = {
   paymentMethod: string
   categorySearch: string
   counterpartySearch: string
-  endpointRole: AllocationEndpointRoleFilter
   dueDayMin: string
   dueDayMax: string
 }
@@ -51,7 +48,6 @@ export const DEFAULT_ALLOCATION_CLUSTER_FILTERS: AllocationClusterFilters = {
   paymentMethod: '',
   categorySearch: '',
   counterpartySearch: '',
-  endpointRole: 'any',
   dueDayMin: '',
   dueDayMax: '',
 }
@@ -87,7 +83,6 @@ export function allocationHasOwnedSinkDestination(item: AllocationItem, accountR
 
 function passesFilters(
   item: AllocationItem,
-  accountRef: string,
   filters: AllocationClusterFilters,
 ): boolean {
   const min = numericFilter(filters.monthlyMin)
@@ -104,8 +99,6 @@ function passesFilters(
   if (!includesText(item.counterparty, filters.counterpartySearch)) return false
   if (dueMin != null && (item.due_day == null || item.due_day < dueMin)) return false
   if (dueMax != null && (item.due_day == null || item.due_day > dueMax)) return false
-  if (filters.endpointRole === 'funds_account' && item.to_account_ref !== accountRef) return false
-  if (filters.endpointRole === 'funded_by_account' && item.from_account_ref !== accountRef) return false
 
   return true
 }
@@ -115,7 +108,7 @@ function nodeLabel(ref: string | null, labelByRef: Map<string, string>, fallback
   return labelByRef.get(ref) ?? ref
 }
 
-/** Label mini-nodes as source/sink primitives with endpoint context. */
+/** Label mini-nodes as source/sink primitives with account context. */
 export function allocationMiniNodeLabel(
   item: AllocationItem,
   accountRef: string,
@@ -159,7 +152,7 @@ export function deriveAccountAllocationCluster(params: {
   const labelByRef = new Map(params.accountNodes.map(node => [node.ref, node.display_name || node.ref]))
   const accountRefs = new Set(params.accountNodes.map(node => node.ref))
   const linked = params.allocations.filter(item => allocationTouchesAccount(item, params.accountRef))
-  const visible = linked.filter(item => passesFilters(item, params.accountRef, params.filters))
+  const visible = linked.filter(item => passesFilters(item, params.filters))
 
   return {
     accountRef: params.accountRef,

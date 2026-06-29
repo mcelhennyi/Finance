@@ -5,9 +5,15 @@ period_month: "2026-05-01"
 plan:
   name: Example allocation plan
   currency: USD
-  income_amount: "10921.70"
-  income_cadence: monthly
 items:
+  - item_name: Paycheck
+    category: Income
+    planned_amount: "10921.70"
+    cadence: monthly
+    allocation_role: source
+    to_account_ref: checking
+    counterparty: Employer
+    payment_method: cash
   - item_name: Groceries
     category: Food
     planned_amount: "350.00"

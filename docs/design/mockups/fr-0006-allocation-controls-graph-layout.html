@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FR-0006 T13 allocation controls and graph layout mock</title>
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 24px; margin: 0 0 16px; }
+    .band { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 16px; padding: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+    label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .06em; }
+    input, select { min-width: 150px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 10px; font-size: 14px; background: white; color: #0f172a; }
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; background: #0f766e; color: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+    th { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; background: #f8fafc; }
+    .graph { position: relative; height: 420px; overflow: hidden; background: #f8fafc; border: 1px solid #dbeafe; border-radius: 8px; }
+    .node { position: absolute; width: 168px; min-height: 68px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: 10px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+    .node strong { display: block; font-size: 13px; }
+    .node span { font-size: 11px; color: #64748b; }
+    .source { left: 32px; }
+    .through { left: 390px; }
+    .sink { right: 32px; }
+    .pill { display: inline-block; margin-top: 7px; border-radius: 999px; background: #ecfdf5; color: #065f46; padding: 2px 7px; font-size: 10px; font-weight: 700; }
+    svg { position: absolute; inset: 0; pointer-events: none; }
+    path { fill: none; stroke: #0f766e; stroke-width: 2.5; }
+    .label { position: absolute; width: 120px; padding: 3px 6px; border-radius: 999px; background: rgba(255,255,255,.94); border: 1px solid #99f6e4; color: #115e59; font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 760px) {
+      main { padding: 12px; }
+      .graph { height: 520px; }
+      .through { left: 205px; }
+      .source, .sink { left: 18px; right: auto; }
+      .sink { top: 370px !important; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Budget allocation controls</h1>
+  <section class="band">
+    <div class="row">
+      <label>Plan name<input value="Baseline June"></label>
+      <button>Save plan</button>
+    </div>
+  </section>
+
+  <section class="band">
+    <table>
+      <thead>
+      <tr><th>Item</th><th>Category</th><th>Role</th><th>Account</th><th>Monthly</th></tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>Paycheck</td>
+        <td><select><option>Income</option></select></td>
+        <td><select><option>source</option><option>sink</option></select></td>
+        <td><select><option>Source into Checking</option><option>Source into Savings</option></select></td>
+        <td>$8,000.00</td>
+      </tr>
+      <tr>
+        <td>Groceries</td>
+        <td><select><option>Groceries</option></select></td>
+        <td><select><option>sink</option><option>source</option></select></td>
+        <td><select><option>Sink from Chase Card</option><option>Sink from Checking</option></select></td>
+        <td>$1,516.67</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <div class="graph" aria-label="Mock cash-flow graph showing pure sources left and pure sinks right">
+      <svg viewBox="0 0 1120 420" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 220 78 L 326 78 L 326 144 L 390 144" />
+        <path d="M 558 144 L 705 144 L 705 320 L 914 320" />
+        <path d="M 558 144 L 690 144 L 690 64 L 914 64" />
+      </svg>
+      <div class="node source" style="top:44px"><strong>Payroll</strong><span>income source</span><div class="pill">Source</div></div>
+      <div class="node through" style="top:110px"><strong>Checking</strong><span>checking</span><div class="pill">Source + sink</div></div>
+      <div class="node sink" style="top:30px"><strong>Brokerage</strong><span>investment</span><div class="pill">Sink</div></div>
+      <div class="node sink" style="top:286px"><strong>Chase Card</strong><span>liability</span><div class="pill">Sink</div></div>
+      <div class="label" style="left:285px; top:83px;">Deposit</div>
+      <div class="label" style="left:700px; top:116px;">Savings sweep</div>
+      <div class="label" style="left:704px; top:290px;">Autopay</div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

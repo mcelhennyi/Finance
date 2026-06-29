@@ -23,6 +23,7 @@ import {
 const GRID_X = 200
 const GRID_Y = 120
 const MONEY_FLOW_EDGE_COLOR = '#0f766e'
+const ROLE_STACK_MIN_WIDTH = GRID_X * 3
 
 function stableOffset(ref: string): { x: number; y: number } {
   let h = 0
@@ -112,10 +113,43 @@ export function graphDocumentToFlowElements(doc: CashFlowGraphDocument): {
     }
   })
 
-  const nodes = relayoutCashFlowNodes(rawNodes)
   const edges: Edge<CashEdgeData>[] = doc.edges.map(cashFlowEdgeToFlowEdge)
+  const nodes = relayoutCashFlowNodes(stackPureSourceSinkNodes(rawNodes, edges))
 
   return { nodes, edges: applyOrthogonalEdgeRoutes(nodes, edges) }
+}
+
+export function stackPureSourceSinkNodes(
+  nodes: CashFlowRfNode[],
+  edges: DirectionalAccountLinkEdge[],
+  options: { leftX?: number; rightX?: number; startY?: number; rowGap?: number } = {},
+): CashFlowRfNode[] {
+  if (!nodes.length) return nodes
+  const roles = deriveAccountNodeRoles(nodes.map(node => node.id), edges)
+  const leftX = options.leftX ?? Math.min(...nodes.map(node => node.position.x), 0)
+  const rightX = options.rightX ?? Math.max(...nodes.map(node => node.position.x), leftX + ROLE_STACK_MIN_WIDTH)
+  const startY = options.startY ?? Math.min(...nodes.map(node => node.position.y), 0)
+  const rowGap = options.rowGap ?? GRID_Y
+  const ordered = (role: AccountNodeRole) => nodes
+    .filter(node => roles[node.id] === role)
+    .sort((a, b) =>
+      a.position.y - b.position.y ||
+      a.position.x - b.position.x ||
+      a.data.spec.display_name.localeCompare(b.data.spec.display_name) ||
+      a.id.localeCompare(b.id),
+    )
+  const nextPositions = new Map<string, { x: number; y: number }>()
+  ordered('source').forEach((node, index) => {
+    nextPositions.set(node.id, { x: leftX, y: startY + index * rowGap })
+  })
+  ordered('sink').forEach((node, index) => {
+    nextPositions.set(node.id, { x: rightX, y: startY + index * rowGap })
+  })
+
+  return nodes.map(node => {
+    const position = nextPositions.get(node.id)
+    return position ? { ...node, position } : node
+  })
 }
 
 export function applyOrthogonalEdgeRoutes(

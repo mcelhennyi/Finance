@@ -4,6 +4,17 @@ Consolidated newest-first diary for **FR-0006**. Raw source logs remain in [`ser
 
 ---
 
+## 2026-06-29 - allocation controls and graph layout cleanup
+
+**Source file:** `parallel/T-FR-0006-13-allocation-controls-graph-layout.md`
+**Git ref:** `feat/FR-0006-budget-cash-flow-graph--T-FR-0006-13-allocation-controls-graph-layout`
+
+Completed the final post-closeout cleanup expansion. Budget allocation rows now use configured category options and one role-aware account dropdown; source rows fund the selected account and sink rows consume from the selected account. Plan-level income controls, allocation endpoint dropdowns/filtering, payment-method selection, and the approximate Time view are no longer surfaced. Starter seed income is modeled as a source allocation row. The graph stacks pure source accounts on the left, pure sink accounts on the right, and routes into endpoint connectors without passing behind node bodies.
+
+Validation passed: Docker backend focused allocation/seed tests (`40` tests), Docker frontend focused tests (`42` tests), full frontend lint/test/build (`65` tests, existing Vite chunk-size warning), diff hygiene, merge-marker scan, strict docs build, and browser VAL on desktop and 390px Budget views with `0` sampled route/node hits and no console errors.
+
+---
+
 ## 2026-06-29 - edge and label deconfliction
 
 **Source file:** `parallel/T-FR-0006-12-edge-label-deconfliction.md`

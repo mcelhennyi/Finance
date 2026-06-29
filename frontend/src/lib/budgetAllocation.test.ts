@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  allocationAccountRef,
   allocationItemCreateBody,
   allocationItemPutBody,
   allocationItemUpdateBody,
+  draftWithAllocationAccount,
   dueDayFromInput,
   formatUsd,
   parsePositiveAmount,
@@ -106,6 +108,36 @@ describe('allocationItemCreateBody', () => {
     expect(body.from_account_ref).toBeUndefined()
     expect(body.to_account_ref).toBe('checking')
     expect(body.counterparty).toBe('Employer')
+  })
+})
+
+describe('allocation account mapping', () => {
+  const base: ItemDraftInput = {
+    item_name: 'Line',
+    category: 'Food',
+    planned_amount: '25',
+    cadence: 'monthly',
+    allocation_role: 'sink',
+    from_account_ref: null,
+    to_account_ref: null,
+    counterparty: null,
+    payment_method: 'cash',
+    due_day: '',
+    notes: '',
+  }
+
+  it('stores sink account as the funding account only', () => {
+    const draft = draftWithAllocationAccount(base, ' checking ', 'sink')
+    expect(allocationAccountRef(draft)).toBe('checking')
+    expect(draft.from_account_ref).toBe('checking')
+    expect(draft.to_account_ref).toBeNull()
+  })
+
+  it('stores source account as the destination account only', () => {
+    const draft = draftWithAllocationAccount(base, ' checking ', 'source')
+    expect(allocationAccountRef(draft)).toBe('checking')
+    expect(draft.from_account_ref).toBeNull()
+    expect(draft.to_account_ref).toBe('checking')
   })
 })
 

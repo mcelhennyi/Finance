@@ -128,6 +128,29 @@ function routeHitsObstacle(points: RoutingPoint[], obstacles: RoutingBox[]): boo
   return false
 }
 
+function overlapLength(a1: number, a2: number, b1: number, b2: number): number {
+  return Math.max(0, Math.min(Math.max(a1, a2), Math.max(b1, b2)) - Math.max(Math.min(a1, a2), Math.min(b1, b2)))
+}
+
+function segmentReusesReservedLine(a: RoutingPoint, b: RoutingPoint, box: RoutingBox, gap: number): boolean {
+  const centerX = box.x + box.width / 2
+  const centerY = box.y + box.height / 2
+  if (a.y === b.y && box.width >= box.height) {
+    return Math.abs(a.y - centerY) <= gap && overlapLength(a.x, b.x, box.x, box.x + box.width) > gap
+  }
+  if (a.x === b.x && box.height >= box.width) {
+    return Math.abs(a.x - centerX) <= gap && overlapLength(a.y, b.y, box.y, box.y + box.height) > gap
+  }
+  return false
+}
+
+function routeReusesReservedLine(points: RoutingPoint[], reservedLines: RoutingBox[], gap: number): boolean {
+  for (let i = 1; i < points.length; i++) {
+    if (reservedLines.some(box => segmentReusesReservedLine(points[i - 1], points[i], box, gap))) return true
+  }
+  return false
+}
+
 function segmentBox(a: RoutingPoint, b: RoutingPoint, id: string, gap: number): RoutingBox {
   const left = Math.min(a.x, b.x)
   const top = Math.min(a.y, b.y)
@@ -292,27 +315,41 @@ function buildRoute(
   laneY: number,
   exitGap: number,
   bendX?: number,
+  approachCandidateX?: number,
 ): RoutingPoint[] {
   const start = { x: sourceBox.x + sourceBox.width, y: sourceBox.y + sourceBox.height / 2 }
   const end = { x: targetBox.x, y: targetBox.y + targetBox.height / 2 }
-  const exitX = Math.max(start.x, end.x) + exitGap
 
   if (start.x <= end.x) {
-    const midX = bendX ?? start.x + Math.max(exitGap, (end.x - start.x) / 2)
+    const maxApproachX = targetBox.x - 1
+    const routeX = Math.max(
+      start.x,
+      Math.min(bendX ?? start.x + Math.max(exitGap, (end.x - start.x) / 2), maxApproachX),
+    )
+    const targetApproachX = Math.max(
+      routeX,
+      Math.min(approachCandidateX ?? targetBox.x - exitGap, maxApproachX),
+    )
     return dedupePoints([
       start,
-      { x: start.x, y: laneY },
-      { x: midX, y: laneY },
-      { x: midX, y: end.y },
+      { x: routeX, y: start.y },
+      { x: routeX, y: laneY },
+      { x: targetApproachX, y: laneY },
+      { x: targetApproachX, y: end.y },
       end,
     ])
   }
 
+  const sourceExitX = start.x + exitGap
+  const bend = Math.max(bendX ?? sourceExitX, sourceExitX)
+  const approachX = targetBox.x - exitGap
   return dedupePoints([
     start,
-    { x: start.x, y: laneY },
-    { x: bendX ?? exitX, y: laneY },
-    { x: bendX ?? exitX, y: end.y },
+    { x: sourceExitX, y: start.y },
+    { x: sourceExitX, y: laneY },
+    { x: bend, y: laneY },
+    { x: approachX, y: laneY },
+    { x: approachX, y: end.y },
     end,
   ])
 }
@@ -370,14 +407,30 @@ export function routeOrthogonalEdges(
     const targetBox = nodeById.get(edge.target)
     if (!sourceBox || !targetBox) continue
     const laneOffset = (index - center) * laneStep
-    const baseY = sourceBox.y + sourceBox.height / 2 + laneOffset
+    const sourceCenterY = sourceBox.y + sourceBox.height / 2
+    const targetCenterY = targetBox.y + targetBox.height / 2
+    const baseY = (sourceCenterY + targetCenterY) / 2 + laneOffset
     const nodeAndClusterAvoid = obstacles.filter(box => box.id !== edge.source && box.id !== edge.target)
-    const avoid = [...nodeAndClusterAvoid, ...reservedLabels, ...reservedLines]
+    const hardAvoid = [sourceBox, targetBox, ...nodeAndClusterAvoid, ...reservedLabels]
+    const avoid = [...hardAvoid, ...reservedLines]
     const candidateY = laneCandidates(baseY, avoid, laneStep)
     const candidateX = bendCandidates(sourceBox, targetBox, avoid, exitGap, laneStep)
-    const points = candidateY
-      .flatMap(y => candidateX.map(x => buildRoute(sourceBox, targetBox, y, exitGap, x)))
-      .find(candidate => !routeHitsObstacle(candidate, avoid)) ?? buildRoute(sourceBox, targetBox, baseY, exitGap)
+    const routeCandidates = candidateY
+      .flatMap(y => {
+        if (sourceBox.x + sourceBox.width <= targetBox.x) {
+          return candidateX.flatMap(x =>
+            candidateX.map(approachX => buildRoute(sourceBox, targetBox, y, exitGap, x, approachX)),
+          )
+        }
+        return candidateX.map(x => buildRoute(sourceBox, targetBox, y, exitGap, x))
+      })
+    const points = routeCandidates.find(candidate => !routeHitsObstacle(candidate, avoid))
+      ?? routeCandidates.find(candidate =>
+        !routeHitsObstacle(candidate, hardAvoid)
+        && !routeReusesReservedLine(candidate, reservedLines, lineGap)
+      )
+      ?? routeCandidates.find(candidate => !routeHitsObstacle(candidate, hardAvoid))
+      ?? buildRoute(sourceBox, targetBox, baseY, exitGap)
 
     const lineBoxes = routeSegmentBoxes(points, edge.id, lineGap)
     const label = placeRouteLabel(edge.id, points, [...obstacles, ...reservedLabels, ...reservedLines, ...lineBoxes], {

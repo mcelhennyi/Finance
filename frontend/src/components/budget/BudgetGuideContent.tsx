@@ -17,10 +17,10 @@ export function BudgetGuideContent() {
         <p>
           <strong className="font-medium text-slate-800">Budget allocation</strong> is where you define recurring planned
           amounts by category for a single calendar month. Each <em>plan</em> holds a set of <em>lines</em>: item name,
-          category, amount, cadence, payment method, optional due day, and notes.
+          category, amount, cadence, source/sink role, allocation account, optional due day, and notes.
         </p>
         <p>
-          Totals roll into KPI cards (cash vs credit, remaining income). Saved lines sync category totals into the Phase 2{' '}
+          Totals roll into KPI cards, source-backed remainder, and graph-linked account context. Saved sink lines sync category totals into the Phase 2{' '}
           <strong className="font-medium text-slate-800">unified view</strong> so your dashboard budgets reflect what you
           entered here.
         </p>
@@ -68,12 +68,11 @@ export function BudgetGuideContent() {
       <section id={BUDGET_DOC_SECTION_IDS.planDetails} className={card}>
         <h2 className={sectionTitle}>Plan details</h2>
         <p>
-          <strong className="font-medium text-slate-800">Name</strong> is for your reference. <strong>Income</strong> and{' '}
-          <strong>income cadence</strong> are optional: when both are set, the summary can show <em>remaining income</em>{' '}
-          (income minus total allocated). Clear both to ignore income for this plan.
+          <strong className="font-medium text-slate-800">Name</strong> is for your reference. Income belongs in allocation
+          lines with the <strong>source</strong> role, where the selected account shows where that money enters the plan.
         </p>
         <p>
-          <strong className="font-medium text-slate-800">Save plan</strong> persists name and income fields.{' '}
+          <strong className="font-medium text-slate-800">Save plan</strong> persists the name.{' '}
           <strong className="font-medium text-slate-800">Delete plan</strong> removes the plan and all its lines — use only
           when you intend to discard that draft.
         </p>
@@ -86,8 +85,8 @@ export function BudgetGuideContent() {
           <strong className="font-medium text-slate-800"> Cash</strong> and <strong className="font-medium text-slate-800">
             Credit
           </strong>{' '}
-          split that total by payment method. <strong className="font-medium text-slate-800">Remaining income</strong>{' '}
-          appears when plan income is configured.
+          split that total by account type. <strong className="font-medium text-slate-800">Remaining income</strong>{' '}
+          comes from source allocation rows minus sink allocation rows when sources are present.
         </p>
       </section>
 
@@ -100,8 +99,8 @@ export function BudgetGuideContent() {
         </p>
         <p>
           Use <strong className="font-medium text-slate-800">Edit</strong> to change a line in place;{' '}
-          <strong className="font-medium text-slate-800">Delete</strong> removes it. Category strings should match how you
-          want rollup in the unified view.
+          <strong className="font-medium text-slate-800">Delete</strong> removes it. Category and account are selected from
+          configured options so lines stay aligned with saved categories and graph accounts.
         </p>
       </section>
 

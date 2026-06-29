@@ -11,6 +11,7 @@ import {
   graphDocumentToFlowElements,
   newEdgeRef,
   relayoutCashFlowNodes,
+  stackPureSourceSinkNodes,
   startDirectionalAccountLink,
   validateDirectionalAccountLink,
 } from './cashFlowGraphFlow'
@@ -19,8 +20,51 @@ import {
   routingBoxesOverlap,
   routeOrthogonalEdges,
   type RoutingBox,
+  type RoutingPoint,
 } from './cashFlowGraphRouting'
 import type { CashFlowGraphDocument } from '../types'
+
+function segmentCrossesBox(a: RoutingPoint, b: RoutingPoint, box: RoutingBox): boolean {
+  if (a.y === b.y) {
+    const left = Math.min(a.x, b.x)
+    const right = Math.max(a.x, b.x)
+    return right > box.x && left < box.x + box.width && a.y > box.y && a.y < box.y + box.height
+  }
+  if (a.x === b.x) {
+    const top = Math.min(a.y, b.y)
+    const bottom = Math.max(a.y, b.y)
+    return a.x > box.x && a.x < box.x + box.width && bottom > box.y && top < box.y + box.height
+  }
+  return false
+}
+
+function routeCrossesBox(points: RoutingPoint[], box: RoutingBox): boolean {
+  return points.some((point, index) => {
+    const previous = points[index - 1]
+    return Boolean(previous && segmentCrossesBox(previous, point, box))
+  })
+}
+
+function overlapLength(a1: number, a2: number, b1: number, b2: number): number {
+  return Math.max(0, Math.min(Math.max(a1, a2), Math.max(b1, b2)) - Math.max(Math.min(a1, a2), Math.min(b1, b2)))
+}
+
+function segmentsReuseLane(a1: RoutingPoint, a2: RoutingPoint, b1: RoutingPoint, b2: RoutingPoint): boolean {
+  if (a1.y === a2.y && b1.y === b2.y && a1.y === b1.y) {
+    return overlapLength(a1.x, a2.x, b1.x, b2.x) > 0
+  }
+  if (a1.x === a2.x && b1.x === b2.x && a1.x === b1.x) {
+    return overlapLength(a1.y, a2.y, b1.y, b2.y) > 0
+  }
+  return false
+}
+
+function routesReuseLane(a: RoutingPoint[], b: RoutingPoint[]): boolean {
+  return a.slice(1).some((aPoint, aIndex) => {
+    const aPrevious = a[aIndex]
+    return b.slice(1).some((bPoint, bIndex) => segmentsReuseLane(aPrevious, aPoint, b[bIndex], bPoint))
+  })
+}
 
 describe('cashFlowGraphFlow', () => {
   it('round-trips a graph document through flow elements', () => {
@@ -71,7 +115,7 @@ describe('cashFlowGraphFlow', () => {
     expect(back.plan_id).toBe(7)
     expect(back.nodes).toHaveLength(2)
     expect(back.edges).toHaveLength(1)
-    expect(back.nodes.find(n => n.ref === 'payroll')?.layout_x).toBe(10)
+    expect(back.nodes.find(n => n.ref === 'payroll')?.layout_x).toBe(0)
     expect(back.nodes.find(n => n.ref === 'checking')?.current_balance).toBe('1234.56')
     expect(back.nodes.find(n => n.ref === 'checking')?.balance_as_of).toBe('2026-05-10')
     expect(back.nodes.find(n => n.ref === 'checking')?.account_mask).toBe('6789')
@@ -173,6 +217,48 @@ describe('cashFlowGraphFlow', () => {
     expect(roles.brokerage).toBe('unlinked')
   })
 
+  it('stacks pure sources left and pure sinks right while preserving through-account positions', () => {
+    const doc: CashFlowGraphDocument = {
+      plan_id: 4,
+      nodes: [
+        {
+          ref: 'payroll',
+          display_name: 'Payroll',
+          kind: 'income_source',
+          institution: null,
+          layout_x: 420,
+          layout_y: 180,
+        },
+        {
+          ref: 'checking',
+          display_name: 'Checking',
+          kind: 'checking',
+          institution: null,
+          layout_x: 220,
+          layout_y: 90,
+        },
+        {
+          ref: 'card',
+          display_name: 'Card',
+          kind: 'liability_surrogate',
+          institution: null,
+          layout_x: 20,
+          layout_y: 260,
+        },
+      ],
+      edges: [
+        defaultNewEdgeSpec('deposit', 'payroll', 'checking'),
+        defaultNewEdgeSpec('autopay', 'checking', 'card'),
+      ],
+    }
+    const { nodes, edges } = graphDocumentToFlowElements(doc)
+    const stacked = stackPureSourceSinkNodes(nodes, edges, { leftX: 0, rightX: 640, startY: 40, rowGap: 130 })
+
+    expect(stacked.find(node => node.id === 'payroll')?.position).toEqual({ x: 0, y: 40 })
+    expect(stacked.find(node => node.id === 'card')?.position).toEqual({ x: 640, y: 40 })
+    expect(stacked.find(node => node.id === 'checking')?.position.x).toBe(220)
+  })
+
   it('tracks pending source selection for directional account linking', () => {
     expect(startDirectionalAccountLink('checking')).toEqual({
       status: 'pending',
@@ -247,9 +333,8 @@ describe('cashFlowGraphFlow', () => {
 
     expect(routes.edge_a.laneIndex).toBe(0)
     expect(routes.edge_z.laneIndex).toBe(1)
-    expect(routes.edge_a.points[1].y).not.toBe(routes.edge_z.points[1].y)
-    expect(routes.edge_a.points[1].x).toBe(routes.edge_a.points[0].x)
-    expect(routes.edge_z.points[1].x).toBe(routes.edge_z.points[0].x)
+    expect(routes.edge_a.points.some(point => point.y === 180)).toBe(true)
+    expect(routes.edge_z.points.some(point => point.y === 124)).toBe(true)
   })
 
   it('routes around an obstacle box between source and target', () => {
@@ -270,6 +355,27 @@ describe('cashFlowGraphFlow', () => {
     })).toBe(true)
     expect(route.points.some(point => point.y < obstacle.y || point.y > obstacle.y + obstacle.height)).toBe(true)
     expect(route.path).toContain(' L ')
+  })
+
+  it('approaches right-to-left targets from the left without crossing endpoint node bodies', () => {
+    const nodeWidth = 192
+    const nodeHeight = 104
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'left_sink', position: { x: 0, y: 100 } },
+        { id: 'right_source', position: { x: 520, y: 100 } },
+      ],
+      [{ id: 'edge_back', source: 'right_source', target: 'left_sink' }],
+      { nodeWidth, nodeHeight },
+    )
+    const route = routes.edge_back
+    const sourceBox: RoutingBox = { id: 'right_source', x: 520, y: 100, width: nodeWidth, height: nodeHeight }
+    const targetBox: RoutingBox = { id: 'left_sink', x: 0, y: 100, width: nodeWidth, height: nodeHeight }
+    const approach = route.points[route.points.length - 2]
+
+    expect(approach.x).toBeLessThan(targetBox.x)
+    expect(routeCrossesBox(route.points, sourceBox)).toBe(false)
+    expect(routeCrossesBox(route.points, targetBox)).toBe(false)
   })
 
   it('places edge labels outside node and obstacle boxes', () => {
@@ -338,7 +444,7 @@ describe('cashFlowGraphFlow', () => {
       { laneStep: 16, lineGap: 12 },
     )
 
-    expect(routes.edge_a.points.some(point => point.x === routes.edge_b.points[2].x)).toBe(false)
+    expect(routesReuseLane(routes.edge_a.points, routes.edge_b.points)).toBe(false)
   })
 
   it('attaches orthogonal route data to React Flow edges', () => {
