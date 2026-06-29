@@ -16,6 +16,7 @@ import {
 } from './cashFlowGraphFlow'
 import {
   orthogonalPathFromPoints,
+  routingBoxesOverlap,
   routeOrthogonalEdges,
   type RoutingBox,
 } from './cashFlowGraphRouting'
@@ -271,6 +272,75 @@ describe('cashFlowGraphFlow', () => {
     expect(route.path).toContain(' L ')
   })
 
+  it('places edge labels outside node and obstacle boxes', () => {
+    const obstacle: RoutingBox = { id: 'expanded_checking', x: 230, y: 72, width: 180, height: 96 }
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'payroll', position: { x: 0, y: 80 } },
+        { id: 'savings', position: { x: 520, y: 80 } },
+      ],
+      [{ id: 'deposit', source: 'payroll', target: 'savings' }],
+      { obstacles: [obstacle] },
+    )
+
+    expect(routingBoxesOverlap(routes.deposit.labelBox, obstacle)).toBe(false)
+    expect(routes.deposit.labelPosition.y).not.toBe(132)
+  })
+
+  it('keeps labels clear of their own source and target nodes', () => {
+    const nodeWidth = 192
+    const nodeHeight = 104
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'payroll', position: { x: 0, y: 80 } },
+        { id: 'checking', position: { x: 340, y: 80 } },
+      ],
+      [{ id: 'deposit', source: 'payroll', target: 'checking' }],
+      { nodeWidth, nodeHeight, labelWidth: 220, labelHeight: 32 },
+    )
+    const sourceBox: RoutingBox = { id: 'payroll', x: 0, y: 80, width: nodeWidth, height: nodeHeight }
+    const targetBox: RoutingBox = { id: 'checking', x: 340, y: 80, width: nodeWidth, height: nodeHeight }
+
+    expect(routingBoxesOverlap(routes.deposit.labelBox, sourceBox)).toBe(false)
+    expect(routingBoxesOverlap(routes.deposit.labelBox, targetBox)).toBe(false)
+  })
+
+  it('deconflicts labels for edges that share the same corridor', () => {
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'checking', position: { x: 0, y: 100 } },
+        { id: 'savings', position: { x: 520, y: 100 } },
+        { id: 'brokerage', position: { x: 0, y: 220 } },
+        { id: 'reserve', position: { x: 520, y: 220 } },
+      ],
+      [
+        { id: 'edge_a', source: 'checking', target: 'savings' },
+        { id: 'edge_b', source: 'brokerage', target: 'reserve' },
+      ],
+      { labelWidth: 160, labelHeight: 32, laneStep: 16 },
+    )
+
+    expect(routingBoxesOverlap(routes.edge_a.labelBox, routes.edge_b.labelBox)).toBe(false)
+  })
+
+  it('reserves previous line lanes when routing later edges', () => {
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'alpha_source', position: { x: 0, y: 0 } },
+        { id: 'zeta_target', position: { x: 520, y: 140 } },
+        { id: 'beta_source', position: { x: 0, y: 140 } },
+        { id: 'omega_target', position: { x: 520, y: 0 } },
+      ],
+      [
+        { id: 'edge_a', source: 'alpha_source', target: 'zeta_target' },
+        { id: 'edge_b', source: 'beta_source', target: 'omega_target' },
+      ],
+      { laneStep: 16, lineGap: 12 },
+    )
+
+    expect(routes.edge_a.points.some(point => point.x === routes.edge_b.points[2].x)).toBe(false)
+  })
+
   it('attaches orthogonal route data to React Flow edges', () => {
     const source = {
       ref: 'checking',
@@ -298,6 +368,10 @@ describe('cashFlowGraphFlow', () => {
 
     expect(routed[0].type).toBe('orthogonalCashEdge')
     expect(routed[0].data?.route?.path.startsWith('M ')).toBe(true)
+    expect(routed[0].data?.route?.labelPosition).toEqual(expect.objectContaining({
+      x: expect.any(Number),
+      y: expect.any(Number),
+    }))
   })
 
   it('relayouts after cluster height changes while preserving unaffected account x positions', () => {

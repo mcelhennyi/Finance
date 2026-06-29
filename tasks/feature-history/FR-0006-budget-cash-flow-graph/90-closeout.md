@@ -4,7 +4,7 @@
 
 ## Executive summary
 
-FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven surface. The completed feature includes graph contracts, ORM persistence, CRUD APIs, the React Flow Budget panel, time aggregation, explicit BBD suggestions, source/sink allocation primitives with account endpoints, directional account linking, orthogonal routing, and expandable allocation clusters with filters and counts.
+FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven surface. The completed feature includes graph contracts, ORM persistence, CRUD APIs, the React Flow Budget panel, time aggregation, explicit BBD suggestions, source/sink allocation primitives with account endpoints, directional account linking, orthogonal routing, expandable allocation clusters with filters and counts, and edge/label deconfliction.
 
 ## Delivered surfaces
 
@@ -32,16 +32,19 @@ FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven s
 | `T-FR-0006-09` | Directional account handles and double-click linking | TEST / DEV / VAL **done** |
 | `T-FR-0006-10` | Orthogonal routing and obstacle-aware relayout | TEST / DEV / VAL **done** |
 | `T-FR-0006-11` | Expandable allocation clusters with filters and counts | TEST / DEV / VAL **done** |
+| `T-FR-0006-12` | Edge and label deconfliction | TEST / DEV / VAL **done** |
 
 ## Validation
 
 - `git diff --check` - pass.
 - `./scripts/check-frontend-no-merge-markers.sh` - pass.
 - `docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/ -q"` - pass, **96 passed**, one existing Starlette/httpx warning.
-- `docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **58 Vitest tests passed**, production build passed with the existing Vite chunk-size warning.
+- `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass after T-FR-0006-12, **62 Vitest tests passed**, production build passed with the existing Vite chunk-size warning.
 - `DEVELOP_COMPOSE_FILE=docker-compose.yml ./develop build` - blocked because this compose file has no `docs` service; used host docs build as a documented exception.
 - `mkdocs build --strict` - pass on host; emitted only the upstream Material for MkDocs 2.0 notice and informational nav messages.
 - Browser VAL by ticket agents - Budget -> Cash flow map and Allocation lines inspected on desktop and 390px phone viewport for directional handles, double-click/fallback linking, duplicate/self-link errors, orthogonal routes, allocation counts, filters, source/owned/external sink clusters, no graph-node overlap, and no console errors.
+- T-FR-0006-12 ticket gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"` - pass, **21** focused tests passed, production build passed with the existing Vite chunk-size warning.
+- T-FR-0006-12 Browser VAL - saved example Budget cash-flow map inspected at desktop and **390px** viewport; sampled **8** edge labels, **8** graph nodes, and **16** SVG edge paths with **0** label-label, label-node, or label-path collisions.
 
 ## Deferred / follow-up
 
@@ -68,4 +71,4 @@ Review and merge PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) when 
 - **Merge commit:** *pending human merge*
 - **Feature branch:** `feat/FR-0006-budget-cash-flow-graph` (retained on remote)
 - **Pull request:** [#9](https://github.com/mcelhennyi/Finance/pull/9)
-- **Handoff:** [`handoffs/2026-06-29-finish-feature.md`](handoffs/2026-06-29-finish-feature.md)
+- **Handoff:** [`handoffs/2026-06-29-finish-feature-edge-label-deconfliction.md`](handoffs/2026-06-29-finish-feature-edge-label-deconfliction.md)

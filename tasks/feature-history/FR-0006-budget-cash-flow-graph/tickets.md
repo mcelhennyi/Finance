@@ -335,3 +335,43 @@ Show each account's linked allocation count on the node and let operators expand
 - Browser VAL: Budget -> Cash flow map and Allocation lines on desktop and phone; verify text fit, count badges, filter controls, relayout, and accessible fallback for linking.
 
 ---
+
+### T-FR-0006-12 — Edge and label deconfliction
+
+**Title:** Edge and label deconfliction
+**Deps:** `T-FR-0006-10`, `T-FR-0006-11`
+
+#### Purpose
+
+Implement the post-closeout expansion from [`30-expand-2026-06-29-edge-label-deconfliction.md`](30-expand-2026-06-29-edge-label-deconfliction.md): routed edge lines and the labels attached to them should avoid visible account nodes, expanded allocation clusters, other routed lines, and other labels wherever the local route helper can find a free lane.
+
+#### Existing changes required
+
+- Extend `frontend/src/lib/cashFlowGraphRouting.ts` so routes carry label position/box metadata and reserve previous route segment boxes.
+- Update the custom React Flow edge renderer in `CashFlowGraphPanel` to place labels at the route-provided label position instead of the middle route point.
+- Add focused Vitest coverage for label boxes, label collisions, and route-line lane reservations.
+- Update FR-0006 addendum, mock, tracker, DAG, and closeout notes because this reopens the feature after PR #9 was prepared.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Pin deconfliction geometry | Tests cover label boxes avoiding node/cluster obstacles, labels avoiding labels, later routes avoiding prior route lines, and React Flow edge data carrying label positions | done |
+| **DEV** | Implement label-aware routing/rendering | `OrthogonalRoute` exposes `labelPosition`/`labelBox`; `routeOrthogonalEdges` reserves line and label boxes; `OrthogonalCashEdge` renders at route-provided coordinates with truncation | done |
+| **VAL** | Rendered graph readability | Docker frontend lint/test/build passes; Budget cash-flow map rendered inspection confirms route lines and labels do not visibly collide with nodes, clusters, lines, or labels at desktop and phone widths | done |
+
+**VAL notes:** `cashFlowGraphRouting` now keeps source/target nodes in the label avoid-list, searches farther from dense corridors, reserves prior label and route segment boxes, and emits fixed label geometry. `OrthogonalCashEdge` renders fixed-width truncated labels at route-provided coordinates. Docker frontend lint/focused tests/build passed with **21** focused routing/flow tests; browser VAL on the saved example Budget graph at desktop and **390px** found **8** labels, **8** nodes, **16** edge paths, and **0** label-label, label-node, or label-path collisions.
+
+#### Implementation notes
+
+- Keep the route helper deterministic: source, target, and edge id ordering should produce stable routes across renders.
+- Use conservative fixed label boxes instead of DOM text measurement in this pass; the renderer should truncate long labels to that same approximate width.
+- Preserve the midpoint fallback for edges without route metadata.
+- Do not add a layout-engine dependency unless deterministic local routing cannot satisfy the representative graph states.
+
+#### Verification notes
+
+- Frontend: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"`
+- Browser VAL: Budget -> Cash flow map; inspect default graph, an expanded allocation cluster, and multiple routed/labelled account links at desktop and 390px phone width. Verify labels are visible, truncated instead of overflowing, and not covering graph nodes, expanded allocation clusters, other labels, or obvious route segments.
+
+---
