@@ -1,3 +1,21 @@
+## 2026-06-29 (session) - edge and label deconfliction expansion completed
+
+**Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-12-edge-label-deconfliction`**
+
+**Recap (plain English):** Completed [**Edge and label deconfliction**](tickets.md) (**`T-FR-0006-12`**) for the Budget cash-flow graph. Labels now use route-provided geometry, avoid their own source/target nodes as well as other nodes/clusters, reserve previous labels and route-line boxes, and render as fixed-width truncated chips so the DOM footprint matches the router reservation.
+
+**Validation:** `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"` passed with **21** focused tests; full frontend lint/test/build passed with **62** tests. `git diff --check`, `./scripts/check-frontend-no-merge-markers.sh`, and host `mkdocs build --strict` passed. Browser VAL on the saved example Budget graph at desktop and **390px** found **0** label-label, label-node, or label-path collisions across **8** labels, **8** nodes, and **16** edge paths.
+
+---
+
+## 2026-06-29 (session) - edge and label deconfliction expansion started
+
+**Stage:** expand-feature / ticket implementation on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-12-edge-label-deconfliction`**
+
+**Recap (plain English):** Added a post-closeout FR-0006 expansion for [**Edge and label deconfliction**](tickets.md) (**`T-FR-0006-12`**) after the user asked to keep graph lines and line labels clear of other nodes, lines, and labels. The work stays inside FR-0006 because it refines the existing Budget cash-flow graph route layer, not a new product surface.
+
+---
+
 ## 2026-06-29 (session) - finish-feature closeout drafted
 
 **Stage:** finish-feature closeout on **`feat/FR-0006-budget-cash-flow-graph`**

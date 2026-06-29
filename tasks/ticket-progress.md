@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | _none_ |
-| **Active phase** | `feature closeout complete` |
-| **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** |
+| **Active ticket** | None — **`FR-0006`** is feature-complete through **`T-FR-0006-12`** |
+| **Active phase** | `n/a` |
+| **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** after merge; ticket worktree **`.worktrees/FR-0006-budget-cash-flow-graph/T-FR-0006-12-edge-label-deconfliction/`** is complete |
 | **Session status** | `complete` |
-| **Next agent should** | Review PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) and merge **`feat/FR-0006-budget-cash-flow-graph`** to **`master`** when satisfied; after merge, remove repo-root **`CURRENT.md`** from the default branch. |
+| **Next agent should** | Review / merge PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) when satisfied, then remove repo-root **`CURRENT.md`** from the default branch after merge. |
 
 ### Parallel streams (optional)
 
@@ -16,7 +16,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| _none_ | - | - | - | No active parallel streams. |
+| _None_ | — | — | — | No active parallel ticket streams. |
 
 **Completed features** (`REGISTRY.md` -> **`complete`**) are **not** listed in **Parallel streams** - they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** -> **Closeout**). **`FR-0002`** closeout: [`FR-0002-budget-entry-page/90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md). **`FR-0006`** closeout: [`FR-0006-budget-cash-flow-graph/90-closeout.md`](feature-history/FR-0006-budget-cash-flow-graph/90-closeout.md).
 
@@ -58,6 +58,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0006-09 | Directional account handles and double-click linking | done | done | done | `FR-0006` expansion; left=input/right=output handles, node roles, double-click + fallback account linking; Docker frontend gate and browser VAL complete |
 | T-FR-0006-10 | Orthogonal routing and obstacle-aware relayout | done | done | done | `FR-0006` expansion; orthogonal edge helper + custom React Flow edge; Docker frontend gate passed; browser VAL desktop/390px + link/create/reload passed |
 | T-FR-0006-11 | Expandable allocation clusters with filters and counts | done | done | done | `FR-0006` expansion; account badges, allocation mini-nodes, filters, relayout; Docker frontend gate passed; browser VAL desktop/390px passed with existing app-header horizontal overflow exception |
+| T-FR-0006-12 | Edge and label deconfliction | done | done | done | `FR-0006` post-closeout expansion; label-aware routing, source/target label avoidance, fixed-width label rendering, and edge-line reservations; Docker frontend gate + browser desktop/390px collision checks passed |
 
 ---
 

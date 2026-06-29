@@ -262,10 +262,11 @@ function OrthogonalCashEdge({
     { x: targetX, y: targetY },
   ]
   const path = data?.route?.path ?? `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`
-  const middle = routePoints[Math.floor(routePoints.length / 2)] ?? {
+  const fallbackLabelPosition = routePoints[Math.floor(routePoints.length / 2)] ?? {
     x: (sourceX + targetX) / 2,
     y: (sourceY + targetY) / 2,
   }
+  const labelPosition = data?.route?.labelPosition ?? fallbackLabelPosition
 
   return (
     <>
@@ -273,10 +274,12 @@ function OrthogonalCashEdge({
       {label ? (
         <EdgeLabelRenderer>
           <div
-            className="pointer-events-none absolute rounded-md border border-teal-100 bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-teal-900 shadow-sm"
+            className="pointer-events-none absolute w-[8.25rem] truncate rounded-md border border-teal-100 bg-white/95 px-1.5 py-0.5 text-center text-[10px] font-medium text-teal-900 shadow-sm"
+            data-cash-edge-label={id}
             style={{
-              transform: `translate(-50%, -50%) translate(${middle.x}px, ${middle.y}px)`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
             }}
+            title={String(label)}
           >
             {label}
           </div>

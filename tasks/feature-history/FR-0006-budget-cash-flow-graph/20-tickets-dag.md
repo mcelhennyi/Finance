@@ -66,3 +66,27 @@ flowchart TB
 ```
 
 **Parallel note:** **T-FR-0006-08** and **T-FR-0006-09** can begin together once the feature branch is current. **T-FR-0006-10** should wait for the directional-handle shape, and **T-FR-0006-11** should wait for both allocation endpoints and routing/relayout helpers.
+
+---
+
+## Expansion addendum - 2026-06-29 edge and label deconfliction
+
+Addendum: [`30-expand-2026-06-29-edge-label-deconfliction.md`](30-expand-2026-06-29-edge-label-deconfliction.md).
+
+| ID | Title (required - human-facing name) | Type | Deps (ticket IDs) | Summary of change (1-2 lines) | Suggested order group | Link |
+|----|----------------------------------------|------|---------------------|------------------------------|------------------------|------|
+| T-FR-0006-12 | Edge and label deconfliction | Story | `T-FR-0006-10`, `T-FR-0006-11` | Reserve label boxes and routed-line lanes so graph edges and labels avoid account nodes, expanded allocation clusters, other lines, and other labels | P0 | [tickets.md](tickets.md) |
+
+```mermaid
+flowchart TB
+  T10["Orthogonal routing and obstacle-aware relayout (T-FR-0006-10)"]
+  T11["Expandable allocation clusters with filters and counts (T-FR-0006-11)"]
+  T12["Edge and label deconfliction (T-FR-0006-12)"]
+
+  T10 --> T12
+  T11 --> T12
+```
+
+**Status:** **T-FR-0006-12** is TEST/DEV/VAL `done`.
+
+**Parallel note:** **T-FR-0006-12** is intentionally serial after the prior routing and cluster tickets because it revises their shared route helper and custom edge renderer.
