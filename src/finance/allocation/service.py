@@ -32,7 +32,36 @@ from finance.allocation.summary import (
 )
 from finance.cash_flow_graph.default_plan_graph import default_seeded_plan_cash_flow_graph
 from finance.cash_flow_graph.service import replace_plan_graph
-from finance.db.models import AllocationItem, AllocationPlan
+from finance.db.models import AllocationItem, AllocationPlan, CashFlowNode
+
+
+def _validate_account_endpoint_refs(
+    session: Session,
+    plan_id: int,
+    *,
+    from_account_ref: str | None,
+    to_account_ref: str | None,
+) -> None:
+    """Ensure non-null allocation endpoint refs exist in the same plan graph."""
+
+    refs = {ref for ref in (from_account_ref, to_account_ref) if ref is not None}
+    if not refs:
+        return
+
+    found = set(
+        session.scalars(
+            select(CashFlowNode.ref).where(
+                CashFlowNode.plan_id == plan_id,
+                CashFlowNode.ref.in_(refs),
+            )
+        )
+    )
+    missing = sorted(refs - found)
+    if missing:
+        raise ValueError(
+            "allocation account endpoint refs must reference existing cash-flow nodes: "
+            + ", ".join(missing)
+        )
 
 
 def create_allocation_plan(session: Session, payload: AllocationPlanCreate) -> AllocationPlan:
@@ -119,6 +148,12 @@ def create_allocation_item(
 ) -> AllocationItem:
     if session.get(AllocationPlan, plan_id) is None:
         raise ValueError("allocation plan not found")
+    _validate_account_endpoint_refs(
+        session,
+        plan_id,
+        from_account_ref=payload.from_account_ref,
+        to_account_ref=payload.to_account_ref,
+    )
 
     row = AllocationItem(
         plan_id=plan_id,
@@ -127,6 +162,10 @@ def create_allocation_item(
         planned_amount=payload.planned_amount,
         cadence=payload.cadence.value,
         monthly_amount=Decimal("0.00"),
+        allocation_role=payload.allocation_role.value,
+        from_account_ref=payload.from_account_ref,
+        to_account_ref=payload.to_account_ref,
+        counterparty=payload.counterparty,
         payment_method=payload.payment_method.value,
         due_day=payload.due_day,
         notes=payload.notes,
@@ -179,8 +218,16 @@ def update_allocation_item(
     data = payload.model_dump(exclude_unset=True, mode="python")
     if "cadence" in data and data["cadence"] is not None:
         data["cadence"] = data["cadence"].value
+    if "allocation_role" in data and data["allocation_role"] is not None:
+        data["allocation_role"] = data["allocation_role"].value
     if "payment_method" in data and data["payment_method"] is not None:
         data["payment_method"] = data["payment_method"].value
+    _validate_account_endpoint_refs(
+        session,
+        plan_id,
+        from_account_ref=data.get("from_account_ref", row.from_account_ref),
+        to_account_ref=data.get("to_account_ref", row.to_account_ref),
+    )
 
     for key, val in data.items():
         setattr(row, key, val)

@@ -55,6 +55,10 @@ def test_allocation_plan_and_item_crud_and_summary(allocation_api_client: TestCl
     assert r.status_code == 200
     item = r.json()
     assert item["monthly_amount"] == pytest.approx(400.0)
+    assert item["allocation_role"] == "sink"
+    assert item["from_account_ref"] is None
+    assert item["to_account_ref"] is None
+    assert item["counterparty"] is None
     item_id = item["id"]
 
     r = c.get(f"/api/budget-allocation/plans/{plan_id}/items")
@@ -102,6 +106,103 @@ def test_allocation_plan_and_item_crud_and_summary(allocation_api_client: TestCl
     assert r.status_code == 200
     r = c.get(f"/api/budget-allocation/plans/{plan_id}")
     assert r.status_code == 404
+
+
+@pytest.mark.unit
+def test_allocation_items_accept_source_sink_account_endpoints(
+    allocation_api_client: TestClient,
+) -> None:
+    c = allocation_api_client
+    r = c.post(
+        "/api/budget-allocation/plans",
+        json={
+            "period_month": "2026-05-01",
+            "income_amount": "9999",
+            "income_cadence": "monthly",
+        },
+    )
+    assert r.status_code == 200
+    plan_id = r.json()["id"]
+    assert c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph").status_code == 200
+
+    source = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/items",
+        json={
+            "item_name": "Paycheck",
+            "category": "Income",
+            "planned_amount": "5000",
+            "cadence": "monthly",
+            "allocation_role": "source",
+            "to_account_ref": "checking",
+            "counterparty": "Employer",
+            "payment_method": "cash",
+        },
+    )
+    assert source.status_code == 200, source.text
+    assert source.json()["allocation_role"] == "source"
+    assert source.json()["to_account_ref"] == "checking"
+    assert source.json()["counterparty"] == "Employer"
+
+    sink = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/items",
+        json={
+            "item_name": "Savings sweep",
+            "category": "Savings",
+            "planned_amount": "1250",
+            "cadence": "monthly",
+            "allocation_role": "sink",
+            "from_account_ref": "checking",
+            "to_account_ref": "savings",
+            "payment_method": "cash",
+        },
+    )
+    assert sink.status_code == 200, sink.text
+
+    r = c.get(f"/api/budget-allocation/plans/{plan_id}/items")
+    rows = {item["item_name"]: item for item in r.json()["items"]}
+    assert rows["Paycheck"]["allocation_role"] == "source"
+    assert rows["Paycheck"]["to_account_ref"] == "checking"
+    assert rows["Savings sweep"]["from_account_ref"] == "checking"
+    assert rows["Savings sweep"]["to_account_ref"] == "savings"
+
+    summary = c.get(f"/api/budget-allocation/plans/{plan_id}/summary").json()
+    assert summary["total_monthly_allocated"] == pytest.approx(1250.0)
+    assert summary["cash_allocated"] == pytest.approx(1250.0)
+    assert summary["remaining_income"] == pytest.approx(3750.0)
+    assert "Income" not in summary["category_totals"]
+
+    updated = c.put(
+        f"/api/budget-allocation/plans/{plan_id}/items/{sink.json()['id']}",
+        json={"to_account_ref": None, "counterparty": "Brokerage"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["to_account_ref"] is None
+    assert updated.json()["counterparty"] == "Brokerage"
+
+
+@pytest.mark.unit
+def test_allocation_item_endpoint_refs_must_exist_in_plan_graph(
+    allocation_api_client: TestClient,
+) -> None:
+    c = allocation_api_client
+    r = c.post("/api/budget-allocation/plans", json={"period_month": "2026-05-01"})
+    plan_id = r.json()["id"]
+    assert c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph").status_code == 200
+
+    r = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/items",
+        json={
+            "item_name": "Bad endpoint",
+            "category": "Other",
+            "planned_amount": "10",
+            "cadence": "monthly",
+            "allocation_role": "sink",
+            "from_account_ref": "missing",
+            "payment_method": "cash",
+        },
+    )
+    assert r.status_code == 400
+    assert "missing" in r.json()["detail"]
 
 
 @pytest.mark.unit

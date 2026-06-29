@@ -333,6 +333,10 @@ class BudgetCategoryLinkedAllocationItemOut(BaseModel):
     planned_amount: float
     cadence: str
     monthly_amount: float
+    allocation_role: str
+    from_account_ref: str | None
+    to_account_ref: str | None
+    counterparty: str | None
     payment_method: str
     due_day: int | None
     notes: str

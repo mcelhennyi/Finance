@@ -190,3 +190,44 @@ def test_cash_flow_graph_link_accounts_rejects_missing_endpoint(
         },
     )
     assert p.status_code == 400
+
+
+@pytest.mark.unit
+def test_cash_flow_graph_replace_rejects_deleting_allocation_endpoint(
+    cash_flow_api_client: TestClient,
+) -> None:
+    c = cash_flow_api_client
+    r = c.post(
+        "/api/budget-allocation/plans",
+        json={"period_month": "2026-10-01", "name": "October"},
+    )
+    plan_id = r.json()["id"]
+    graph = c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph").json()
+
+    item = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/items",
+        json={
+            "item_name": "Savings sweep",
+            "category": "Savings",
+            "planned_amount": "1000",
+            "cadence": "monthly",
+            "allocation_role": "sink",
+            "from_account_ref": "checking",
+            "to_account_ref": "savings",
+            "payment_method": "cash",
+        },
+    )
+    assert item.status_code == 200, item.text
+
+    payload = {
+        "plan_id": plan_id,
+        "nodes": [node for node in graph["nodes"] if node["ref"] != "savings"],
+        "edges": [
+            edge
+            for edge in graph["edges"]
+            if edge["from_ref"] != "savings" and edge["to_ref"] != "savings"
+        ],
+    }
+    replaced = c.put(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph", json=payload)
+    assert replaced.status_code == 400
+    assert "savings" in replaced.json()["detail"]

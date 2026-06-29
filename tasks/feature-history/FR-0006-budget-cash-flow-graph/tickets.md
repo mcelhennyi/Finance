@@ -200,9 +200,11 @@ Implement the contract from [`30-expand-2026-06-29-account-routing-allocations.m
 
 | Phase | Goal | Exit criteria | Status |
 |-------|------|---------------|--------|
-| **TEST** | Freeze allocation primitive contract | Backend tests cover default `allocation_role`, source/sink summary math, valid endpoint refs, invalid endpoint refs, graph-save rejection when a referenced account is deleted, and seed import/export round trips | todo |
-| **DEV** | Implement data model + API | ORM, SQL stub/migration, Pydantic schemas, service validation, router outputs, frontend types, and budget allocation payload helpers support `allocation_role`, `from_account_ref`, `to_account_ref`, and `counterparty` | todo |
-| **VAL** | Container verification | Docker backend tests for allocation + graph APIs pass; Docker frontend lint/test/build passes for updated TS contracts; no existing Budget expense rows break | todo |
+| **TEST** | Freeze allocation primitive contract | Backend tests cover default `allocation_role`, source/sink summary math, valid endpoint refs, invalid endpoint refs, graph-save rejection when a referenced account is deleted, and seed import/export round trips | done |
+| **DEV** | Implement data model + API | ORM, SQL stub/migration, Pydantic schemas, service validation, router outputs, frontend types, and budget allocation payload helpers support `allocation_role`, `from_account_ref`, `to_account_ref`, and `counterparty` | done |
+| **VAL** | Container verification | Docker backend tests for allocation + graph APIs pass; Docker frontend lint/test/build passes for updated TS contracts; no existing Budget expense rows break | done |
+
+**VAL notes:** Allocation rows now carry `allocation_role`, `from_account_ref`, `to_account_ref`, and `counterparty`; endpoint refs validate against same-plan cash-flow nodes, and graph replacement rejects deleting referenced account nodes. Docker backend allocation/graph/seed tests passed (46 tests plus focused budget-sync regression), and Docker frontend lint/test/build passed with the existing Vite chunk-size warning.
 
 #### Implementation notes
 
@@ -237,9 +239,11 @@ Make graph account linking direct on the node: left side is input, right side is
 
 | Phase | Goal | Exit criteria | Status |
 |-------|------|---------------|--------|
-| **TEST** | Define role/link behavior | Frontend unit tests cover source/sink/source+sink/unlinked role derivation, pending source selection, completed link, duplicate edge rejection, self-link rejection, and keyboard/action-menu fallback | todo |
-| **DEV** | Implement handles + gesture | Account nodes render left input/right output handles; double-click flow creates directed edges; existing save-before-link behavior remains; visible error state handles invalid links | todo |
-| **VAL** | Browser interaction check | Docker frontend checks pass; rendered Budget graph inspection confirms handles are visible and linkable at desktop and phone viewports with no console errors | todo |
+| **TEST** | Define role/link behavior | Frontend unit tests cover source/sink/source+sink/unlinked role derivation, pending source selection, completed link, duplicate edge rejection, self-link rejection, and keyboard/action-menu fallback | done |
+| **DEV** | Implement handles + gesture | Account nodes render left input/right output handles; double-click flow creates directed edges; existing save-before-link behavior remains; visible error state handles invalid links | done |
+| **VAL** | Browser interaction check | Docker frontend checks pass; rendered Budget graph inspection confirms handles are visible and linkable at desktop and phone viewports with no console errors | done |
+
+**VAL notes:** Account nodes now expose left input and right output handles, derive visible role badges from edge incidence, support double-click output-to-input linking, and keep the accessible fallback controls. Docker frontend lint/focused tests/build passed; browser VAL confirmed desktop and 390px rendering, successful linking, duplicate/self-link errors, and no console errors.
 
 #### Implementation notes
 
@@ -273,9 +277,11 @@ Replace default curved/overlapping graph lines with deterministic square routing
 
 | Phase | Goal | Exit criteria | Status |
 |-------|------|---------------|--------|
-| **TEST** | Route around common obstacles | Unit tests cover multiple outgoing edges from one node, crossing avoidance around one obstacle box, square path generation, stable lane ordering, and relayout after cluster height changes | todo |
-| **DEV** | Implement routing + relayout | Custom edge paths render with square corners; outgoing lanes do not overlap; layout helper reserves space for expanded clusters and avoids account-node overlap | todo |
-| **VAL** | Visual non-overlap check | Docker frontend checks pass; rendered graph inspection verifies nonblank orthogonal routes, no obvious overlap, and stable relayout after expand/collapse | todo |
+| **TEST** | Route around common obstacles | Unit tests cover multiple outgoing edges from one node, crossing avoidance around one obstacle box, square path generation, stable lane ordering, and relayout after cluster height changes | done |
+| **DEV** | Implement routing + relayout | Custom edge paths render with square corners; outgoing lanes do not overlap; layout helper reserves space for expanded clusters and avoids account-node overlap | done |
+| **VAL** | Visual non-overlap check | Docker frontend checks pass; rendered graph inspection verifies nonblank orthogonal routes, no obvious overlap, and stable relayout after expand/collapse | done |
+
+**VAL notes:** `cashFlowGraphRouting` now builds deterministic square paths, stable per-source lanes, obstacle-aware bends, and cluster-aware relayout data for custom React Flow edges. Docker frontend lint/focused tests/build passed; browser VAL confirmed nonblank orthogonal routes, reload persistence, phone rendering, and no graph-node overlap.
 
 #### Implementation notes
 
@@ -310,9 +316,11 @@ Show each account's linked allocation count on the node and let operators expand
 
 | Phase | Goal | Exit criteria | Status |
 |-------|------|---------------|--------|
-| **TEST** | Define counts/filter behavior | Frontend tests cover account totals, source/sink splits, visible counts after filters, source/sink mini-node labels, empty account expansion, and relayout after filter changes | todo |
-| **DEV** | Implement expansion UI | Account badges show allocation counts and source/sink split; expanded clusters render mini-nodes in rows/columns; filters update visible rows/totals; Budget allocation forms expose allocation role and endpoints | todo |
-| **VAL** | Full Budget graph workflow | Docker frontend checks pass; rendered browser inspection covers linked paycheck source, savings sink, Amazon-style sink, filters, expand/collapse, phone viewport, and no overlap/console errors | todo |
+| **TEST** | Define counts/filter behavior | Frontend tests cover account totals, source/sink splits, visible counts after filters, source/sink mini-node labels, empty account expansion, and relayout after filter changes | done |
+| **DEV** | Implement expansion UI | Account badges show allocation counts and source/sink split; expanded clusters render mini-nodes in rows/columns; filters update visible rows/totals; Budget allocation forms expose allocation role and endpoints | done |
+| **VAL** | Full Budget graph workflow | Docker frontend checks pass; rendered browser inspection covers linked paycheck source, savings sink, Amazon-style sink, filters, expand/collapse, phone viewport, and no overlap/console errors | done |
+
+**VAL notes:** `CashFlowGraphPanel` now renders account allocation counts, one expanded allocation cluster, source/sink mini-nodes, filters, and relayout/rerouting around the cluster. `BudgetPage` allocation forms expose role, endpoint refs, and counterparty. Docker frontend lint/test/build passed; browser VAL covered paycheck source, owned savings sink, external Amazon-style sink, filters, desktop/phone viewports, and no graph-node overlap.
 
 #### Implementation notes
 

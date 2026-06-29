@@ -180,6 +180,10 @@ export interface AllocationItem {
   planned_amount: number
   cadence: string
   monthly_amount: number
+  allocation_role: 'source' | 'sink'
+  from_account_ref: string | null
+  to_account_ref: string | null
+  counterparty: string | null
   payment_method: string
   due_day: number | null
   notes: string
@@ -234,6 +238,10 @@ export interface BudgetCategoryLinkedAllocationItem {
   planned_amount: number
   cadence: string
   monthly_amount: number
+  allocation_role: 'source' | 'sink'
+  from_account_ref: string | null
+  to_account_ref: string | null
+  counterparty: string | null
   payment_method: string
   due_day: number | null
   notes: string

@@ -27,7 +27,12 @@ from sqlalchemy.orm import Session
 
 from finance.allocation.cadence import normalize_period_month
 from finance.allocation.category_catalog import ensure_budget_category_labels_from_strings
-from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import (
+    AllocationCadence,
+    AllocationRole,
+    PaymentMethod,
+    PlanIncomeCadence,
+)
 from finance.allocation.schemas import AllocationItemCreate, AllocationPlanCreate
 from finance.allocation.service import (
     create_allocation_item,
@@ -79,6 +84,10 @@ class BudgetSeedItemModel(BaseModel):
     category: str = Field(min_length=1, max_length=100)
     planned_amount: Decimal = Field(gt=0)
     cadence: AllocationCadence
+    allocation_role: AllocationRole = AllocationRole.SINK
+    from_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    to_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    counterparty: str | None = Field(default=None, min_length=1, max_length=200)
     payment_method: PaymentMethod
     due_day: int | None = Field(default=None, ge=1, le=31)
     notes: str = Field(default="", max_length=2000)
@@ -90,6 +99,10 @@ class BudgetSeedItemModel(BaseModel):
             category=self.category,
             planned_amount=self.planned_amount,
             cadence=self.cadence,
+            allocation_role=self.allocation_role,
+            from_account_ref=self.from_account_ref,
+            to_account_ref=self.to_account_ref,
+            counterparty=self.counterparty,
             payment_method=self.payment_method,
             due_day=self.due_day,
             notes=self.notes,
@@ -210,9 +223,6 @@ def apply_budget_seed_yaml(session: Session, yaml_path: Path) -> tuple[int, date
         delete_allocation_plan(session, existing.id)
 
     plan_row = create_allocation_plan(session, plan_create)
-    for payload in item_creates:
-        create_allocation_item(session, plan_row.id, payload)
-    ensure_budget_category_labels_from_strings(session, [ic.category for ic in item_creates])
     if doc.cash_flow_graph is not None:
         replace_plan_graph(
             session,
@@ -225,6 +235,9 @@ def apply_budget_seed_yaml(session: Session, yaml_path: Path) -> tuple[int, date
         )
     else:
         replace_plan_graph(session, plan_row.id, default_seeded_plan_cash_flow_graph(plan_row.id))
+    for payload in item_creates:
+        create_allocation_item(session, plan_row.id, payload)
+    ensure_budget_category_labels_from_strings(session, [ic.category for ic in item_creates])
     return len(item_creates), pm
 
 
@@ -353,8 +366,15 @@ def _item_seed_payload(item: AllocationItem) -> dict[str, Any]:
         "category": item.category,
         "planned_amount": _money_text(item.planned_amount),
         "cadence": item.cadence,
+        "allocation_role": item.allocation_role or AllocationRole.SINK.value,
         "payment_method": item.payment_method,
     }
+    if item.from_account_ref is not None:
+        payload["from_account_ref"] = item.from_account_ref
+    if item.to_account_ref is not None:
+        payload["to_account_ref"] = item.to_account_ref
+    if item.counterparty:
+        payload["counterparty"] = item.counterparty
     if item.due_day is not None:
         payload["due_day"] = item.due_day
     if item.notes:

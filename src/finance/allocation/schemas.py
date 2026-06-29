@@ -13,7 +13,12 @@ from finance.allocation.cadence import (
     monthly_equivalent_for_plan_income,
     normalize_period_month,
 )
-from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import (
+    AllocationCadence,
+    AllocationRole,
+    PaymentMethod,
+    PlanIncomeCadence,
+)
 
 
 def default_plan_name(period_month: date) -> str:
@@ -98,6 +103,10 @@ class AllocationItemCreate(BaseModel):
     category: str = Field(min_length=1, max_length=100)
     planned_amount: Decimal = Field(gt=0)
     cadence: AllocationCadence
+    allocation_role: AllocationRole = AllocationRole.SINK
+    from_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    to_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    counterparty: str | None = Field(default=None, min_length=1, max_length=200)
     payment_method: PaymentMethod
     due_day: int | None = Field(default=None, ge=1, le=31)
     notes: str = Field(default="", max_length=2000)
@@ -116,6 +125,10 @@ class AllocationItemUpdate(BaseModel):
     category: str | None = Field(default=None, min_length=1, max_length=100)
     planned_amount: Decimal | None = Field(default=None, gt=0)
     cadence: AllocationCadence | None = None
+    allocation_role: AllocationRole | None = None
+    from_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    to_account_ref: str | None = Field(default=None, min_length=1, max_length=64)
+    counterparty: str | None = Field(default=None, min_length=1, max_length=200)
     payment_method: PaymentMethod | None = None
     due_day: int | None = None
     notes: str | None = Field(default=None, max_length=2000)
@@ -141,6 +154,10 @@ class AllocationItemOut(BaseModel):
     planned_amount: float
     cadence: AllocationCadence
     monthly_amount: float
+    allocation_role: AllocationRole = AllocationRole.SINK
+    from_account_ref: str | None = None
+    to_account_ref: str | None = None
+    counterparty: str | None = None
     payment_method: PaymentMethod
     due_day: int | None
     notes: str

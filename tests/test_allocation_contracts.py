@@ -11,7 +11,12 @@ from finance.allocation.cadence import (
     monthly_equivalent_for_plan_income,
     normalize_period_month,
 )
-from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import (
+    AllocationCadence,
+    AllocationRole,
+    PaymentMethod,
+    PlanIncomeCadence,
+)
 from finance.allocation.item_sync import refresh_item_monthly_amount
 from finance.allocation.schemas import (
     AllocationItemCreate,
@@ -110,6 +115,10 @@ def test_allocation_item_create_computed_monthly_matches_cadence_table() -> None
         payment_method=PaymentMethod.CASH,
     )
     assert item.computed_monthly_amount() == Decimal("2000.00")
+    assert item.allocation_role == AllocationRole.SINK
+    assert item.from_account_ref is None
+    assert item.to_account_ref is None
+    assert item.counterparty is None
 
     with pytest.raises(ValidationError):
         AllocationItemCreate(
@@ -184,6 +193,53 @@ def test_build_allocation_summary_without_income() -> None:
     assert summary.remaining_income is None
 
 
+@pytest.mark.unit
+def test_build_allocation_summary_prefers_source_allocations_for_income() -> None:
+    rows = [
+        AllocationSummaryItemInput(
+            category="Income",
+            cadence=AllocationCadence.MONTHLY.value,
+            monthly_amount=Decimal("5000.00"),
+            payment_method=PaymentMethod.CASH.value,
+            due_day=None,
+            allocation_role=AllocationRole.SOURCE.value,
+            to_account_ref="checking",
+        ),
+        AllocationSummaryItemInput(
+            category="Savings",
+            cadence=AllocationCadence.MONTHLY.value,
+            monthly_amount=Decimal("1250.00"),
+            payment_method=PaymentMethod.CASH.value,
+            due_day=None,
+            allocation_role=AllocationRole.SINK.value,
+            from_account_ref="checking",
+            to_account_ref="savings",
+        ),
+        AllocationSummaryItemInput(
+            category="Shopping",
+            cadence=AllocationCadence.MONTHLY.value,
+            monthly_amount=Decimal("400.00"),
+            payment_method=PaymentMethod.CREDIT.value,
+            due_day=None,
+            allocation_role=AllocationRole.SINK.value,
+            from_account_ref="ian_chase_sapphire",
+        ),
+    ]
+    summary = build_allocation_summary(
+        rows,
+        income_amount=Decimal("9000.00"),
+        income_cadence=PlanIncomeCadence.MONTHLY,
+    )
+    assert summary.total_monthly_allocated == Decimal("1650.00")
+    assert summary.cash_allocated == Decimal("1250.00")
+    assert summary.credit_allocated == Decimal("400.00")
+    assert summary.remaining_income == Decimal("3350.00")
+    assert summary.category_totals == {
+        "Savings": Decimal("1250.00"),
+        "Shopping": Decimal("400.00"),
+    }
+
+
 @pytest.mark.integration
 def test_allocation_orm_roundtrip_and_item_sync() -> None:
     session = _make_session()
@@ -204,6 +260,10 @@ def test_allocation_orm_roundtrip_and_item_sync() -> None:
             planned_amount=Decimal("100.00"),
             cadence=AllocationCadence.WEEKLY.value,
             monthly_amount=Decimal("0.00"),
+            allocation_role=AllocationRole.SINK.value,
+            from_account_ref="checking",
+            to_account_ref=None,
+            counterparty="Grocery store",
             payment_method=PaymentMethod.CASH.value,
             due_day=10,
             notes="",
@@ -216,6 +276,10 @@ def test_allocation_orm_roundtrip_and_item_sync() -> None:
 
         loaded = session.scalars(select(AllocationItem)).one()
         assert loaded.monthly_amount == Decimal("400.00")
+        assert loaded.allocation_role == AllocationRole.SINK.value
+        assert loaded.from_account_ref == "checking"
+        assert loaded.to_account_ref is None
+        assert loaded.counterparty == "Grocery store"
 
         summary = build_allocation_summary(
             [item_slice_from_orm(loaded)],

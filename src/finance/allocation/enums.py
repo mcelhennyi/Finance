@@ -29,3 +29,10 @@ class PaymentMethod(StrEnum):
 
     CASH = "cash"
     CREDIT = "credit"
+
+
+class AllocationRole(StrEnum):
+    """Cash-flow role for an allocation primitive."""
+
+    SOURCE = "source"
+    SINK = "sink"

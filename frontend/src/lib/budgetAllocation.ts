@@ -29,6 +29,10 @@ export const PAYMENT_METHODS = ['cash', 'credit'] as const
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 
+export const ALLOCATION_ROLES = ['source', 'sink'] as const
+
+export type AllocationRole = (typeof ALLOCATION_ROLES)[number]
+
 /** Table / KPI shorthand for the account implied by each payment method. */
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Checking',
@@ -68,6 +72,10 @@ export interface ItemDraftInput {
   category: string
   planned_amount: string
   cadence: AllocationItemCadence
+  allocation_role?: AllocationRole
+  from_account_ref?: string | null
+  to_account_ref?: string | null
+  counterparty?: string | null
   payment_method: PaymentMethod
   due_day: string
   notes: string
@@ -94,10 +102,17 @@ export function allocationItemCreateBody(d: ItemDraftInput): Record<string, unkn
     category: d.category.trim(),
     planned_amount: String(amt),
     cadence: d.cadence,
+    allocation_role: d.allocation_role ?? 'sink',
     payment_method: d.payment_method,
     notes: d.notes.trim(),
     sort_order: 0,
   }
+  const fromRef = d.from_account_ref?.trim()
+  if (fromRef) body.from_account_ref = fromRef
+  const toRef = d.to_account_ref?.trim()
+  if (toRef) body.to_account_ref = toRef
+  const counterparty = d.counterparty?.trim()
+  if (counterparty) body.counterparty = counterparty
   const due = dueDayFromInput(d.due_day)
   if (due !== undefined) body.due_day = due
   return body
@@ -124,6 +139,10 @@ export function allocationItemUpdateBody(
     body.planned_amount = String(amt)
   }
   if (d.cadence !== undefined) body.cadence = d.cadence
+  if (d.allocation_role !== undefined) body.allocation_role = d.allocation_role
+  if (d.from_account_ref !== undefined) body.from_account_ref = d.from_account_ref?.trim() || null
+  if (d.to_account_ref !== undefined) body.to_account_ref = d.to_account_ref?.trim() || null
+  if (d.counterparty !== undefined) body.counterparty = d.counterparty?.trim() || null
   if (d.payment_method !== undefined) body.payment_method = d.payment_method
   if (d.notes !== undefined) body.notes = d.notes.trim()
   if (d.due_day !== undefined) {

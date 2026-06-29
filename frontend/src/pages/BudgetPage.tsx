@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns'
 import { api } from '../api/client'
 import {
   ALLOCATION_ITEM_CADENCES,
+  ALLOCATION_ROLES,
   PLAN_INCOME_CADENCES,
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
@@ -14,6 +15,7 @@ import {
   graphNodeRefForPaymentMethod,
   validateItemDraft,
   type AllocationItemCadence,
+  type AllocationRole,
   type ItemDraftInput,
   type PaymentMethod,
   type PlanIncomeCadence,
@@ -120,6 +122,10 @@ function itemToDraft(item: AllocationItem): ItemDraftInput {
     cadence: (ALLOCATION_ITEM_CADENCES.includes(item.cadence as AllocationItemCadence)
       ? item.cadence
       : 'monthly') as AllocationItemCadence,
+    allocation_role: item.allocation_role,
+    from_account_ref: item.from_account_ref,
+    to_account_ref: item.to_account_ref,
+    counterparty: item.counterparty,
     payment_method: (PAYMENT_METHODS.includes(item.payment_method as PaymentMethod)
       ? item.payment_method
       : 'cash') as PaymentMethod,
@@ -134,10 +140,19 @@ function emptyDraft(): ItemDraftInput {
     category: '',
     planned_amount: '',
     cadence: 'monthly',
+    allocation_role: 'sink',
+    from_account_ref: null,
+    to_account_ref: null,
+    counterparty: null,
     payment_method: 'cash',
     due_day: '',
     notes: '',
   }
+}
+
+function endpointLabel(ref: string | null | undefined, options: { ref: string; label: string }[]): string {
+  if (!ref) return 'external'
+  return options.find(option => option.ref === ref)?.label ?? ref
 }
 
 export function BudgetPage() {
@@ -257,6 +272,13 @@ export function BudgetPage() {
 
   const planMoneyFlows = useMemo(
     () => planMoneyFlowPhrases(planGraphQuery.data ?? undefined),
+    [planGraphQuery.data],
+  )
+  const graphAccountOptions = useMemo(
+    () => planGraphQuery.data?.nodes.map(node => ({
+      ref: node.ref,
+      label: node.display_name || node.ref,
+    })) ?? [],
     [planGraphQuery.data],
   )
 
@@ -754,6 +776,7 @@ export function BudgetPage() {
           >
             <CashFlowGraphPanel
               planId={selectedPlanId}
+              allocationItems={itemsQuery.data?.items ?? []}
               planIncomeMonthly={activePlan?.income_monthly ?? null}
               highlightNodeRefs={graphHighlightNodeRefs}
               addAccountPanelOpen={addAccountPanelOpen}
@@ -857,6 +880,7 @@ export function BudgetPage() {
                           Cadence
                         </OutputHoverTip>
                       </th>
+                      <th className="px-3 py-3">Role</th>
                       <th className="px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.monthly} dashed={false} placement="below" className="inline font-semibold">
                           Monthly
@@ -867,11 +891,13 @@ export function BudgetPage() {
                           Account
                         </OutputHoverTip>
                       </th>
+                      <th className="px-3 py-3">Endpoints</th>
                       <th className="px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.due} dashed={false} placement="below" className="inline font-semibold">
                           Due
                         </OutputHoverTip>
                       </th>
+                      <th className="px-3 py-3">Counterparty</th>
                       <th className="px-3 py-3 min-w-[8rem]">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.notes} dashed={false} placement="below" className="inline font-semibold">
                           Notes
@@ -925,6 +951,24 @@ export function BudgetPage() {
                               ))}
                             </select>
                           </td>
+                          <td className="px-3 py-2">
+                            <select
+                              className="w-full rounded border border-slate-200 px-2 py-1"
+                              value={editDraft.allocation_role ?? 'sink'}
+                              onChange={e =>
+                                setEditDraft({
+                                  ...editDraft,
+                                  allocation_role: e.target.value as AllocationRole,
+                                })
+                              }
+                            >
+                              {ALLOCATION_ROLES.map(role => (
+                                <option key={role} value={role}>
+                                  {role}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
                           <td className="px-3 py-2 text-slate-500 tabular-nums">{formatUsd(item.monthly_amount)}</td>
                           <td
                             className="px-3 py-2"
@@ -952,11 +996,59 @@ export function BudgetPage() {
                               ))}
                             </select>
                           </td>
+                          <td className="px-3 py-2 min-w-[16rem]">
+                            <div className="grid gap-1">
+                              <select
+                                className="w-full rounded border border-slate-200 px-2 py-1"
+                                value={editDraft.from_account_ref ?? ''}
+                                onChange={e =>
+                                  setEditDraft({
+                                    ...editDraft,
+                                    from_account_ref: e.target.value || null,
+                                  })
+                                }
+                                aria-label="Funding account"
+                              >
+                                <option value="">External / none</option>
+                                {graphAccountOptions.map(option => (
+                                  <option key={option.ref} value={option.ref}>
+                                    From {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                className="w-full rounded border border-slate-200 px-2 py-1"
+                                value={editDraft.to_account_ref ?? ''}
+                                onChange={e =>
+                                  setEditDraft({
+                                    ...editDraft,
+                                    to_account_ref: e.target.value || null,
+                                  })
+                                }
+                                aria-label="Destination account"
+                              >
+                                <option value="">External / none</option>
+                                {graphAccountOptions.map(option => (
+                                  <option key={option.ref} value={option.ref}>
+                                    To {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </td>
                           <td className="px-3 py-2">
                             <input
                               className="w-14 rounded border border-slate-200 px-2 py-1"
                               value={editDraft.due_day}
                               onChange={e => setEditDraft({ ...editDraft, due_day: e.target.value })}
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <input
+                              className="w-full rounded border border-slate-200 px-2 py-1"
+                              value={editDraft.counterparty ?? ''}
+                              onChange={e => setEditDraft({ ...editDraft, counterparty: e.target.value })}
+                              placeholder="Employer, Amazon"
                             />
                           </td>
                           <td className="px-3 py-2">
@@ -993,6 +1085,17 @@ export function BudgetPage() {
                           <td className="px-3 py-2 text-slate-600">{item.category}</td>
                           <td className="px-3 py-2 tabular-nums">{formatUsd(item.planned_amount)}</td>
                           <td className="px-3 py-2 text-slate-500">{item.cadence.replace(/_/g, ' ')}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                                item.allocation_role === 'source'
+                                  ? 'bg-emerald-50 text-emerald-800'
+                                  : 'bg-rose-50 text-rose-800'
+                              }`}
+                            >
+                              {item.allocation_role}
+                            </span>
+                          </td>
                           <td className="px-3 py-2 tabular-nums text-teal-800 font-medium">
                             {formatUsd(item.monthly_amount)}
                           </td>
@@ -1020,7 +1123,12 @@ export function BudgetPage() {
                               )
                             })()}
                           </td>
+                          <td className="px-3 py-2 text-xs text-slate-600 min-w-[12rem]">
+                            {endpointLabel(item.from_account_ref, graphAccountOptions)} →{' '}
+                            {endpointLabel(item.to_account_ref, graphAccountOptions)}
+                          </td>
                           <td className="px-3 py-2 text-slate-500">{item.due_day ?? '—'}</td>
+                          <td className="px-3 py-2 text-slate-500">{item.counterparty || '—'}</td>
                           <td className="px-3 py-2 text-slate-500 max-w-xs truncate" title={item.notes}>
                             {item.notes || '—'}
                           </td>
@@ -1113,6 +1221,20 @@ export function BudgetPage() {
                     </select>
                     <select
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={newItem.allocation_role ?? 'sink'}
+                      onChange={e =>
+                        setNewItem({ ...newItem, allocation_role: e.target.value as AllocationRole })
+                      }
+                      aria-label="Allocation role"
+                    >
+                      {ALLOCATION_ROLES.map(role => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                       value={newItem.payment_method}
                       onChange={e =>
                         setNewItem({ ...newItem, payment_method: e.target.value as PaymentMethod })
@@ -1124,11 +1246,43 @@ export function BudgetPage() {
                         </option>
                       ))}
                     </select>
+                    <select
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[10rem]"
+                      value={newItem.from_account_ref ?? ''}
+                      onChange={e => setNewItem({ ...newItem, from_account_ref: e.target.value || null })}
+                      aria-label="Funding account"
+                    >
+                      <option value="">From external / none</option>
+                      {graphAccountOptions.map(option => (
+                        <option key={option.ref} value={option.ref}>
+                          From {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[10rem]"
+                      value={newItem.to_account_ref ?? ''}
+                      onChange={e => setNewItem({ ...newItem, to_account_ref: e.target.value || null })}
+                      aria-label="Destination account"
+                    >
+                      <option value="">To external / none</option>
+                      {graphAccountOptions.map(option => (
+                        <option key={option.ref} value={option.ref}>
+                          To {option.label}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       placeholder="Due day"
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm w-20"
                       value={newItem.due_day}
                       onChange={e => setNewItem({ ...newItem, due_day: e.target.value })}
+                    />
+                    <input
+                      placeholder="Counterparty"
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[9rem]"
+                      value={newItem.counterparty ?? ''}
+                      onChange={e => setNewItem({ ...newItem, counterparty: e.target.value })}
                     />
                     <input
                       placeholder="Notes"

@@ -1,8 +1,8 @@
 # Budget plans — roadmap (multi-plan, BBD linkage, starter template)
 
-**Status:** Product roadmap + implemented baseline (**starter template** via env). Interactive cash-flow graph UI is **not** shipped yet.
+**Status:** Product roadmap + implemented baseline (**starter template** via env). Interactive cash-flow graph UI is implemented under **FR-0006** and remains feature-branch scoped until FR-0006 closeout.
 
-**See also:** [`tasks/feature-history/FR-0006-budget-cash-flow-graph/`](../../tasks/feature-history/FR-0006-budget-cash-flow-graph/), [`tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md`](../../tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md).
+**See also:** repo paths `tasks/feature-history/FR-0006-budget-cash-flow-graph/` and `tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md`.
 
 ---
 
@@ -53,4 +53,4 @@ Persisted graph schema and editor milestones live in the **FR-0006** feature his
 - **Source** allocations show how money arrives, e.g. Paycheck → Checking.
 - **Sink** allocations show how money is spent or stored, e.g. Chase Card → Amazon / shopping or Checking → High Yield Savings.
 
-Allocation rows can link to graph account endpoints (`from_account_ref` / `to_account_ref`) and carry `allocation_role` (`source` / `sink`) so the same primitive powers the allocation table, account source/sink counts, expanded allocation mini-nodes, and graph routes. Mock: [`mockups/fr-0006-account-routing-allocation-expansion.html`](mockups/fr-0006-account-routing-allocation-expansion.html).
+Allocation rows can link to graph account endpoints (`from_account_ref` / `to_account_ref`) and carry `allocation_role` (`source` / `sink`) so the same primitive powers the allocation table, account source/sink counts, expanded allocation mini-nodes, and graph routes. Account nodes expose linked allocation counts at all times; expanding one account renders derived allocation mini-nodes with filters for size, cadence, role, payment method, category, counterparty, endpoint direction, and due-day range. Sink allocations with owned `to_account_ref` are presented as storage / owned-destination movement instead of external spend. Mock: [`mockups/fr-0006-account-routing-allocation-expansion.html`](mockups/fr-0006-account-routing-allocation-expansion.html).

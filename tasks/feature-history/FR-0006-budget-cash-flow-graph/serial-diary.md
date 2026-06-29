@@ -1,3 +1,37 @@
+## 2026-06-29 (session) - finish-feature closeout drafted
+
+**Stage:** finish-feature closeout on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Confirmed **FR-0006** meets the feature-complete gate: **`T-FR-0006-01`** through **`T-FR-0006-11`** are TEST/DEV/VAL `done` in the tracker and canonical tickets. Updated closeout artifacts, cleared active parallel streams, and prepared PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) for refreshed human review.
+
+**Validation:** `git diff --check`; `./scripts/check-frontend-no-merge-markers.sh`; Docker backend full tests (`96 passed`, one existing Starlette/httpx warning); Docker frontend lint/test/build (`58 passed`, existing Vite chunk-size warning); host `mkdocs build --strict` after Docker docs-service route was unavailable.
+
+---
+
+## 2026-06-29 (session) - final expansion wave started
+
+**Stage:** develop-frontier orchestration on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** [**Orthogonal routing and obstacle-aware relayout**](tickets.md) (**`T-FR-0006-10`**) reached TEST/DEV/VAL `done`, so the final FR-0006 expansion ticket is now dependency-valid: [**Expandable allocation clusters with filters and counts**](tickets.md) (**`T-FR-0006-11`**). This ticket should build on the source/sink allocation fields from **`T-FR-0006-08`** and the cluster-ready routing helpers from **`T-FR-0006-10`**.
+
+---
+
+## 2026-06-29 (session) - frontier wave 2 started
+
+**Stage:** develop-frontier orchestration on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** First expansion wave completed in ticket streams: [**Unified source/sink allocation primitive contracts**](tickets.md) (**`T-FR-0006-08`**) and [**Directional account handles and double-click linking**](tickets.md) (**`T-FR-0006-09`**) are TEST/DEV/VAL `done`. The next dependency-valid ticket is [**Orthogonal routing and obstacle-aware relayout**](tickets.md) (**`T-FR-0006-10`**); [**Expandable allocation clusters with filters and counts**](tickets.md) (**`T-FR-0006-11`**) remains blocked until **`T-FR-0006-10`** is VAL-done.
+
+---
+
+## 2026-06-29 (session) - frontier wave 1 started
+
+**Stage:** identify-frontier / develop-frontier orchestration on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Ran the FR-0006 expansion frontier from the account routing/allocation addendum. The dependency-valid first wave is [**Unified source/sink allocation primitive contracts**](tickets.md) (**`T-FR-0006-08`**) and [**Directional account handles and double-click linking**](tickets.md) (**`T-FR-0006-09`**); [**Orthogonal routing and obstacle-aware relayout**](tickets.md) (**`T-FR-0006-10`**) waits on **`T-FR-0006-09`**, and [**Expandable allocation clusters with filters and counts**](tickets.md) (**`T-FR-0006-11`**) waits on **`T-FR-0006-08`** plus **`T-FR-0006-10`**. Queue beacon and branch **`CURRENT.md`** now show the feature in `developing` status.
+
+---
+
 ## 2026-06-29 (session) — expansion design for account routing and allocation primitives
 
 **Stage:** expand-feature design / ticket expansion on **`feat/FR-0006-budget-cash-flow-graph`**

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   allocationItemCreateBody,
   allocationItemPutBody,
+  allocationItemUpdateBody,
   dueDayFromInput,
   formatUsd,
   parsePositiveAmount,
@@ -83,7 +84,28 @@ describe('allocationItemCreateBody', () => {
     expect(body.item_name).toBe('Groceries')
     expect(body.planned_amount).toBe('100')
     expect(body.cadence).toBe('weekly')
+    expect(body.allocation_role).toBe('sink')
     expect(body.due_day).toBe(5)
+  })
+
+  it('emits source/sink primitive endpoint fields when provided', () => {
+    const body = allocationItemCreateBody({
+      item_name: 'Paycheck',
+      category: 'Income',
+      planned_amount: '5000',
+      cadence: 'monthly',
+      allocation_role: 'source',
+      from_account_ref: ' ',
+      to_account_ref: ' checking ',
+      counterparty: ' Employer ',
+      payment_method: 'cash',
+      due_day: '',
+      notes: '',
+    })
+    expect(body.allocation_role).toBe('source')
+    expect(body.from_account_ref).toBeUndefined()
+    expect(body.to_account_ref).toBe('checking')
+    expect(body.counterparty).toBe('Employer')
   })
 })
 
@@ -100,5 +122,20 @@ describe('allocationItemPutBody', () => {
     })
     expect(body.sort_order).toBeUndefined()
     expect(body.planned_amount).toBe('10')
+  })
+})
+
+describe('allocationItemUpdateBody', () => {
+  it('clears endpoint fields with null and emits role changes', () => {
+    const body = allocationItemUpdateBody({
+      allocation_role: 'sink',
+      from_account_ref: ' checking ',
+      to_account_ref: '',
+      counterparty: '',
+    })
+    expect(body.allocation_role).toBe('sink')
+    expect(body.from_account_ref).toBe('checking')
+    expect(body.to_account_ref).toBeNull()
+    expect(body.counterparty).toBeNull()
   })
 })

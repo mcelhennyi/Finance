@@ -16,7 +16,7 @@ from finance.cash_flow_graph.schemas import (
     CashFlowGraphDocument,
     CashFlowNodeSpec,
 )
-from finance.db.models import AllocationPlan, CashFlowEdge, CashFlowNode
+from finance.db.models import AllocationItem, AllocationPlan, CashFlowEdge, CashFlowNode
 
 _UNSAFE_REF_CHARS = re.compile(r"[^a-zA-Z0-9_-]+")
 
@@ -119,6 +119,31 @@ def replace_plan_graph(session: Session, plan_id: int, payload: CashFlowGraphDoc
     plan = session.get(AllocationPlan, plan_id)
     if plan is None:
         raise ValueError("allocation plan not found")
+
+    new_refs = {node.ref for node in payload.nodes}
+    referenced_refs = set(
+        session.scalars(
+            select(AllocationItem.from_account_ref)
+            .where(
+                AllocationItem.plan_id == plan_id,
+                AllocationItem.from_account_ref.is_not(None),
+            )
+        )
+    )
+    referenced_refs.update(
+        session.scalars(
+            select(AllocationItem.to_account_ref).where(
+                AllocationItem.plan_id == plan_id,
+                AllocationItem.to_account_ref.is_not(None),
+            )
+        )
+    )
+    missing_refs = sorted(ref for ref in referenced_refs if ref not in new_refs)
+    if missing_refs:
+        raise ValueError(
+            "cash-flow graph cannot delete nodes referenced by allocation endpoints: "
+            + ", ".join(missing_refs)
+        )
 
     session.execute(delete(CashFlowEdge).where(CashFlowEdge.plan_id == plan_id))
     session.execute(delete(CashFlowNode).where(CashFlowNode.plan_id == plan_id))

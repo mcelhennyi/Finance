@@ -15,6 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from finance.allocation.cadence import normalize_period_month
+from finance.allocation.enums import AllocationRole
 from finance.db.models import AllocationItem, AllocationPlan, Budget
 
 
@@ -27,7 +28,10 @@ def aggregate_allocation_totals_by_category(
     stmt = (
         select(AllocationItem.category, func.sum(AllocationItem.monthly_amount))
         .join(AllocationPlan, AllocationItem.plan_id == AllocationPlan.id)
-        .where(AllocationPlan.period_month == pm)
+        .where(
+            AllocationPlan.period_month == pm,
+            AllocationItem.allocation_role == AllocationRole.SINK.value,
+        )
         .group_by(AllocationItem.category)
     )
     out: dict[str, Decimal] = {}

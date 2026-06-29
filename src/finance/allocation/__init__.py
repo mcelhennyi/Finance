@@ -8,7 +8,12 @@ from finance.allocation.cadence import (
     monthly_equivalent_for_plan_income,
     normalize_period_month,
 )
-from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import (
+    AllocationCadence,
+    AllocationRole,
+    PaymentMethod,
+    PlanIncomeCadence,
+)
 from finance.allocation.item_sync import refresh_item_monthly_amount
 from finance.allocation.schemas import (
     AllocationItemCreate,
@@ -33,6 +38,7 @@ __all__ = [
     "AllocationPlanCreate",
     "AllocationPlanOut",
     "AllocationPlanUpdate",
+    "AllocationRole",
     "AllocationSummary",
     "AllocationSummaryItemInput",
     "PaymentMethod",

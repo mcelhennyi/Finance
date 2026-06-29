@@ -117,6 +117,10 @@ def get_budget_category_inventory_items(
                     planned_amount=float(item.planned_amount),
                     cadence=item.cadence,
                     monthly_amount=float(item.monthly_amount),
+                    allocation_role=item.allocation_role or "sink",
+                    from_account_ref=item.from_account_ref,
+                    to_account_ref=item.to_account_ref,
+                    counterparty=item.counterparty,
                     payment_method=item.payment_method,
                     due_day=item.due_day,
                     notes=item.notes,
@@ -193,6 +197,10 @@ def _item_to_out(row: AllocationItem) -> AllocationItemOut:
         planned_amount=float(row.planned_amount),
         cadence=AllocationCadence(row.cadence),
         monthly_amount=float(row.monthly_amount),
+        allocation_role=row.allocation_role or "sink",
+        from_account_ref=row.from_account_ref,
+        to_account_ref=row.to_account_ref,
+        counterparty=row.counterparty,
         payment_method=PaymentMethod(row.payment_method),
         due_day=row.due_day,
         notes=row.notes,
@@ -271,7 +279,8 @@ def post_allocation_item(plan_id: int, payload: AllocationItemCreate) -> Allocat
         try:
             row = create_allocation_item(session, plan_id, payload)
         except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
+            code = 404 if "plan not found" in str(exc) else 400
+            raise HTTPException(status_code=code, detail=str(exc)) from exc
         return _item_to_out(row)
 
 
@@ -311,7 +320,9 @@ def put_allocation_item(
         try:
             row = update_allocation_item(session, plan_id, item_id, payload)
         except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
+            detail = str(exc)
+            code = 404 if "not found" in detail else 400
+            raise HTTPException(status_code=code, detail=detail) from exc
         return _item_to_out(row)
 
 

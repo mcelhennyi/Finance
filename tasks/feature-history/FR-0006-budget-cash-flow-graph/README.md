@@ -1,8 +1,8 @@
 # FR-0006 — Budget cash-flow graph (persisted + React Flow)
 
-**Status:** `in-progress` (see [`REGISTRY.md`](../REGISTRY.md)). Prior review PR [#9](https://github.com/mcelhennyi/Finance/pull/9) covered the original `T-FR-0006-01`–`07` slice; the 2026-06-29 expansion adds `T-FR-0006-08`–`11` before the feature-complete gate can pass again. Latest handoff: [`handoffs/2026-06-29-expand-account-routing-allocations.md`](handoffs/2026-06-29-expand-account-routing-allocations.md).
+**Status:** `complete` (see [`REGISTRY.md`](../REGISTRY.md)). PR [#9](https://github.com/mcelhennyi/Finance/pull/9) is open from `feat/FR-0006-budget-cash-flow-graph` to `master` for human review. Latest handoff: [`handoffs/2026-06-29-finish-feature.md`](handoffs/2026-06-29-finish-feature.md); closeout: [`90-closeout.md`](90-closeout.md).
 
-**Scope note:** Original FR-0006 delivery is triad-complete through **`T-FR-0006-07`**. This expansion keeps the feature active until the new allocation primitive, routing, and expansion tickets are complete.
+**Scope note:** FR-0006 is triad-complete through **`T-FR-0006-11`**. The 2026-06-29 expansion closes the account routing, source/sink allocation primitive, orthogonal routing, and expandable allocation cluster additions.
 
 ## Contents
 
@@ -13,7 +13,10 @@
 | [`30-expand-2026-06-29-account-routing-allocations.md`](30-expand-2026-06-29-account-routing-allocations.md) | Expansion addendum for account routing, allocation primitives, filters, and relayout |
 | [`20-tickets-dag.md`](20-tickets-dag.md) | Work breakdown + Mermaid DAG |
 | [`tickets.md`](tickets.md) | Canonical **`T-FR-0006-xx`** |
+| [`90-closeout.md`](90-closeout.md) | Feature-complete closeout, validation, PR audit |
+| [`DIARY.md`](DIARY.md) | Consolidated newest-first diary from serial and parallel logs |
 | [`serial-diary.md`](serial-diary.md) | Session notes |
+| [`parallel/`](parallel/) | Raw parallel ticket worker diaries |
 
 ## Summary
 

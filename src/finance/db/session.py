@@ -114,6 +114,31 @@ def apply_cash_flow_nodes_account_metadata_columns(engine: Engine) -> None:
             conn.execute(text(sql))
 
 
+def apply_allocation_item_primitive_columns(engine: Engine) -> None:
+    """Add source/sink allocation primitive columns to legacy ``allocation_items`` tables."""
+
+    insp = inspect(engine)
+    if not insp.has_table("allocation_items"):
+        return
+    cols = {c["name"] for c in insp.get_columns("allocation_items")}
+    alters = [
+        (
+            "allocation_role",
+            "ALTER TABLE allocation_items ADD COLUMN "
+            "allocation_role VARCHAR(32) NOT NULL DEFAULT 'sink'",
+        ),
+        ("from_account_ref", "ALTER TABLE allocation_items ADD COLUMN from_account_ref VARCHAR(64)"),
+        ("to_account_ref", "ALTER TABLE allocation_items ADD COLUMN to_account_ref VARCHAR(64)"),
+        ("counterparty", "ALTER TABLE allocation_items ADD COLUMN counterparty VARCHAR(200)"),
+    ]
+    missing = [sql for col, sql in alters if col not in cols]
+    if not missing:
+        return
+    with engine.begin() as conn:
+        for sql in missing:
+            conn.execute(text(sql))
+
+
 def init_db() -> None:
     """Create all tables if they don't exist; upgrade legacy SQLite schemas additively."""
     engine = get_engine()
@@ -121,6 +146,7 @@ def init_db() -> None:
     apply_additive_schema_fixes(engine)
     apply_cash_flow_nodes_parent_ref_column(engine)
     apply_cash_flow_nodes_account_metadata_columns(engine)
+    apply_allocation_item_primitive_columns(engine)
 
 
 @contextmanager

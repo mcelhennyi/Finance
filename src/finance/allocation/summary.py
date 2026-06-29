@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Iterable
 
 from finance.allocation.cadence import monthly_equivalent_for_plan_income
-from finance.allocation.enums import PaymentMethod, PlanIncomeCadence
+from finance.allocation.enums import AllocationRole, PaymentMethod, PlanIncomeCadence
 
 
 @dataclass(frozen=True)
@@ -32,6 +32,9 @@ class AllocationSummaryItemInput:
     monthly_amount: Decimal
     payment_method: str
     due_day: int | None
+    allocation_role: str = AllocationRole.SINK.value
+    from_account_ref: str | None = None
+    to_account_ref: str | None = None
 
 
 def build_allocation_summary(
@@ -44,13 +47,21 @@ def build_allocation_summary(
 
     category_totals: dict[str, Decimal] = {}
     cadence_totals: dict[str, Decimal] = {}
-    total = Decimal("0.00")
+    sink_total = Decimal("0.00")
+    source_income = Decimal("0.00")
     cash = Decimal("0.00")
     credit = Decimal("0.00")
+    has_source_allocations = False
 
     for row in items:
         m = row.monthly_amount
-        total += m
+        role = row.allocation_role or AllocationRole.SINK.value
+        if role == AllocationRole.SOURCE.value:
+            has_source_allocations = True
+            source_income += m
+            continue
+
+        sink_total += m
         cat = row.category
         category_totals[cat] = category_totals.get(cat, Decimal("0.00")) + m
 
@@ -63,15 +74,17 @@ def build_allocation_summary(
             credit += m
 
     income_monthly: Decimal | None = None
-    if income_amount is not None and income_cadence is not None:
+    if has_source_allocations:
+        income_monthly = source_income
+    elif income_amount is not None and income_cadence is not None:
         income_monthly = monthly_equivalent_for_plan_income(income_amount, income_cadence)
 
     remaining: Decimal | None = None
     if income_monthly is not None:
-        remaining = (income_monthly - total).quantize(Decimal("0.01"))
+        remaining = (income_monthly - sink_total).quantize(Decimal("0.01"))
 
     return AllocationSummary(
-        total_monthly_allocated=total.quantize(Decimal("0.01")),
+        total_monthly_allocated=sink_total.quantize(Decimal("0.01")),
         cash_allocated=cash.quantize(Decimal("0.01")),
         credit_allocated=credit.quantize(Decimal("0.01")),
         remaining_income=remaining,
@@ -91,4 +104,8 @@ def item_slice_from_orm(item: object) -> AllocationSummaryItemInput:
         monthly_amount=item.monthly_amount,
         payment_method=item.payment_method,
         due_day=item.due_day,
+        allocation_role=getattr(item, "allocation_role", AllocationRole.SINK.value)
+        or AllocationRole.SINK.value,
+        from_account_ref=getattr(item, "from_account_ref", None),
+        to_account_ref=getattr(item, "to_account_ref", None),
     )

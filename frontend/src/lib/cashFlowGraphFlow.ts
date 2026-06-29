@@ -12,6 +12,13 @@ import type {
   CashFlowNodeSpec,
   CashNodeKind,
 } from '../types'
+import type { AccountAllocationCluster } from './cashFlowAllocationClusters'
+import {
+  relayoutRoutableNodes,
+  routeOrthogonalEdges,
+  type OrthogonalRoute,
+  type RoutingBox,
+} from './cashFlowGraphRouting'
 
 const GRID_X = 200
 const GRID_Y = 120
@@ -30,8 +37,29 @@ export function defaultNodeLayoutForRef(ref: string): { layout_x: number; layout
   return { layout_x: o.x, layout_y: o.y }
 }
 
-export type CashNodeData = { spec: CashFlowNodeSpec; highlighted?: boolean }
-export type CashEdgeData = { spec: CashFlowEdgeSpec }
+export type AccountNodeRole = 'source' | 'sink' | 'source_sink' | 'unlinked'
+
+export type DirectionalAccountLinkState =
+  | { status: 'idle'; pendingFromRef: null; error: null }
+  | { status: 'pending'; pendingFromRef: string; error: null }
+  | { status: 'ready'; pendingFromRef: null; fromRef: string; toRef: string; error: null }
+  | { status: 'error'; pendingFromRef: string | null; error: string }
+
+export type DirectionalAccountLinkEdge = Pick<Edge<CashEdgeData>, 'source' | 'target'>
+
+export type CashNodeData = {
+  spec: CashFlowNodeSpec
+  highlighted?: boolean
+  role?: AccountNodeRole
+  allocationCluster?: AccountAllocationCluster
+  allocationExpanded?: boolean
+  pendingLinkFrom?: boolean
+  linkError?: boolean
+  onToggleAllocationCluster?: (ref: string) => void
+  onStartOutputLink?: (ref: string) => void
+  onFinishInputLink?: (ref: string) => void
+}
+export type CashEdgeData = { spec: CashFlowEdgeSpec; route?: OrthogonalRoute }
 
 /** Typed React Flow node for custom `cashNode` renderer. */
 export type CashFlowRfNode = Node<CashNodeData, 'cashNode'>
@@ -72,7 +100,7 @@ export function graphDocumentToFlowElements(doc: CashFlowGraphDocument): {
   nodes: CashFlowRfNode[]
   edges: Edge<CashEdgeData>[]
 } {
-  const nodes: CashFlowRfNode[] = doc.nodes.map(n => {
+  const rawNodes: CashFlowRfNode[] = doc.nodes.map(n => {
     const fallback = stableOffset(n.ref)
     const x = n.layout_x ?? fallback.x
     const y = n.layout_y ?? fallback.y
@@ -84,9 +112,95 @@ export function graphDocumentToFlowElements(doc: CashFlowGraphDocument): {
     }
   })
 
+  const nodes = relayoutCashFlowNodes(rawNodes)
   const edges: Edge<CashEdgeData>[] = doc.edges.map(cashFlowEdgeToFlowEdge)
 
-  return { nodes, edges }
+  return { nodes, edges: applyOrthogonalEdgeRoutes(nodes, edges) }
+}
+
+export function applyOrthogonalEdgeRoutes(
+  nodes: CashFlowRfNode[],
+  edges: Edge<CashEdgeData>[],
+  obstacles: RoutingBox[] = [],
+): Edge<CashEdgeData>[] {
+  const routes = routeOrthogonalEdges(
+    nodes,
+    edges.map(edge => ({ id: edge.id, source: edge.source, target: edge.target })),
+    { obstacles },
+  )
+
+  return edges.map(edge => ({
+    ...edge,
+    type: 'orthogonalCashEdge',
+    data: {
+      ...(edge.data ?? { spec: defaultNewEdgeSpec(edge.id, edge.source, edge.target) }),
+      route: routes[edge.id],
+    },
+  }))
+}
+
+export function relayoutCashFlowNodes(
+  nodes: CashFlowRfNode[],
+  obstacles: RoutingBox[] = [],
+): CashFlowRfNode[] {
+  return relayoutRoutableNodes(nodes, { obstacles })
+}
+
+export function deriveAccountNodeRole(
+  ref: string,
+  edges: DirectionalAccountLinkEdge[],
+): AccountNodeRole {
+  const hasIncoming = edges.some(e => e.target === ref)
+  const hasOutgoing = edges.some(e => e.source === ref)
+  if (hasIncoming && hasOutgoing) return 'source_sink'
+  if (hasOutgoing) return 'source'
+  if (hasIncoming) return 'sink'
+  return 'unlinked'
+}
+
+export function deriveAccountNodeRoles(
+  nodeRefs: string[],
+  edges: DirectionalAccountLinkEdge[],
+): Record<string, AccountNodeRole> {
+  return Object.fromEntries(nodeRefs.map(ref => [ref, deriveAccountNodeRole(ref, edges)]))
+}
+
+export function startDirectionalAccountLink(fromRef: string): DirectionalAccountLinkState {
+  return { status: 'pending', pendingFromRef: fromRef, error: null }
+}
+
+export function completeDirectionalAccountLink(
+  pendingFromRef: string | null,
+  toRef: string,
+  edges: DirectionalAccountLinkEdge[],
+): DirectionalAccountLinkState {
+  if (!pendingFromRef) {
+    return {
+      status: 'error',
+      pendingFromRef: null,
+      error: 'Choose a source account output first.',
+    }
+  }
+  return validateDirectionalAccountLink(pendingFromRef, toRef, edges)
+}
+
+export function validateDirectionalAccountLink(
+  fromRef: string,
+  toRef: string,
+  edges: DirectionalAccountLinkEdge[],
+): DirectionalAccountLinkState {
+  const source = fromRef.trim()
+  const target = toRef.trim()
+  if (!source || !target) {
+    return { status: 'error', pendingFromRef: source || null, error: 'Choose source and destination accounts.' }
+  }
+  if (source === target) {
+    return { status: 'error', pendingFromRef: source, error: 'Choose two different accounts.' }
+  }
+  if (edges.some(e => e.source === source && e.target === target)) {
+    return { status: 'error', pendingFromRef: source, error: 'That account flow already exists.' }
+  }
+  return { status: 'ready', pendingFromRef: null, fromRef: source, toRef: target, error: null }
 }
 
 export function newEdgeRef(fromRef: string, toRef: string): string {

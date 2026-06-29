@@ -3,7 +3,9 @@ import '@xyflow/react/dist/style.css'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Background,
+  BaseEdge,
   Controls,
+  EdgeLabelRenderer,
   Handle,
   MiniMap,
   Position,
@@ -17,6 +19,9 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
+  type EdgeProps,
+  type EdgeTypes,
+  type Node,
   type NodeChange,
   type NodeProps,
   type NodeTypes,
@@ -24,29 +29,58 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '../../api/client'
-import type { CashFlowEdgeSpec, CashFlowNodeSpec, CashNodeKind } from '../../types'
+import type { AllocationItem, CashFlowEdgeSpec, CashFlowNodeSpec, CashNodeKind } from '../../types'
 import { suggestedEdgesFromBbdResponse } from '../../lib/bbdCashFlowSuggestions'
 import {
+  DEFAULT_ALLOCATION_CLUSTER_FILTERS,
+  allocationClusterBox,
+  deriveAllocationClusters,
+  type AccountAllocationCluster,
+  type AllocationClusterFilters,
+  type AllocationMiniNode,
+} from '../../lib/cashFlowAllocationClusters'
+import {
+  applyOrthogonalEdgeRoutes,
   CashEdgeData,
   CashFlowRfNode,
+  completeDirectionalAccountLink,
   cashFlowEdgeToFlowEdge,
   defaultNewEdgeSpec,
+  deriveAccountNodeRoles,
   edgeSummaryLabel,
   flowElementsToGraphDocument,
   graphDocumentToFlowElements,
   newEdgeRef,
+  relayoutCashFlowNodes,
+  startDirectionalAccountLink,
+  validateDirectionalAccountLink,
+  type AccountNodeRole,
 } from '../../lib/cashFlowGraphFlow'
 import {
   aggregateNodeFlows,
   type TimeGrain,
 } from '../../lib/cashFlowTimeAggregation'
-import { formatUsd } from '../../lib/budgetAllocation'
+import { ALLOCATION_ITEM_CADENCES, ALLOCATION_ROLES, PAYMENT_METHODS, formatUsd } from '../../lib/budgetAllocation'
 import { CASH_NODE_KIND_OPTIONS, CASH_FLOW_REF_PATTERN } from '../../lib/cashFlowGraphKinds'
 import { BUDGET_SCROLL_ANCHORS } from './budgetDocAnchors'
 
 const KIND_OPTIONS: CashNodeKind[] = CASH_NODE_KIND_OPTIONS
 
 const REF_PATTERN = CASH_FLOW_REF_PATTERN
+const ACCOUNT_NODE_WIDTH = 192
+const ACCOUNT_NODE_HEIGHT = 104
+const MINI_NODE_WIDTH = 164
+const MINI_NODE_HEIGHT = 74
+const MINI_NODE_GAP = 12
+const CLUSTER_HEADER_HEIGHT = 56
+
+type AllocationMiniNodeData = {
+  miniNode: AllocationMiniNode | null
+  accountLabel: string
+}
+
+type AllocationMiniRfNode = Node<AllocationMiniNodeData, 'allocationMiniNode'>
+type GraphDisplayNode = CashFlowRfNode | AllocationMiniRfNode
 
 function formatNodeBalance(amount: string | null | undefined): string {
   const t = amount?.trim()
@@ -122,25 +156,177 @@ function CashFlowNodeView({ data }: NodeProps<CashFlowRfNode>) {
   const ring = data.highlighted
     ? 'ring-2 ring-teal-500 ring-offset-2 ring-offset-slate-50 shadow-md z-10'
     : ''
+  const isPendingSource = data.pendingLinkFrom
+  const hasLinkError = data.linkError
+  const role = data.role ?? 'unlinked'
+  const roleClasses: Record<AccountNodeRole, string> = {
+    source: 'bg-emerald-50 text-emerald-800 ring-emerald-100',
+    sink: 'bg-sky-50 text-sky-800 ring-sky-100',
+    source_sink: 'bg-violet-50 text-violet-800 ring-violet-100',
+    unlinked: 'bg-slate-100 text-slate-500 ring-slate-200',
+  }
+  const roleLabel: Record<AccountNodeRole, string> = {
+    source: 'Source',
+    sink: 'Sink',
+    source_sink: 'Source + sink',
+    unlinked: 'Unlinked',
+  }
+  const allocationCluster = data.allocationCluster
+  const sourceCount = allocationCluster?.sourceCount ?? 0
+  const sinkCount = allocationCluster?.sinkCount ?? 0
+  const totalCount = allocationCluster?.totalCount ?? 0
+  const visibleCount = allocationCluster?.visibleCount ?? totalCount
   return (
     <div
-      className={`rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[7.5rem] max-w-[14rem] ${ring}`}
+      className={`relative rounded-lg border bg-white px-3 py-2 shadow-sm min-w-[7.5rem] max-w-[14rem] ${
+        isPendingSource
+          ? 'border-teal-500'
+          : hasLinkError
+            ? 'border-red-300'
+            : 'border-slate-200'
+      } ${ring}`}
     >
-      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-slate-300 !bg-teal-500" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        onDoubleClick={event => {
+          event.stopPropagation()
+          data.onFinishInputLink?.(spec.ref)
+        }}
+        title="Input: double-click to finish a directed account link"
+        className="!left-[-9px] !h-8 !w-3 !rounded-full !border-slate-300 !bg-sky-500"
+      />
       <div className="text-xs font-semibold leading-snug text-slate-800 break-words">{spec.display_name}</div>
       {parentLabel && (
         <div className="mt-0.5 text-[10px] text-slate-500 leading-snug break-words">Under {parentLabel}</div>
       )}
       <div className="mt-0.5 text-[10px] capitalize text-slate-500">{spec.kind.replace(/_/g, ' ')}</div>
-      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-slate-300 !bg-teal-500" />
+      <div
+        className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ring-1 ${roleClasses[role]}`}
+      >
+        {roleLabel[role]}
+      </div>
+      <button
+        type="button"
+        onClick={event => {
+          event.stopPropagation()
+          data.onToggleAllocationCluster?.(spec.ref)
+        }}
+        className={`mt-1 flex w-full items-center justify-between gap-1 rounded-md border px-1.5 py-1 text-[10px] font-semibold ${
+          data.allocationExpanded
+            ? 'border-teal-200 bg-teal-50 text-teal-900'
+            : 'border-slate-100 bg-slate-50 text-slate-700'
+        }`}
+        aria-expanded={Boolean(data.allocationExpanded)}
+        title="Show linked allocation rows below this account"
+      >
+        <span>{totalCount} allocations</span>
+        <span className="tabular-nums text-[9px] text-slate-500">
+          {sourceCount} in / {sinkCount} out
+        </span>
+      </button>
+      {data.allocationExpanded && (
+        <div className="mt-1 text-[9px] font-medium text-teal-800">
+          {visibleCount} visible after filters
+        </div>
+      )}
+      <Handle
+        type="source"
+        position={Position.Right}
+        onDoubleClick={event => {
+          event.stopPropagation()
+          data.onStartOutputLink?.(spec.ref)
+        }}
+        title="Output: double-click to start a directed account link"
+        className="!right-[-9px] !h-8 !w-3 !rounded-full !border-slate-300 !bg-teal-500"
+      />
     </div>
   )
 }
 
 const CashFlowNodeViewMemo = memo(CashFlowNodeView)
 
+function OrthogonalCashEdge({
+  data,
+  id,
+  label,
+  markerEnd,
+  sourceX,
+  sourceY,
+  style,
+  targetX,
+  targetY,
+}: EdgeProps<Edge<CashEdgeData>>) {
+  const routePoints = data?.route?.points ?? [
+    { x: sourceX, y: sourceY },
+    { x: targetX, y: targetY },
+  ]
+  const path = data?.route?.path ?? `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`
+  const middle = routePoints[Math.floor(routePoints.length / 2)] ?? {
+    x: (sourceX + targetX) / 2,
+    y: (sourceY + targetY) / 2,
+  }
+
+  return (
+    <>
+      <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} />
+      {label ? (
+        <EdgeLabelRenderer>
+          <div
+            className="pointer-events-none absolute rounded-md border border-teal-100 bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-teal-900 shadow-sm"
+            style={{
+              transform: `translate(-50%, -50%) translate(${middle.x}px, ${middle.y}px)`,
+            }}
+          >
+            {label}
+          </div>
+        </EdgeLabelRenderer>
+      ) : null}
+    </>
+  )
+}
+
+const OrthogonalCashEdgeMemo = memo(OrthogonalCashEdge)
+
+function AllocationMiniNodeView({ data }: NodeProps<AllocationMiniRfNode>) {
+  if (!data.miniNode) {
+    return (
+      <div className="flex h-[4.625rem] w-[10.25rem] items-center justify-center rounded-md border border-dashed border-slate-200 bg-white px-3 text-center text-[10px] font-medium leading-snug text-slate-500 shadow-sm">
+        No linked allocations for {data.accountLabel}.
+      </div>
+    )
+  }
+
+  const mini = data.miniNode
+  const toneClass = {
+    source: 'border-emerald-200 bg-emerald-50 text-emerald-950',
+    sink: 'border-rose-200 bg-rose-50 text-rose-950',
+    owned_sink: 'border-sky-200 bg-sky-50 text-sky-950',
+  }[mini.tone]
+
+  return (
+    <div className={`h-[4.625rem] w-[10.25rem] rounded-md border px-2 py-1.5 shadow-sm ${toneClass}`}>
+      <div className="flex items-center justify-between gap-1">
+        <span className="rounded-full bg-white/75 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide">
+          {mini.roleLabel}
+        </span>
+        <span className="text-[10px] font-semibold tabular-nums">{formatUsd(mini.item.monthly_amount)}</span>
+      </div>
+      <div className="mt-1 truncate text-[11px] font-semibold" title={mini.label}>
+        {mini.label}
+      </div>
+      <div className="mt-0.5 max-h-6 overflow-hidden text-[9px] leading-snug text-slate-600" title={mini.detail}>
+        {mini.detail}
+      </div>
+    </div>
+  )
+}
+
+const AllocationMiniNodeViewMemo = memo(AllocationMiniNodeView)
+
 interface Props {
   planId: number | null
+  allocationItems?: AllocationItem[]
   /** Used for percent-of-inflow aggregation (plan summary monthly income). */
   planIncomeMonthly?: number | null
   /** Node refs to emphasize when hovering the allocation Account column. */
@@ -152,6 +338,7 @@ interface Props {
 
 export function CashFlowGraphPanel({
   planId,
+  allocationItems = [],
   planIncomeMonthly = null,
   highlightNodeRefs = [],
   addAccountPanelOpen,
@@ -177,8 +364,11 @@ export function CashFlowGraphPanel({
   const [linkFromRef, setLinkFromRef] = useState('')
   const [linkToRef, setLinkToRef] = useState('')
   const [linkLabel, setLinkLabel] = useState('')
+  const [pendingLinkFromRef, setPendingLinkFromRef] = useState<string | null>(null)
   const [linkError, setLinkError] = useState<string | null>(null)
   const [grain, setGrain] = useState<TimeGrain>('month')
+  const [expandedAccountRef, setExpandedAccountRef] = useState<string | null>(null)
+  const [allocationFiltersByAccountRef, setAllocationFiltersByAccountRef] = useState<Record<string, AllocationClusterFilters>>({})
   const [bbdSuggestions, setBbdSuggestions] = useState<{
     edges: CashFlowEdgeSpec[]
     meta: { rationale: string }[]
@@ -203,11 +393,15 @@ export function CashFlowGraphPanel({
     setLinkFromRef(el.nodes[0]?.id ?? '')
     setLinkToRef(el.nodes.find(n => n.id !== el.nodes[0]?.id)?.id ?? '')
     setLinkLabel('')
+    setPendingLinkFromRef(null)
     setLinkError(null)
+    setExpandedAccountRef(null)
   }, [graphQuery.data, setEdges, setNodes])
 
   useEffect(() => {
     setEditingAccountId(null)
+    setAllocationFiltersByAccountRef({})
+    setExpandedAccountRef(null)
   }, [planId])
 
   useEffect(() => {
@@ -244,22 +438,25 @@ export function CashFlowGraphPanel({
   })
 
   const linkMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({
+      fromRef,
+      toRef,
+      label,
+    }: {
+      fromRef: string
+      toRef: string
+      label: string
+    }) => {
       if (planId == null) throw new Error('No plan')
-      const fromRef = linkFromRef.trim()
-      const toRef = linkToRef.trim()
-      if (!fromRef || !toRef) throw new Error('Choose source and destination accounts.')
-      if (fromRef === toRef) throw new Error('Choose two different accounts.')
-      if (edges.some(e => e.source === fromRef && e.target === toRef)) {
-        throw new Error('That account flow already exists.')
-      }
+      const state = validateDirectionalAccountLink(fromRef, toRef, edges)
+      if (state.status !== 'ready') throw new Error(state.error ?? 'Could not link accounts')
 
       const doc = flowElementsToGraphDocument(planId, nodes, edges)
       await api.putBudgetCashFlowGraph(planId, doc)
       return api.linkBudgetCashFlowAccounts(planId, {
-        from_ref: fromRef,
-        to_ref: toRef,
-        label: linkLabel.trim(),
+        from_ref: state.fromRef,
+        to_ref: state.toRef,
+        label: label.trim(),
         amount_rule: 'remainder',
         fixed_amount: null,
         percent_of_inflow: null,
@@ -274,6 +471,7 @@ export function CashFlowGraphPanel({
       if (planId != null) {
         queryClient.setQueryData(['budgetCashFlowGraph', planId], data)
       }
+      setPendingLinkFromRef(null)
       setLinkLabel('')
     },
     onError: error => {
@@ -311,8 +509,8 @@ export function CashFlowGraphPanel({
   )
 
   const handleNodesChange = useCallback(
-    (changes: NodeChange<CashFlowRfNode>[]) => {
-      setNodes(nds => applyNodeChanges(changes, nds))
+    (changes: NodeChange<GraphDisplayNode>[]) => {
+      setNodes(nds => applyNodeChanges(changes as NodeChange<CashFlowRfNode>[], nds))
     },
     [setNodes],
   )
@@ -325,16 +523,192 @@ export function CashFlowGraphPanel({
   )
 
   const onSelectionChange = useCallback(
-    ({ nodes: selNodes, edges: selEdges }: { nodes: CashFlowRfNode[]; edges: Edge<CashEdgeData>[] }) => {
-      setSelectedNodeId(selNodes[0]?.id ?? null)
+    ({ nodes: selNodes, edges: selEdges }: { nodes: GraphDisplayNode[]; edges: Edge<CashEdgeData>[] }) => {
+      const selectedAccount = selNodes.find(node => node.type === 'cashNode')
+      setSelectedNodeId(selectedAccount?.id ?? null)
       setSelectedEdgeId(selEdges[0]?.id ?? null)
     },
     [],
   )
 
+  const submitDirectionalLink = useCallback(
+    (fromRef: string, toRef: string, label: string) => {
+      const state = validateDirectionalAccountLink(fromRef, toRef, edges)
+      if (state.status !== 'ready') {
+        setPendingLinkFromRef(state.pendingFromRef)
+        setLinkError(state.error)
+        return
+      }
+      setLinkError(null)
+      setLinkFromRef(state.fromRef)
+      setLinkToRef(state.toRef)
+      linkMut.mutate({ fromRef: state.fromRef, toRef: state.toRef, label })
+    },
+    [edges, linkMut],
+  )
+
+  const handleOutputDoubleClick = useCallback((fromRef: string) => {
+    const state = startDirectionalAccountLink(fromRef)
+    setPendingLinkFromRef(state.pendingFromRef)
+    setLinkFromRef(fromRef)
+    setLinkError(null)
+  }, [])
+
+  const handleInputDoubleClick = useCallback(
+    (toRef: string) => {
+      const state = completeDirectionalAccountLink(pendingLinkFromRef, toRef, edges)
+      setLinkToRef(toRef)
+      if (state.status !== 'ready') {
+        setPendingLinkFromRef(state.pendingFromRef)
+        setLinkError(state.error)
+        return
+      }
+      submitDirectionalLink(state.fromRef, state.toRef, linkLabel)
+    },
+    [edges, linkLabel, pendingLinkFromRef, submitDirectionalLink],
+  )
+
   const selectedEdge = useMemo(
     () => edges.find(e => e.id === selectedEdgeId),
     [edges, selectedEdgeId],
+  )
+  const accountSpecs = useMemo(() => nodes.map(n => n.data.spec), [nodes])
+  const allocationClusters = useMemo(
+    () =>
+      deriveAllocationClusters({
+        accountNodes: accountSpecs,
+        allocations: allocationItems,
+        filtersByAccountRef: allocationFiltersByAccountRef,
+      }),
+    [accountSpecs, allocationFiltersByAccountRef, allocationItems],
+  )
+  const toggleAllocationCluster = useCallback((ref: string) => {
+    setExpandedAccountRef(cur => (cur === ref ? null : ref))
+    setAllocationFiltersByAccountRef(cur => ({
+      ...cur,
+      [ref]: cur[ref] ?? DEFAULT_ALLOCATION_CLUSTER_FILTERS,
+    }))
+  }, [])
+  const activeAllocationFilters = expandedAccountRef
+    ? allocationFiltersByAccountRef[expandedAccountRef] ?? DEFAULT_ALLOCATION_CLUSTER_FILTERS
+    : DEFAULT_ALLOCATION_CLUSTER_FILTERS
+  const activeAllocationCluster: AccountAllocationCluster | null = expandedAccountRef
+    ? allocationClusters[expandedAccountRef] ?? null
+    : null
+  const activeAccountLabel = expandedAccountRef
+    ? nodes.find(node => node.id === expandedAccountRef)?.data.spec.display_name ?? expandedAccountRef
+    : ''
+  const setActiveAllocationFilter = useCallback(
+    <K extends keyof AllocationClusterFilters>(key: K, value: AllocationClusterFilters[K]) => {
+      if (!expandedAccountRef) return
+      setAllocationFiltersByAccountRef(cur => ({
+        ...cur,
+        [expandedAccountRef]: {
+          ...(cur[expandedAccountRef] ?? DEFAULT_ALLOCATION_CLUSTER_FILTERS),
+          [key]: value,
+        },
+      }))
+    },
+    [expandedAccountRef],
+  )
+  const roleByNodeRef = useMemo(
+    () => deriveAccountNodeRoles(nodes.map(n => n.id), edges),
+    [edges, nodes],
+  )
+  const roughExpandedNode = useMemo(
+    () => (expandedAccountRef ? nodes.find(n => n.id === expandedAccountRef) : null),
+    [expandedAccountRef, nodes],
+  )
+  const roughCluster = expandedAccountRef && roughExpandedNode
+    ? allocationClusterBox({
+        accountRef: expandedAccountRef,
+        accountX: roughExpandedNode.position.x,
+        accountY: roughExpandedNode.position.y,
+        accountWidth: ACCOUNT_NODE_WIDTH,
+        accountHeight: ACCOUNT_NODE_HEIGHT,
+        miniNodeCount: Math.max(1, allocationClusters[expandedAccountRef]?.visibleCount ?? 0),
+      })
+    : null
+  const relaidNodes = useMemo(
+    () => relayoutCashFlowNodes(nodes, roughCluster ? [roughCluster] : []),
+    [nodes, roughCluster],
+  )
+  const finalExpandedNode = useMemo(
+    () => (expandedAccountRef ? relaidNodes.find(n => n.id === expandedAccountRef) : null),
+    [expandedAccountRef, relaidNodes],
+  )
+  const finalCluster = expandedAccountRef && finalExpandedNode
+    ? allocationClusterBox({
+        accountRef: expandedAccountRef,
+        accountX: finalExpandedNode.position.x,
+        accountY: finalExpandedNode.position.y,
+        accountWidth: ACCOUNT_NODE_WIDTH,
+        accountHeight: ACCOUNT_NODE_HEIGHT,
+        miniNodeCount: Math.max(1, allocationClusters[expandedAccountRef]?.visibleCount ?? 0),
+      })
+    : null
+  const displayedAccountNodes = useMemo(
+    () =>
+      relaidNodes.map(n => ({
+        ...n,
+        data: {
+          ...n.data,
+          role: roleByNodeRef[n.id] ?? 'unlinked',
+          allocationCluster: allocationClusters[n.id],
+          allocationExpanded: expandedAccountRef === n.id,
+          pendingLinkFrom: pendingLinkFromRef === n.id,
+          linkError: linkError != null && (pendingLinkFromRef === n.id || linkToRef === n.id),
+          onToggleAllocationCluster: toggleAllocationCluster,
+          onStartOutputLink: handleOutputDoubleClick,
+          onFinishInputLink: handleInputDoubleClick,
+        },
+      })),
+    [
+      allocationClusters,
+      expandedAccountRef,
+      handleInputDoubleClick,
+      handleOutputDoubleClick,
+      linkError,
+      linkToRef,
+      pendingLinkFromRef,
+      relaidNodes,
+      roleByNodeRef,
+      toggleAllocationCluster,
+    ],
+  )
+  const allocationMiniNodes = useMemo((): AllocationMiniRfNode[] => {
+    if (!expandedAccountRef || !finalCluster || !finalExpandedNode) return []
+    const cluster = allocationClusters[expandedAccountRef]
+    const accountLabel = finalExpandedNode.data.spec.display_name || expandedAccountRef
+    const miniNodes = cluster?.miniNodes ?? []
+    const columns = Math.max(1, Math.min(3, Math.max(1, miniNodes.length)))
+    const startX = finalCluster.x
+    const startY = finalCluster.y + CLUSTER_HEADER_HEIGHT
+    const source: { id: string; miniNode: AllocationMiniNode | null }[] = miniNodes.length
+      ? miniNodes.map(miniNode => ({ id: miniNode.id, miniNode }))
+      : [{ id: `allocation-empty-${expandedAccountRef}`, miniNode: null }]
+
+    return source.map((entry, index) => {
+      return {
+        id: entry.id,
+        type: 'allocationMiniNode',
+        position: {
+          x: startX + (index % columns) * (MINI_NODE_WIDTH + MINI_NODE_GAP),
+          y: startY + Math.floor(index / columns) * (MINI_NODE_HEIGHT + MINI_NODE_GAP),
+        },
+        draggable: false,
+        selectable: false,
+        data: { miniNode: entry.miniNode, accountLabel },
+      }
+    })
+  }, [allocationClusters, expandedAccountRef, finalCluster, finalExpandedNode])
+  const displayedNodes = useMemo<GraphDisplayNode[]>(
+    () => [...displayedAccountNodes, ...allocationMiniNodes],
+    [allocationMiniNodes, displayedAccountNodes],
+  )
+  const displayedEdges = useMemo(
+    () => applyOrthogonalEdgeRoutes(displayedAccountNodes, edges, finalCluster ? [finalCluster] : []),
+    [displayedAccountNodes, edges, finalCluster],
   )
   const accountListRows = useMemo(() => accountRows(nodes), [nodes])
   const nodeLabelByRef = useMemo(
@@ -472,7 +846,14 @@ export function CashFlowGraphPanel({
   )
 
   const nodeTypes = useMemo(
-    (): NodeTypes => ({ cashNode: CashFlowNodeViewMemo }),
+    (): NodeTypes => ({
+      cashNode: CashFlowNodeViewMemo,
+      allocationMiniNode: AllocationMiniNodeViewMemo,
+    }),
+    [],
+  )
+  const edgeTypes = useMemo(
+    (): EdgeTypes => ({ orthogonalCashEdge: OrthogonalCashEdgeMemo }),
     [],
   )
 
@@ -629,11 +1010,172 @@ export function CashFlowGraphPanel({
             )}
           </div>
 
+          {expandedAccountRef && activeAllocationCluster && (
+            <div className="rounded-xl border border-teal-100 bg-white p-3 shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-widest text-teal-700">
+                    Expanded allocations
+                  </div>
+                  <div className="text-sm font-semibold text-slate-800">{activeAccountLabel}</div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[11px] text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-2 py-1">
+                    {activeAllocationCluster.visibleCount}/{activeAllocationCluster.totalCount} visible
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-800">
+                    Source {formatUsd(activeAllocationCluster.visibleSourceTotal)}
+                  </span>
+                  <span className="rounded-full bg-rose-50 px-2 py-1 text-rose-800">
+                    External sink {formatUsd(activeAllocationCluster.visibleExternalSinkTotal)}
+                  </span>
+                  <span className="rounded-full bg-sky-50 px-2 py-1 text-sky-800">
+                    Owned destination {formatUsd(activeAllocationCluster.visibleOwnedSinkTotal)}
+                  </span>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+                <label className="text-[11px] font-medium text-slate-600">
+                  Min monthly
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.monthlyMin}
+                    onChange={e => setActiveAllocationFilter('monthlyMin', e.target.value)}
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Max monthly
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.monthlyMax}
+                    onChange={e => setActiveAllocationFilter('monthlyMax', e.target.value)}
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Cadence
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.cadence}
+                    onChange={e => setActiveAllocationFilter('cadence', e.target.value)}
+                  >
+                    <option value="">Any</option>
+                    {ALLOCATION_ITEM_CADENCES.map(cadence => (
+                      <option key={cadence} value={cadence}>
+                        {cadence.replace(/_/g, ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Role
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.allocationRole}
+                    onChange={e => setActiveAllocationFilter('allocationRole', e.target.value)}
+                  >
+                    <option value="">Any</option>
+                    {ALLOCATION_ROLES.map(role => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Method
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.paymentMethod}
+                    onChange={e => setActiveAllocationFilter('paymentMethod', e.target.value)}
+                  >
+                    <option value="">Any</option>
+                    {PAYMENT_METHODS.map(method => (
+                      <option key={method} value={method}>
+                        {method}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Endpoint
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.endpointRole}
+                    onChange={e =>
+                      setActiveAllocationFilter('endpointRole', e.target.value as AllocationClusterFilters['endpointRole'])
+                    }
+                  >
+                    <option value="any">Any</option>
+                    <option value="funds_account">Funds this account</option>
+                    <option value="funded_by_account">Funded by this account</option>
+                  </select>
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Category
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.categorySearch}
+                    onChange={e => setActiveAllocationFilter('categorySearch', e.target.value)}
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Counterparty
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.counterpartySearch}
+                    onChange={e => setActiveAllocationFilter('counterpartySearch', e.target.value)}
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Due min
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.dueDayMin}
+                    onChange={e => setActiveAllocationFilter('dueDayMin', e.target.value)}
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-slate-600">
+                  Due max
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                    value={activeAllocationFilters.dueDayMax}
+                    onChange={e => setActiveAllocationFilter('dueDayMax', e.target.value)}
+                  />
+                </label>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAllocationFiltersByAccountRef(cur => ({
+                        ...cur,
+                        [expandedAccountRef]: DEFAULT_ALLOCATION_CLUSTER_FILTERS,
+                      }))
+                    }
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50" style={{ height: 'min(55vh, 28rem)' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
+            <ReactFlow<GraphDisplayNode, Edge<CashEdgeData>>
+              nodes={displayedNodes}
+              edges={displayedEdges}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
               onConnect={onConnect}
@@ -656,7 +1198,7 @@ export function CashFlowGraphPanel({
           </div>
 
           <p className="text-xs text-slate-500">
-            Drag nodes, connect handles to add flows, select an edge or node to edit details. Delete key removes the selection.
+            Drag nodes, double-click a right output then a left input to link accounts, or use the account-link controls below. Delete key removes the selection.
           </p>
 
           <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm space-y-4">
@@ -669,7 +1211,7 @@ export function CashFlowGraphPanel({
               </p>
             </div>
             <div className="border-y border-teal-100 bg-teal-50/40 py-3">
-              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(8rem,0.75fr)_auto] md:items-end">
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(8rem,0.75fr)_auto_auto] md:items-end">
                 <label className="block text-xs font-medium text-slate-600">
                   Source account
                   <select
@@ -715,13 +1257,30 @@ export function CashFlowGraphPanel({
                 </label>
                 <button
                   type="button"
-                  onClick={() => linkMut.mutate()}
+                  onClick={() => {
+                    const state = startDirectionalAccountLink(linkFromRef)
+                    setPendingLinkFromRef(state.pendingFromRef)
+                    setLinkError(null)
+                  }}
+                  disabled={!canLinkAccounts || linkMut.isPending || !linkFromRef}
+                  className="rounded-lg border border-teal-200 bg-white px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-50 disabled:opacity-50"
+                >
+                  Start
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitDirectionalLink(linkFromRef, linkToRef, linkLabel)}
                   disabled={!canLinkAccounts || linkMut.isPending}
                   className="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
                 >
                   {linkMut.isPending ? 'Linking…' : 'Link accounts'}
                 </button>
               </div>
+              {pendingLinkFromRef && (
+                <p className="mt-2 text-xs text-teal-800">
+                  Pending source: {nodeLabelByRef.get(pendingLinkFromRef) ?? pendingLinkFromRef}. Choose a destination input.
+                </p>
+              )}
               {(linkError || linkMut.isError) && (
                 <p className="mt-2 text-xs text-red-700" role="alert">
                   {linkError ||

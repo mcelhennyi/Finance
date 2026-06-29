@@ -1,13 +1,24 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  applyOrthogonalEdgeRoutes,
   cashFlowEdgeToFlowEdge,
+  completeDirectionalAccountLink,
   defaultNewEdgeSpec,
+  deriveAccountNodeRoles,
   edgeSummaryLabel,
   flowElementsToGraphDocument,
   graphDocumentToFlowElements,
   newEdgeRef,
+  relayoutCashFlowNodes,
+  startDirectionalAccountLink,
+  validateDirectionalAccountLink,
 } from './cashFlowGraphFlow'
+import {
+  orthogonalPathFromPoints,
+  routeOrthogonalEdges,
+  type RoutingBox,
+} from './cashFlowGraphRouting'
 import type { CashFlowGraphDocument } from '../types'
 
 describe('cashFlowGraphFlow', () => {
@@ -147,5 +158,177 @@ describe('cashFlowGraphFlow', () => {
     const r = newEdgeRef('pay', 'chk')
     expect(r.startsWith('e_')).toBe(true)
     expect(r.length).toBeLessThanOrEqual(64)
+  })
+
+  it('derives account node roles from directed edge incidence', () => {
+    const roles = deriveAccountNodeRoles(['payroll', 'checking', 'savings', 'brokerage'], [
+      { source: 'payroll', target: 'checking' },
+      { source: 'checking', target: 'savings' },
+    ])
+
+    expect(roles.payroll).toBe('source')
+    expect(roles.savings).toBe('sink')
+    expect(roles.checking).toBe('source_sink')
+    expect(roles.brokerage).toBe('unlinked')
+  })
+
+  it('tracks pending source selection for directional account linking', () => {
+    expect(startDirectionalAccountLink('checking')).toEqual({
+      status: 'pending',
+      pendingFromRef: 'checking',
+      error: null,
+    })
+  })
+
+  it('completes a pending directional account link', () => {
+    expect(completeDirectionalAccountLink('checking', 'savings', [])).toEqual({
+      status: 'ready',
+      pendingFromRef: null,
+      fromRef: 'checking',
+      toRef: 'savings',
+      error: null,
+    })
+  })
+
+  it('rejects duplicate directional account links', () => {
+    expect(
+      completeDirectionalAccountLink('checking', 'savings', [
+        { source: 'checking', target: 'savings' },
+      ]),
+    ).toEqual({
+      status: 'error',
+      pendingFromRef: 'checking',
+      error: 'That account flow already exists.',
+    })
+  })
+
+  it('rejects self-links for directional account links', () => {
+    expect(completeDirectionalAccountLink('checking', 'checking', [])).toEqual({
+      status: 'error',
+      pendingFromRef: 'checking',
+      error: 'Choose two different accounts.',
+    })
+  })
+
+  it('supports the select/button fallback path through the same validation', () => {
+    expect(validateDirectionalAccountLink('payroll', 'checking', [])).toEqual({
+      status: 'ready',
+      pendingFromRef: null,
+      fromRef: 'payroll',
+      toRef: 'checking',
+      error: null,
+    })
+  })
+
+  it('generates square orthogonal SVG paths from points', () => {
+    expect(
+      orthogonalPathFromPoints([
+        { x: 10, y: 20 },
+        { x: 10, y: 20 },
+        { x: 80, y: 20 },
+        { x: 80, y: 70 },
+      ]),
+    ).toBe('M 10 20 L 80 20 L 80 70')
+  })
+
+  it('assigns stable separate lanes for multiple outgoing edges from one node', () => {
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'checking', position: { x: 0, y: 100 } },
+        { id: 'savings', position: { x: 360, y: 20 } },
+        { id: 'brokerage', position: { x: 360, y: 180 } },
+      ],
+      [
+        { id: 'edge_z', source: 'checking', target: 'savings' },
+        { id: 'edge_a', source: 'checking', target: 'brokerage' },
+      ],
+    )
+
+    expect(routes.edge_a.laneIndex).toBe(0)
+    expect(routes.edge_z.laneIndex).toBe(1)
+    expect(routes.edge_a.points[1].y).not.toBe(routes.edge_z.points[1].y)
+    expect(routes.edge_a.points[1].x).toBe(routes.edge_a.points[0].x)
+    expect(routes.edge_z.points[1].x).toBe(routes.edge_z.points[0].x)
+  })
+
+  it('routes around an obstacle box between source and target', () => {
+    const obstacle: RoutingBox = { id: 'expanded_checking', x: 240, y: 100, width: 160, height: 120 }
+    const routes = routeOrthogonalEdges(
+      [
+        { id: 'payroll', position: { x: 0, y: 100 } },
+        { id: 'savings', position: { x: 520, y: 100 } },
+      ],
+      [{ id: 'deposit', source: 'payroll', target: 'savings' }],
+      { obstacles: [obstacle] },
+    )
+    const route = routes.deposit
+
+    expect(route.points.every((point, index, points) => {
+      const previous = points[index - 1]
+      return !previous || previous.x === point.x || previous.y === point.y
+    })).toBe(true)
+    expect(route.points.some(point => point.y < obstacle.y || point.y > obstacle.y + obstacle.height)).toBe(true)
+    expect(route.path).toContain(' L ')
+  })
+
+  it('attaches orthogonal route data to React Flow edges', () => {
+    const source = {
+      ref: 'checking',
+      display_name: 'Checking',
+      kind: 'checking' as const,
+      institution: null,
+      layout_x: 0,
+      layout_y: 0,
+    }
+    const target = {
+      ref: 'savings',
+      display_name: 'Savings',
+      kind: 'savings' as const,
+      institution: null,
+      layout_x: 360,
+      layout_y: 0,
+    }
+    const doc: CashFlowGraphDocument = {
+      plan_id: 1,
+      nodes: [source, target],
+      edges: [defaultNewEdgeSpec('checking_to_savings', 'checking', 'savings')],
+    }
+    const { nodes, edges } = graphDocumentToFlowElements(doc)
+    const routed = applyOrthogonalEdgeRoutes(nodes, edges)
+
+    expect(routed[0].type).toBe('orthogonalCashEdge')
+    expect(routed[0].data?.route?.path.startsWith('M ')).toBe(true)
+  })
+
+  it('relayouts after cluster height changes while preserving unaffected account x positions', () => {
+    const doc: CashFlowGraphDocument = {
+      plan_id: 2,
+      nodes: [
+        {
+          ref: 'checking',
+          display_name: 'Checking',
+          kind: 'checking',
+          institution: null,
+          layout_x: 40,
+          layout_y: 40,
+        },
+        {
+          ref: 'savings',
+          display_name: 'Savings',
+          kind: 'savings',
+          institution: null,
+          layout_x: 40,
+          layout_y: 150,
+        },
+      ],
+      edges: [],
+    }
+    const { nodes } = graphDocumentToFlowElements(doc)
+    const cluster: RoutingBox = { id: 'checking_cluster', x: 40, y: 140, width: 240, height: 180 }
+    const relaid = relayoutCashFlowNodes(nodes, [cluster])
+    const savings = relaid.find(node => node.id === 'savings')
+
+    expect(savings?.position.x).toBe(40)
+    expect(savings?.position.y).toBeGreaterThan(cluster.y + cluster.height)
   })
 })

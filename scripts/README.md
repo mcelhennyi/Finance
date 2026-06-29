@@ -157,10 +157,10 @@ docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app 
 **Frontend (web dev image, `frontend/` mounted at `/app`):**
 
 ```bash
-docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test"
+docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"
 ```
 
-**Manual smoke:** start **`./scripts/dev.sh`**, open **Budget**, create a plan and a line, confirm **Unified view** shows matching category budget after save.
+**Manual smoke:** start **`./scripts/dev.sh`**, open **Budget**, create a plan and allocation lines, confirm **Unified view** shows matching category budget after save. For the FR-0006 cash-flow map, inspect desktop and phone viewports: account counts, source/sink allocation endpoints, expand/collapse, filters, mini-node text fit, and graph relayout / routing with no console errors.
 
 ---
 

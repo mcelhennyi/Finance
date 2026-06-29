@@ -75,6 +75,47 @@ cash_flow_graph:
 """
 
 
+SOURCE_SINK_YAML_WITH_GRAPH = """
+version: 1
+period_month: "2026-05-01"
+plan:
+  name: Source sink plan
+  currency: USD
+items:
+  - item_name: Paycheck
+    category: Income
+    planned_amount: "5000.00"
+    cadence: monthly
+    allocation_role: source
+    to_account_ref: checking
+    counterparty: Employer
+    payment_method: cash
+  - item_name: Savings sweep
+    category: Savings
+    planned_amount: "1250.00"
+    cadence: monthly
+    allocation_role: sink
+    from_account_ref: checking
+    to_account_ref: savings
+    payment_method: cash
+cash_flow_graph:
+  nodes:
+    - ref: checking
+      display_name: Checking
+      kind: checking
+      institution: null
+      layout_x: 0
+      layout_y: 0
+    - ref: savings
+      display_name: Savings
+      kind: savings
+      institution: null
+      layout_x: 180
+      layout_y: 0
+  edges: []
+"""
+
+
 @pytest.fixture
 def isolated_db(tmp_path, monkeypatch):
     db_file = tmp_path / "seed_yaml.sqlite"
@@ -237,3 +278,26 @@ def test_export_budget_seed_yaml_plan_id_allows_renamed_plan(isolated_db, tmp_pa
     assert doc.plan.name == "Renamed in UI"
     assert doc.cash_flow_graph is not None
     assert len(doc.cash_flow_graph.edges) == 0
+
+
+def test_seed_yaml_round_trips_source_sink_allocation_fields(
+    isolated_db, tmp_path: Path
+) -> None:
+    path = tmp_path / "source_sink.yaml"
+    path.write_text(SOURCE_SINK_YAML_WITH_GRAPH, encoding="utf-8")
+    init_db()
+    with get_session() as session:
+        apply_budget_seed_yaml(session, path)
+        plan = session.scalars(
+            select(AllocationPlan).where(AllocationPlan.name == "Source sink plan")
+        ).one()
+        export_budget_seed_yaml(session, path, plan_id=plan.id)
+
+    doc = load_budget_seed_document(path)
+    rows = {item.item_name: item for item in doc.items}
+    assert rows["Paycheck"].allocation_role.value == "source"
+    assert rows["Paycheck"].to_account_ref == "checking"
+    assert rows["Paycheck"].counterparty == "Employer"
+    assert rows["Savings sweep"].allocation_role.value == "sink"
+    assert rows["Savings sweep"].from_account_ref == "checking"
+    assert rows["Savings sweep"].to_account_ref == "savings"
