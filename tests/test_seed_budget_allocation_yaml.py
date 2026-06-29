@@ -130,7 +130,11 @@ def test_tracked_example_yaml_loads(repo_root: Path) -> None:
     path = repo_root / "data" / "budget-default-plan.yaml"
     doc = load_budget_seed_document(path)
     assert doc.version == 1
-    assert len(doc.items) == 45
+    assert doc.plan.income_amount is None
+    assert doc.plan.income_cadence is None
+    assert len(doc.items) == 46
+    assert doc.items[0].allocation_role == "source"
+    assert doc.items[0].to_account_ref == "checking"
     assert doc.cash_flow_graph is not None
     assert len(doc.cash_flow_graph.nodes) == 8
     assert len(doc.cash_flow_graph.edges) == 5

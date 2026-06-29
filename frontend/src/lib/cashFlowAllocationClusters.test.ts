@@ -88,7 +88,7 @@ describe('cashFlowAllocationClusters', () => {
     expect(cluster.visibleExternalSinkTotal).toBe(0)
   })
 
-  it('filters visible counts by monthly size, cadence, role, payment, text, endpoint role, and due range', () => {
+  it('filters visible counts by monthly size, cadence, role, payment, text, and due range', () => {
     const cluster = deriveAccountAllocationCluster({
       accountRef: 'card',
       accountNodes,
@@ -102,7 +102,6 @@ describe('cashFlowAllocationClusters', () => {
         paymentMethod: 'credit',
         categorySearch: 'shop',
         counterpartySearch: 'ama',
-        endpointRole: 'funded_by_account',
         dueDayMin: '10',
         dueDayMax: '20',
       },
@@ -113,7 +112,7 @@ describe('cashFlowAllocationClusters', () => {
     expect(cluster.miniNodes[0].label).toBe('Amazon order')
   })
 
-  it('labels source and sink mini-nodes with endpoint context', () => {
+  it('labels source and sink mini-nodes with account context', () => {
     const labelByRef = new Map(accountNodes.map(node => [node.ref, node.display_name]))
     const accountRefs = new Set(accountNodes.map(node => node.ref))
 
@@ -142,21 +141,6 @@ describe('cashFlowAllocationClusters', () => {
     expect(cluster.totalCount).toBe(0)
     expect(cluster.visibleCount).toBe(0)
     expect(cluster.miniNodes).toEqual([])
-  })
-
-  it('filters endpoint direction for allocations that fund this account', () => {
-    const cluster = deriveAccountAllocationCluster({
-      accountRef: 'savings',
-      accountNodes,
-      allocations,
-      filters: {
-        ...DEFAULT_ALLOCATION_CLUSTER_FILTERS,
-        endpointRole: 'funds_account',
-      },
-    })
-
-    expect(cluster.visibleCount).toBe(1)
-    expect(cluster.miniNodes[0].label).toBe('Savings sweep')
   })
 
   it('uses the cluster box as a relayout obstacle after filter changes', () => {

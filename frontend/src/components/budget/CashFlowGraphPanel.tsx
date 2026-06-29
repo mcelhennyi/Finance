@@ -52,14 +52,11 @@ import {
   graphDocumentToFlowElements,
   newEdgeRef,
   relayoutCashFlowNodes,
+  stackPureSourceSinkNodes,
   startDirectionalAccountLink,
   validateDirectionalAccountLink,
   type AccountNodeRole,
 } from '../../lib/cashFlowGraphFlow'
-import {
-  aggregateNodeFlows,
-  type TimeGrain,
-} from '../../lib/cashFlowTimeAggregation'
 import { ALLOCATION_ITEM_CADENCES, ALLOCATION_ROLES, PAYMENT_METHODS, formatUsd } from '../../lib/budgetAllocation'
 import { CASH_NODE_KIND_OPTIONS, CASH_FLOW_REF_PATTERN } from '../../lib/cashFlowGraphKinds'
 import { BUDGET_SCROLL_ANCHORS } from './budgetDocAnchors'
@@ -330,8 +327,6 @@ const AllocationMiniNodeViewMemo = memo(AllocationMiniNodeView)
 interface Props {
   planId: number | null
   allocationItems?: AllocationItem[]
-  /** Used for percent-of-inflow aggregation (plan summary monthly income). */
-  planIncomeMonthly?: number | null
   /** Node refs to emphasize when hovering the allocation Account column. */
   highlightNodeRefs?: string[]
   /** Controlled disclosure for the add-account form at the bottom of the accounts list. */
@@ -342,7 +337,6 @@ interface Props {
 export function CashFlowGraphPanel({
   planId,
   allocationItems = [],
-  planIncomeMonthly = null,
   highlightNodeRefs = [],
   addAccountPanelOpen,
   onAddAccountPanelOpenChange,
@@ -369,7 +363,6 @@ export function CashFlowGraphPanel({
   const [linkLabel, setLinkLabel] = useState('')
   const [pendingLinkFromRef, setPendingLinkFromRef] = useState<string | null>(null)
   const [linkError, setLinkError] = useState<string | null>(null)
-  const [grain, setGrain] = useState<TimeGrain>('month')
   const [expandedAccountRef, setExpandedAccountRef] = useState<string | null>(null)
   const [allocationFiltersByAccountRef, setAllocationFiltersByAccountRef] = useState<Record<string, AllocationClusterFilters>>({})
   const [bbdSuggestions, setBbdSuggestions] = useState<{
@@ -618,9 +611,13 @@ export function CashFlowGraphPanel({
     () => deriveAccountNodeRoles(nodes.map(n => n.id), edges),
     [edges, nodes],
   )
+  const roleStackedNodes = useMemo(
+    () => stackPureSourceSinkNodes(nodes, edges),
+    [edges, nodes],
+  )
   const roughExpandedNode = useMemo(
-    () => (expandedAccountRef ? nodes.find(n => n.id === expandedAccountRef) : null),
-    [expandedAccountRef, nodes],
+    () => (expandedAccountRef ? roleStackedNodes.find(n => n.id === expandedAccountRef) : null),
+    [expandedAccountRef, roleStackedNodes],
   )
   const roughCluster = expandedAccountRef && roughExpandedNode
     ? allocationClusterBox({
@@ -633,8 +630,8 @@ export function CashFlowGraphPanel({
       })
     : null
   const relaidNodes = useMemo(
-    () => relayoutCashFlowNodes(nodes, roughCluster ? [roughCluster] : []),
-    [nodes, roughCluster],
+    () => relayoutCashFlowNodes(roleStackedNodes, roughCluster ? [roughCluster] : []),
+    [roleStackedNodes, roughCluster],
   )
   const finalExpandedNode = useMemo(
     () => (expandedAccountRef ? relaidNodes.find(n => n.id === expandedAccountRef) : null),
@@ -719,22 +716,6 @@ export function CashFlowGraphPanel({
     [nodes],
   )
   const canLinkAccounts = nodes.length >= 2
-
-  const graphDocForAgg = useMemo(() => {
-    if (planId == null) return null
-    try {
-      return flowElementsToGraphDocument(planId, nodes, edges)
-    } catch {
-      return null
-    }
-  }, [planId, nodes, edges])
-
-  const nodeTotals = useMemo(() => {
-    if (!graphDocForAgg) return {}
-    return aggregateNodeFlows(graphDocForAgg, grain, {
-      planIncomeMonthly: planIncomeMonthly ?? null,
-    })
-  }, [graphDocForAgg, grain, planIncomeMonthly])
 
   const patchNode = useCallback(
     (nodeId: string, partial: Partial<CashFlowNodeSpec>) => {
@@ -908,57 +889,6 @@ export function CashFlowGraphPanel({
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-              Time view (approximate)
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs text-slate-600 flex items-center gap-2">
-                Grain
-                <select
-                  className="rounded-lg border border-slate-200 px-2 py-1 text-sm"
-                  value={grain}
-                  onChange={e => setGrain(e.target.value as TimeGrain)}
-                  aria-label="Aggregation time grain"
-                >
-                  <option value="day">Day</option>
-                  <option value="month">Month</option>
-                  <option value="year">Year</option>
-                </select>
-              </label>
-              <span className="text-[11px] text-slate-500">
-                Fixed and percent-of-inflow edges; remainder flows count as $0 here.
-              </span>
-            </div>
-            {graphDocForAgg && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead>
-                    <tr className="text-left text-slate-500 border-b border-slate-100">
-                      <th className="py-1 pr-2">Node</th>
-                      <th className="py-1 pr-2 tabular-nums">In</th>
-                      <th className="py-1 pr-2 tabular-nums">Out</th>
-                      <th className="py-1 tabular-nums">Net</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {graphDocForAgg.nodes.map(n => {
-                      const t = nodeTotals[n.ref]
-                      return (
-                        <tr key={n.ref} className="border-b border-slate-50">
-                          <td className="py-1 pr-2 font-medium text-slate-800">{n.display_name}</td>
-                          <td className="py-1 pr-2 tabular-nums">{formatUsd(t?.inflow ?? 0)}</td>
-                          <td className="py-1 pr-2 tabular-nums">{formatUsd(t?.outflow ?? 0)}</td>
-                          <td className="py-1 tabular-nums">{formatUsd(t?.net ?? 0)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
           <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3 space-y-2">
             <div className="text-[11px] font-semibold uppercase tracking-widest text-amber-900/80">
               BBD-linked suggestions
@@ -1101,20 +1031,6 @@ export function CashFlowGraphPanel({
                         {method}
                       </option>
                     ))}
-                  </select>
-                </label>
-                <label className="text-[11px] font-medium text-slate-600">
-                  Endpoint
-                  <select
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
-                    value={activeAllocationFilters.endpointRole}
-                    onChange={e =>
-                      setActiveAllocationFilter('endpointRole', e.target.value as AllocationClusterFilters['endpointRole'])
-                    }
-                  >
-                    <option value="any">Any</option>
-                    <option value="funds_account">Funds this account</option>
-                    <option value="funded_by_account">Funded by this account</option>
                   </select>
                 </label>
                 <label className="text-[11px] font-medium text-slate-600">

@@ -309,10 +309,16 @@ def test_allocation_auto_template_seeds_when_enabled(
     items = r.json()["items"]
     assert len(items) == 1
     assert items[0]["name"] == "Starter cash-flow template"
+    assert items[0]["income_amount"] is None
+    assert items[0]["income_monthly"] is None
     plan_id = items[0]["id"]
     r2 = c.get(f"/api/budget-allocation/plans/{plan_id}/items")
     assert r2.status_code == 200
-    assert len(r2.json()["items"]) == 4
+    rows = {item["item_name"]: item for item in r2.json()["items"]}
+    assert len(rows) == 5
+    assert rows["Paycheck"]["allocation_role"] == "source"
+    assert rows["Paycheck"]["to_account_ref"] == "checking"
+    assert rows["Essential spending (bills & lifestyle)"]["from_account_ref"] == "checking"
 
 
 @pytest.mark.unit

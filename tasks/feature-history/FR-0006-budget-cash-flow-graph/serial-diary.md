@@ -1,3 +1,13 @@
+## 2026-06-29 (session) - allocation controls and graph layout cleanup completed
+
+**Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-13-allocation-controls-graph-layout`**
+
+**Recap (plain English):** Completed [**Allocation controls and graph layout cleanup**](tickets.md) (**`T-FR-0006-13`**) for the Budget cash-flow graph. Allocation rows now select a configured category and a single role-aware account; endpoint dropdowns, payment-method selection, plan income controls, and the approximate Time view are gone. Starter income is modeled as a source allocation, and the graph stacks pure sources on the left, pure sinks on the right, and routes into endpoint handles without crossing node bodies.
+
+**Validation:** Backend focused allocation/seed tests passed with **40** tests; focused frontend tests passed with **42** tests; full frontend lint/test/build passed with **65** tests and the existing Vite chunk-size warning. `git diff --check`, `./scripts/check-frontend-no-merge-markers.sh`, and host `mkdocs build --strict` passed. Browser VAL on desktop and **390px** confirmed removed controls, category/account dropdowns, source/sink stacking, **0** sampled route/node hits, and no console errors.
+
+---
+
 ## 2026-06-29 (session) - edge and label deconfliction expansion completed
 
 **Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-12-edge-label-deconfliction`**

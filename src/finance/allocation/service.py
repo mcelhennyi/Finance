@@ -183,9 +183,9 @@ def seed_starter_allocation_plan(session: Session, period_month: date) -> Alloca
     """Insert starter plan + template lines (see ``finance.allocation.default_template``)."""
 
     plan = create_allocation_plan(session, starter_plan_create(period_month))
+    replace_plan_graph(session, plan.id, default_seeded_plan_cash_flow_graph(plan.id))
     for item_payload in starter_plan_items():
         create_allocation_item(session, plan.id, item_payload)
-    replace_plan_graph(session, plan.id, default_seeded_plan_cash_flow_graph(plan.id))
     return plan
 
 

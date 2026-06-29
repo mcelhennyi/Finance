@@ -375,3 +375,44 @@ Implement the post-closeout expansion from [`30-expand-2026-06-29-edge-label-dec
 - Browser VAL: Budget -> Cash flow map; inspect default graph, an expanded allocation cluster, and multiple routed/labelled account links at desktop and 390px phone width. Verify labels are visible, truncated instead of overflowing, and not covering graph nodes, expanded allocation clusters, other labels, or obvious route segments.
 
 ---
+
+### T-FR-0006-13 — Allocation controls and graph layout cleanup
+
+**Title:** Allocation controls and graph layout cleanup
+**Deps:** `T-FR-0006-12`
+
+#### Purpose
+
+Implement the follow-up expansion from [`30-expand-2026-06-29-allocation-controls-graph-layout.md`](30-expand-2026-06-29-allocation-controls-graph-layout.md): allocation rows use dropdowns for configured categories and graph accounts, plan income controls and the approximate Time view are removed, source/sink account semantics replace endpoint dropdowns, pure source/sink account nodes stack left/right, and routes never pass behind endpoint node bodies.
+
+#### Existing changes required
+
+- Replace allocation category free text controls in add/edit rows with category option dropdowns.
+- Replace payment-method and endpoint controls with one account dropdown whose role determines `from_account_ref` or `to_account_ref`.
+- Remove plan-level income controls and update starter seeds so income is represented as a source allocation row.
+- Remove the approximate time aggregation view from `CashFlowGraphPanel`.
+- Stack pure sources left and pure sinks right before relayout/routing.
+- Refine orthogonal routing to leave source handles horizontally, approach target handles from the left, and avoid endpoint node bodies.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Pin control/routing semantics | Unit tests cover single-account source/sink mapping, starter source seed behavior, source/sink stacking, endpoint-safe route approach, and no endpoint filter/dropdown behavior | done |
+| **DEV** | Implement UI and routing cleanup | Budget add/edit rows use category/account dropdowns; plan income and Time view are gone; graph stacks pure roles left/right; routes avoid endpoint node bodies | done |
+| **VAL** | Full Budget browser validation | Docker frontend/backend checks pass; rendered Budget inspection confirms no income/time/endpoint controls, account/category dropdowns, left/right source/sink stacks, and no route-through-node geometry | done |
+
+**VAL notes:** Allocation controls now expose configured category/account dropdowns only; the selected account maps through role semantics (`source` -> `to_account_ref`, `sink` -> `from_account_ref`). Plan income controls, endpoint dropdowns/filtering, payment-method selection, and the approximate Time view are removed from the Budget UI. Starter plans seed income as a source allocation. Docker backend tests passed (**40** tests), focused frontend tests passed (**42** tests), full frontend lint/test/build passed (**65** tests), `git diff --check`, merge-marker scan, and strict docs build passed. Browser VAL on desktop and **390px** confirmed no income/time/endpoint controls, role-aware category/account dropdowns, pure source nodes stacked left, the checking sink stacked right, route samples with **0** node-body hits, and no console errors.
+
+#### Implementation notes
+
+- `source` rows store the selected account as `to_account_ref`; `sink` rows store it as `from_account_ref`.
+- Existing rows with both endpoint refs remain readable, but any save through the Budget UI normalizes them to the single-account role model.
+- Keep old plan income API fields as compatibility data; do not surface them in the Plan section.
+
+#### Verification notes
+
+- Backend: `docker compose run --rm --no-deps api sh -c "pip install pytest >/tmp/pip-pytest.log && pytest tests/test_api_budget_allocation.py tests/test_seed_budget_allocation_yaml.py tests/test_allocation_contracts.py"`
+- Frontend focused: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowAllocationClusters.test.ts cashFlowGraphFlow.test.ts"`
+- Frontend full: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"`
+- Browser VAL: Budget allocation page at desktop and 390px phone viewport; verify removed controls, category/account dropdown options, source/sink stacks, route samples, and console errors.

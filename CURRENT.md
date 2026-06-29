@@ -7,15 +7,16 @@
 
 ## Landed on this branch
 
-All **`tickets.md`** tickets **`T-FR-0006-01`** ... **`T-FR-0006-12`** are triad-complete on this integration line (see **`tasks/ticket-progress.md`**). The post-closeout routing/label deconfliction expansion is complete.
+All **`tickets.md`** tickets **`T-FR-0006-01`** ... **`T-FR-0006-13`** are triad-complete on this integration line (see **`tasks/ticket-progress.md`**). The post-closeout allocation-controls/graph-layout expansion is complete.
 
-Highlights: **`finance.cash_flow_graph`** persistence + API; **`CashFlowGraphPanel`** (**`@xyflow/react`**); arrowed money-direction edges; account-to-account link API / Budget controls; **`cashFlowTimeAggregation`** + time-grain UI; **`bbdCashFlowSuggestions`** + explicit BBD suggestion flow (**no silent writes**); source/sink allocation primitives with account endpoints; directional left/right account handles; orthogonal routing; expandable allocation clusters with filters and counts; label-aware route deconfliction.
+Highlights: **`finance.cash_flow_graph`** persistence + API; **`CashFlowGraphPanel`** (**`@xyflow/react`**); arrowed money-direction edges; account-to-account link API / Budget controls; **`bbdCashFlowSuggestions`** + explicit BBD suggestion flow (**no silent writes**); source/sink allocation primitives with role-aware account controls; directional left/right account handles; orthogonal routing; expandable allocation clusters with filters and counts; label-aware route deconfliction; single account/category allocation dropdowns; pure source/sink graph stacking.
 
 ## In flight
 
-None. **`FR-0006`** is complete and PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) is ready for refreshed review.
+_None._
 
 ## Next
 
-1. Review / merge PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9).
-2. After merge, remove repo-root **`CURRENT.md`** from the default branch.
+1. Review refreshed PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9).
+2. Merge **`feat/FR-0006-budget-cash-flow-graph`** to **`master`** when satisfied.
+3. Remove repo-root **`CURRENT.md`** from the default branch after merge.

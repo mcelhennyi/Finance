@@ -21,7 +21,7 @@ Future enhancements:
 
 **Goal:** A budget plan can be **associated** with a BBD scenario or timeline so that:
 
-- Category totals and income assumptions from the plan inform **starting conditions** or **recurring flow hints** in a BBD run.
+- Category totals and source allocation rows from the plan inform **starting conditions** or **recurring flow hints** in a BBD run.
 - A BBD output (draw schedule, dividend cadence, borrowing envelopes) can suggest **edges** in the cash-flow graph (future).
 
 **Not implemented.** Sketch for a later ticket:
@@ -53,6 +53,8 @@ Persisted graph schema and editor milestones live in the **FR-0006** feature his
 - **Source** allocations show how money arrives, e.g. Paycheck → Checking.
 - **Sink** allocations show how money is spent or stored, e.g. Chase Card → Amazon / shopping or Checking → High Yield Savings.
 
-Allocation rows can link to graph account endpoints (`from_account_ref` / `to_account_ref`) and carry `allocation_role` (`source` / `sink`) so the same primitive powers the allocation table, account source/sink counts, expanded allocation mini-nodes, and graph routes. Account nodes expose linked allocation counts at all times; expanding one account renders derived allocation mini-nodes with filters for size, cadence, role, payment method, category, counterparty, endpoint direction, and due-day range. Sink allocations with owned `to_account_ref` are presented as storage / owned-destination movement instead of external spend. Mock: [`mockups/fr-0006-account-routing-allocation-expansion.html`](mockups/fr-0006-account-routing-allocation-expansion.html).
+Allocation rows carry `allocation_role` (`source` / `sink`) and, in the Budget UI, a single configured graph account. A `source` row stores that account as `to_account_ref`; a `sink` row stores it as `from_account_ref`. Plan-level income controls are not surfaced; income is modeled as source allocation rows. Account nodes expose linked allocation counts at all times; expanding one account renders derived allocation mini-nodes with filters for size, cadence, role, payment method, category, counterparty, and due-day range. Legacy rows with both endpoint refs remain readable, but the UI normalizes edited rows to the single-account role model. Mock: [`mockups/fr-0006-account-routing-allocation-expansion.html`](mockups/fr-0006-account-routing-allocation-expansion.html).
 
 The graph route layer also reserves visual space for edge labels and prior edge lanes. Edge labels are placed near, not directly on top of, their routed line when possible, and both labels and route segments are treated as obstacles for subsequent edge routing so labels do not cover account nodes, expanded allocation clusters, other labels, or other lines. Mock: [`mockups/fr-0006-edge-label-deconfliction.html`](mockups/fr-0006-edge-label-deconfliction.html).
+
+The follow-up allocation-control cleanup removes the approximate Time view from the graph panel, stacks pure source accounts on the left and pure sink accounts on the right, and routes edges so they leave/enter left/right handles without passing behind endpoint node bodies. Mock: [`mockups/fr-0006-allocation-controls-graph-layout.html`](mockups/fr-0006-allocation-controls-graph-layout.html).

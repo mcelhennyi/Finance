@@ -93,6 +93,23 @@ export function validateItemDraft(d: ItemDraftInput): string | null {
   return null
 }
 
+export function allocationAccountRef(d: Pick<ItemDraftInput, 'allocation_role' | 'from_account_ref' | 'to_account_ref'>): string {
+  return d.allocation_role === 'source'
+    ? d.to_account_ref?.trim() ?? ''
+    : d.from_account_ref?.trim() ?? ''
+}
+
+export function draftWithAllocationAccount(
+  d: ItemDraftInput,
+  accountRef: string,
+  role: AllocationRole = d.allocation_role ?? 'sink',
+): ItemDraftInput {
+  const ref = accountRef.trim() || null
+  return role === 'source'
+    ? { ...d, allocation_role: role, from_account_ref: null, to_account_ref: ref }
+    : { ...d, allocation_role: role, from_account_ref: ref, to_account_ref: null }
+}
+
 /** JSON body for POST item APIs (omits undefined due_day). */
 export function allocationItemCreateBody(d: ItemDraftInput): Record<string, unknown> {
   const amt = parsePositiveAmount(d.planned_amount)
