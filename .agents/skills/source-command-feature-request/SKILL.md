@@ -1,9 +1,13 @@
 ---
-description: >-
-  End-to-end feature request: FR-NNNN registry, layered design, tickets + DAG,
-  then optional /identify-frontier, /develop-frontier; /finish-feature only after
-  docs/ai-context.md §2d feature-complete gate (or /finish-frontier). Resume with /feature-request-continue.
+name: "source-command-feature-request"
+description: "End-to-end feature request: FR-NNNN registry, layered design, tickets + DAG, then optional /identify-frontier, /develop-frontier; /finish-feature only after docs/ai-context.md §2d feature-complete gate (or /finish-frontier). Resume with /feature-request-continue."
 ---
+
+# source-command-feature-request
+
+Use this skill when the user asks to run the migrated source command `feature-request`.
+
+## Command Template
 
 # /feature-request
 

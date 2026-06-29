@@ -14,6 +14,14 @@ Orchestrates a **markdown-first** feature lifecycle that feeds the repo’s
 **parallel ticket frontier** tools. Composes with existing project commands —
 does **not** replace them.
 
+## Prerequisite (recommended)
+
+When implementation will be driven by an existing **top-level design doc** under
+**`docs/design/`**, run **`/audit-design <path>`** first. Use its verdict
+(**Ready** / **Caution** / **Blocked**) and **Fix before tickets** list to
+close gaps; then start this skill with the **same** design path. Skip audit only
+for greenfield features with no design doc yet.
+
 ## User-facing close (required)
 
 Every time work on this workflow **pauses for the human**—after a **stage**, a **checkpoint**, **ticket or design work**, **develop / finish** steps, **`/feature-request-continue`**, or **closeout**—end the reply with a compact block (template in **`reference-templates.md` → User-facing session close**):
@@ -26,23 +34,15 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 
 **Scope:** skip the full block only for **non-FR** one-offs (e.g. a one-line fix unrelated to the feature); any work under **`FR-NNNN`** still gets at least a one-line summary + next step.
 
-## Canonical branching (Finance Hub default)
-
-Per **`docs/ai-context.md` §2d**:
-
-1. **`feat/FR-NNNN-<slug>`** — feature integration branch (one per **`FR-NNNN`**).
-2. **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-…`** — ticket branches from the feature branch; merge **into** **`feat/…`** when the ticket is **VAL** `done` (**PR** base = feature branch).
-3. **`feat/FR-NNNN-<slug>` → `main`** — **only** via **`finish-feature`** when the **feature** is **complete** per **`tickets.md`** / **`REGISTRY.md`**; **avoid** merging partial features to **`main`**.
-
-**Do not** merge ticket branches straight to **`main`** in normal work. **`finish-frontier`** (direct-to-**`main`**) is non-default and requires explicit policy.
-
 ## Related local commands (compose, do not fork)
 
 | Step | Command / skill | Role |
 |------|------------------|------|
+| Pre-ticket design readiness (optional) | `audit-design` / `/audit-design` | Plain-English audit of a top-level **`docs/design/…`** doc before registering **`FR-NNNN`** — **`.cursor/skills/audit-design/SKILL.md`**. |
+| Same-feature expansion | `expand-feature` / `/expand-feature` | Adds a sub-feature/change to an existing **`FR-NNNN`** with process scaled to the ask: simple UI worktree + docs HTML mock, or **`30-expand-*`** addendum + same-FR tickets/tracker/DAG for larger changes — **`.cursor/skills/expand-feature/SKILL.md`**. |
 | Parallel handoff for **tickets** (`T-FR-NNNN-xx`) | `identify-frontier` / `/identify-frontier` | Recomputes who can run in parallel from **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** (DAG hints in **`tickets-initial.md`**). |
 | Implement parallel set | `develop-frontier` / `/develop-frontier` | One child worktree per ticket under **`.worktrees/FR-NNNN-<slug>/`**; **TEST→DEV→VAL** per ticket. |
-| Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges ticket branches **into** **`feat/FR-NNNN-<slug>`**; **PR `feat/…` → `main`** **only** when the **feature** is **complete**; **never** auto-deletes remote branches. |
+| Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, **PR to `main`** for human review; **never** auto-deletes remote branches. |
 | Merge to `main` (integration) | `finish-frontier` / `/finish-frontier` | Direct integration of parallel ticket/stage branches into **`main`** when not using the feature-branch line. |
 | Commits (optional) | `commit-with-ai-metrics` / `/commit-with-metrics` | Conventional commit + optional metrics footer. |
 | Doc site (MkDocs) — preview / static build | **`./develop`** (`./develop help`) | When **`docs/`** or **`mkdocs.yml`** change: use **`./develop up`** (Docker Compose, bind-mounted repo, live reload) or **`./develop local`** (host venv via **`./scripts/serve-docs.sh`**). Run **`./develop build`** for a containerized static build before closeout or as doc **VAL** when tickets touch docs. Set **`DEVELOP_*`** in optional **`develop.conf`** (from **`develop.conf.example`**) if service names or ports differ. **Aligns** with **Docker for VAL** in **`docs/ai-context.md`**. |
@@ -69,6 +69,7 @@ Per **`docs/ai-context.md` §2d**:
 
 - **`./develop` is the supported entrypoint** (not a parallel to **`/identify-frontier`**) for running the **documentation** stack: **`help`**, **`up`**, **`down`**, **`build`**, **`local`**, shell/run helpers. See the root **`README.md`**.
 - **Development commands default to containers:** when a repo ships **`./develop`**, Compose, a Dev Container, or CI image, run build/test/lint/package-manager/doc/dev-server commands through that container path where possible. Host-local commands are exceptions and must be recorded in the stage diary or handoff.
+- **Web UI validation is required for web UI tickets:** during implementation and **VAL**, any ticket that creates or changes user-visible web UI must include **`docs/ai-context.md` → Web UI validation**: scripted frontend checks plus rendered browser inspection. Use the project overlay or stack conventions for commands, local URL, browser-capable tool, and route/state matrix; document host-local or browser-tool exceptions.
 - **During design (Stages 1..N):** if the feature adds or rewrites **design or product docs** under **`docs/`**, run **`./develop up`** or **`./develop local`** to verify navigation, links, Mermaid, and formatting before you treat a design stage as done.
 - **During implementation and VAL:** if a **ticket** changes **`docs/`** or site config, include **`./develop build`** (or the ticket’s own Docker-based doc check) in **VAL** or note the equivalent verification in **`parallel/…` / `tickets.md`** so **`docs/ai-context.md`** (Docker for verification) is satisfied. If the project has no **`./develop`** or Compose yet, use **`/develop-frontier`**-assigned worktrees and document **VAL** criteria per ticket.
 
@@ -113,7 +114,7 @@ tasks/feature-history/FR-NNNN-<slug>/
 - **Serial runs:** append stages to **`serial-diary.md`** (and/or per-stage files). One narrative chain.
 - **Parallel design or implementation subagents:** each stream writes **`parallel/<stream>.md`** (e.g. `parallel/T-FR-0007-01-scaffold-api.md` — include a **title slug** from the ticket so folder listings stay human-readable). Do **not** overwrite **`serial-diary.md`** from parallel streams.
 - **Continue / resume handoffs:** write under **`handoffs/`** (e.g. **`handoffs/2026-04-25-continue.md`**) — this is the **canonical** place for “what the next agent should do” **for this `FR-NNNN`**. A short pointer in **`tasks/handoffs/`** is optional, not a substitute.
-- **Git (implementation):** create **`feat/FR-NNNN-<slug>`** from **`main`** when starting build-out and check it out at **`.worktrees/FR-NNNN-<slug>/feature/`**. Create every ticket/stage branch from that feature branch, name it with both feature and ticket/stage (for example **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`**), place its worktree under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`**, merge it **into** the feature branch, then use **`/finish-feature`** to open the **PR → `main`** for human review. Maintain repo-root **`CURRENT.md`** on those **`feat/*`** branches per **Branch state (`CURRENT.md`)** below.
+- **Git (implementation):** create **`feat/FR-NNNN-<slug>`** from the default branch when starting build-out and check it out at **`.worktrees/FR-NNNN-<slug>/feature/`**. Create every ticket/stage branch from that feature branch, name it with both feature and ticket/stage (for example **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`**), place its worktree under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`**, merge it **into** the feature branch as tickets complete, and keep all product code on **`feat/FR-NNNN-<slug>`** until **`docs/ai-context.md` §2d** **feature-complete gate** is met. Only then run **`/finish-feature`** to open the **PR to the default branch** for human review. Maintain repo-root **`CURRENT.md`** on those **`feat/*`** branches per **Branch state (`CURRENT.md`)** below.
 
 If you need a one-off “prompt log”, add `prompts/prompts-log.md` and link it from the README.
 
@@ -193,6 +194,7 @@ When **`README.md`**, **`90-closeout.md`**, newest **`handoffs/*.md`**, or **`ta
    - large feature: sequence diagrams, data lifecycle, idempotency, error taxonomy, SLO/throughput.
 3. Each stage ends with a **plain-English summary** in **`serial-diary.md`** (or the relevant **`parallel/…`** file).
 4. If the stage touched **`docs/`**, use **`./develop up`** or **`./develop local`** to preview where **`./develop`** is available; note any build warnings in the diary.
+5. **User-visible UI:** before treating a design stage as done for screens, flows, or shell layout, add or update **static HTML mocks** under **`docs/design/mockups/`** and link them from the authoritative **`docs/design/…`** doc. For additions to an existing UI, update the current UI as the example when possible so the proposed change is shown in real context. Mocks are the visual source of truth until amended — **`.cursor/rules/ui-design-mockups.mdc`**. Do not author UI-leaning **`T-FR-NNNN-xx`** DEV tickets without mocks (unless the user documented an explicit waiver in intake/diary).
 
 Tag unknowns with **`DESIGN-GAP`** per **`docs/ai-context.md`**.
 
@@ -235,8 +237,9 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 3. Run **`/develop-frontier`** (or the skill) to launch **one subagent per parallel-capable ticket**, each in a child worktree under **`.worktrees/FR-NNNN-<slug>/`** on a feature-prefixed ticket/stage branch, **TEST→DEV→VAL** in order **inside** each ticket.
 4. For each parallel subagent, ensure **`parallel/…-diary.md`** gets an entry when that stream starts and when it ends.
 5. Run development-specific commands for each ticket (**build**, **test**, **lint**, **format**, package-manager scripts, doc builds, and dev servers) inside Docker / Docker Compose / Dev Container / CI images where possible; record host-local exceptions in the ticket diary or handoff.
-6. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
-7. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
+6. When a ticket or stream creates or changes user-visible web UI, include required **Web UI validation** from **`docs/ai-context.md`** before marking **VAL** `done`: scripted frontend checks plus rendered browser inspection using the project’s documented commands, local URL, browser-capable tool, and route/state matrix.
+7. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
+8. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
 
 ---
 
@@ -253,8 +256,8 @@ After each develop chunk or when the user returns:
 
 ## Stage — Finish implementation (prompt, then run)
 
-1. **Ask:** “All targeted tickets for this **`FR-NNNN`** are VAL-done. Merge via **`/finish-feature`** (feature branch → **PR to `main`**) or **`/finish-frontier`** (direct **`main`** integration)?”
-2. **Default for `FR-NNNN` product work:** run **`/finish-feature`** — merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, opens **PR** for human review. **Do not** push **`main`** from automation here.
+1. **Ask:** “All **`### T-FR-NNNN-xx`** tickets in **`tickets.md`** for this **`FR-NNNN`** are VAL-done on **`feat/FR-NNNN-<slug>`** (see **`docs/ai-context.md` §2d** gate). Merge via **`/finish-feature`** (open PR from **`feat/FR-NNNN-<slug>`** to the default branch) or **`/finish-frontier`** (direct default-branch integration)?”
+2. **Default for `FR-NNNN` product work:** run **`/finish-feature`** **only after** the **feature-complete gate** — merges any remaining ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, opens **PR** for human review. **Do not** push the default branch from automation here. **Do not** open that PR before every ticket in **`tickets.md`** is VAL **`done`** unless a **documented exception** applies (**§2d**).
 3. **Alternate:** **`/finish-frontier`** when the team explicitly integrates parallel tickets straight into **`main`**. Follow that skill’s **revalidation** / **`broken-main`** gate.
 4. **CURRENT.md:** before **`/finish-feature`**, ensure **`feat/FR-NNNN-<slug>`**’s **`CURRENT.md`** reflects all merged tickets. The **PR to `main`** (or the human merge) should **remove** **`CURRENT.md`** on **`main`** per **Branch state (`CURRENT.md`)**.
 5. After merge: run **Diary consolidation** → update **`DIARY.md`** (newest-first stack); **do not delete** remote **`feat/*`** branches.

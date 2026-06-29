@@ -3,20 +3,30 @@ description: Project-wide AI session rules (process and pointers)
 alwaysApply: true
 ---
 
-All **process** standards for this project live in **`docs/ai-context.md`**. Load and follow it at the start of every session.
+All **process** standards for this project live in **`docs/ai-context.md`** and, when present, **`docs/ai-context.project.md`** (load both per **`docs/ai-context.md` → Session bootstrap**). Load and follow them at the start of every session.
 
 **Documentation as source of truth:** **`docs/design/`** (and published docs site, if any) specifies product and system behavior; **`docs/ai-context.md`** specifies AI dev process. Details: **`.cursor/rules/docs-authority-and-escalation.mdc`**.
 
-**Covers:** session bootstrap, **git branch ladder** (ticket → **`feat/FR-NNNN-<slug>`** → **`main`**; see **`docs/ai-context.md` §2d**), **git worktrees** under `.worktrees/FR-NNNN-<slug>/` (feature worktree plus feature-prefixed ticket/stage branch worktrees), **`tasks/ticket-progress.md`** beacon, per-feature **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, global DAG index **`docs/design/tickets-initial.md`**, documentation authority and escalation tags, **subagents ahead of large work**, ticket phases (**TEST / DEV / VAL**), and git hygiene (commit, push, PR) per team policy.
+**UI design mocks:** user-visible UI design create/update → **HTML mocks** in **`docs/design/mockups/`** before implementation — **`.cursor/rules/ui-design-mockups.mdc`**.
 
-**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design → **`tickets.md`**), then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default: **merge completed tickets into `feat/FR-NNNN-<slug>`**, then **PR `feat/…` → `main` only when the feature is complete**) or **`finish-frontier`** only for **explicit** direct-to-**`main`** policy — see **`docs/ai-context.md` §2b–§2d**. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. **`/commit-with-metrics`** is optional for commits.
+**Tag reservation:** numbered ids (`DG-`, `RW-`, `GR-`, `FR-`, …) — **`tasks/TAG-REGISTRY.md`** + **`REGISTRY.md`**; **commit and push before use** — **`.cursor/rules/tag-reservation.mdc`**.
+
+**Covers:** session bootstrap, **git worktrees** under `.worktrees/FR-NNNN-<slug>/` (feature worktree plus feature-prefixed ticket/stage branch worktrees), **`tasks/ticket-progress.md`** beacon, per-feature **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, global DAG index **`docs/design/tickets-initial.md`**, documentation authority and escalation tags, **subagents ahead of large work**, ticket phases (**TEST / DEV / VAL**), and git hygiene (commit, push, PR) per team policy.
+
+**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design to **`tickets.md`**), **`expand-feature`** / **`/expand-feature`** for same-**`FR-NNNN`** additions scaled to the ask (simple UI tweak = dedicated worktree + docs HTML mock; involved expansion = addendum + same-FR ticket/DAG expansion), then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default, **only after** **`docs/ai-context.md` §2d** feature-complete gate; **`finish-feature`** runs **mandatory closeout** — **`90-closeout.md`**, **`REGISTRY`**, **`ticket-progress`**) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. **`/commit-with-metrics`** is optional for commits.
 
 **Development commands:** Run build/test/lint/format/package-manager/dev-server/doc-build commands inside Docker / Docker Compose / Dev Container / CI images where possible. Prefer **`./develop`**, `docker compose run`, or the configured Dev Container; document host-local exceptions in ticket diaries or handoffs.
 
-**Doc sync:** When you change Cursor rules, skills, or Claude commands together, follow **`.cursor/rules/cursor-claude-doc-sync.mdc`**.
+**Web UI validation:** Required for any user-visible web UI work. Follow **`docs/ai-context.md` → Web UI validation**: scripted frontend checks plus rendered browser inspection before **VAL**; project overlays or stack conventions provide commands, local URL, browser-capable tool, and route/state matrix.
+
+**Doc sync:** When you change Cursor, Claude, or Codex rules/skills/commands, follow **`.cursor/rules/cursor-claude-doc-sync.mdc`**.
 
 **Stack-specific code style:** enable **`.cursor/rules/stack-conventions.mdc`** when you have chosen a stack (set `alwaysApply: true` in that file).
 
 **Explanatory comments:** follow **`.claude/rules/development-standards.md`** (Comments and documentation) and the **Explanatory comments** section in **`.cursor/rules/stack-conventions.mdc`**.
 
-**Claude Code** without Cursor: mirror expectations in **`.claude/rules/development-standards.md`** and slash commands under **`.claude/commands/`**.
+**Claude Code:** **`.claude/rules/development-standards.md`** and slash commands under **`.claude/commands/`**.
+
+**Codex:** **`AGENTS.md`**, **`.codex/rules/session.md`**, and **`.codex/rules/`** mirrors — see **`.codex/README.md`**.
+
+**`init-project`:** skeleton-template Cursor skill (syncignored at consumer root after first init). Use **`docs/ai-context.project.md`** and **`.codex/project.md`** for post-bootstrap customization.

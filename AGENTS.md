@@ -1,24 +1,32 @@
 @docs/ai-context.md
 
-Load **`docs/ai-context.project.md`** when present (shared project process overlay). See **`docs/skeleton-project-overlays.md`**.
+## Codex session bootstrap
 
-## Claude-specific notes
+After this file, load in order:
+
+1. **`docs/ai-context.project.md`** when present — shared project process overlay
+2. **`.codex/rules/session.md`** — binding rules and full load order
+3. **`.codex/project.md`** when present — Codex-only project overlay (syncignored at consumer root after first init)
+
+See **`.codex/README.md`** and **`docs/skeleton-project-overlays.md`**.
+
+## Codex-specific notes
 
 - Prefer **subagents or delegated tasks** for large exploration or multi-file work; see **`docs/ai-context.md` §1b**.
 - Keep **`tasks/ticket-progress.md`** current when doing ticket work (**Active ticket**, **Branch / worktree**, **Session status**). Worktrees live under **`.worktrees/FR-NNNN-<slug>/`**: `feature/` for **`feat/FR-NNNN-<slug>`**, plus child ticket/stage worktrees on feature-prefixed branches.
 - Run development-specific commands (**build**, **test**, **lint**, package-manager scripts, doc builds, and dev servers) inside Docker / Docker Compose / Dev Container / CI images where possible; use **`./develop`** / `docker compose run` before host-local execution, and document host exceptions in ticket diaries or handoffs.
-- For any web UI work, required validation means scripted frontend checks plus rendered browser inspection before **VAL** per **`docs/ai-context.md`**; use the available browser-capable testing surface after starting the local app, and follow project overlays / stack conventions for commands, URLs, and route/state matrices.
+- For any web UI work, required validation means scripted frontend checks plus rendered browser inspection before **VAL** per **`docs/ai-context.md`**; use **`@Browser`** when available after starting the local app, and follow project overlays / stack conventions for commands, URLs, and route/state matrices.
 - **Parallel features:** several **`FR-NNNN`** streams may be active; **`/develop-frontier`** batches **`T-FR-NNNN-xx`** from the **global** graph — see **`docs/ai-context.md` §2c** and **`tasks/ticket-progress.md` → Parallel streams**.
 - When you assign a new **`FR-NNNN`** in **`REGISTRY.md`**, **commit and push to `main` immediately** after the minimal feature stub exists so concurrent work deconflicts ids (**`docs/ai-context.md` §2b**).
 
-Custom slash commands live in **`.claude/commands/`**:
+Codex discovers reusable command skills under **`.agents/skills/`**. Wrappers named **`source-command-*`** point at the same workflows as Cursor skills and Claude commands.
 
 | Command | Role |
 |---------|------|
-| **`/audit-design`** | Pre-ticket readiness audit for a **top-level design doc** path (plain-English report: fix / address / defer before ticketing) — **`.cursor/skills/audit-design/SKILL.md`**. Run before **`/feature-request`** when design already exists. |
-| **`/feature-request`** | **`FR-NNNN`** lifecycle: intake, layered design, **`20-tickets-dag.md`**, canonical **`tickets.md`**, optional frontier; repo-root **`CURRENT.md`** on **`feat/*`**; end turns with **Executive summary** + **next step** + **options** when relevant — see **`.cursor/skills/feature-request/SKILL.md`**. |
+| **`/audit-design`** | Pre-ticket readiness audit for a **top-level design doc** path — **`.cursor/skills/audit-design/SKILL.md`**. Run before **`/feature-request`** when design already exists. |
+| **`/feature-request`** | **`FR-NNNN`** lifecycle: intake, layered design, **`20-tickets-dag.md`**, canonical **`tickets.md`**, optional frontier; repo-root **`CURRENT.md`** on **`feat/*`**; end turns with **Executive summary** + **next step** + **options** when relevant — **`.cursor/skills/feature-request/SKILL.md`**. |
 | **`/expand-feature`** | Same-**`FR-NNNN`** sub-feature addendum: scale process to the ask; simple UI tweaks use a dedicated worktree plus docs HTML mock, while larger additions write **`30-expand-*`**, append same-FR tickets/DAG/tracker rows, then optionally run frontier implementation — **`.cursor/skills/expand-feature/SKILL.md`**. |
-| **`/feature-request-continue`** | Resume an in-progress **`FR-NNNN`** from **`tasks/feature-history/`** (read **`CURRENT.md`** when on **`feat/*`**); **`git fetch`** and verify integration PR state before suggesting merge; if merged, apply **Closeout** hygiene (**`90-closeout.md`**, retire **`Parallel streams`** row, **Current focus**). |
+| **`/feature-request-continue`** | Resume an in-progress **`FR-NNNN`** from **`tasks/feature-history/`** (read **`CURRENT.md`** when on **`feat/*`**); **`git fetch`** and verify integration PR state before suggesting merge; if merged, apply closeout hygiene (**`90-closeout.md`**, retire **`Parallel streams`** row, **Current focus**). |
 | **`/identify-frontier`** | Parallel-ticket handoff from **`ticket-progress.md`** + **`tasks/feature-history/**/tickets.md`** (+ DAG). Run **after** tickets exist. |
 | **`/develop-frontier`** | One subagent per parallel-capable ticket (**TEST→DEV→VAL** per child worktree under **`.worktrees/FR-NNNN-<slug>/`**); merge to **`feat/…`**; **`finish-feature`** only after **§2d** gate. |
 | **`/finish-feature`** | Merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate; **mandatory closeout** (**`90-closeout.md`**, **`REGISTRY`**, **`ticket-progress`**) when gate passes; **PR → default branch** only when **`docs/ai-context.md` §2d** feature-complete gate is met; do not auto-delete remote **`feat/*`**. |
@@ -26,8 +34,8 @@ Custom slash commands live in **`.claude/commands/`**:
 | **`/commit-with-metrics`** | Commit with optional AI metrics footer — **`.cursor/skills/commit-with-ai-metrics/SKILL.md`**. |
 | **`/add-todo`** | Lightweight follow-up in **`tasks/todo.md`** — **`.cursor/skills/add-todo/SKILL.md`**. |
 | **`/code-tour`** | Generate a self-contained interactive HTML walkthrough for a scoped code area — hot path, code excerpts, diagrams, error handling, tests, and docs/code mismatches — **`.cursor/skills/code-tour/SKILL.md`**. |
-| **`/sync-skeleton`** | Update **`.skeleton/`** submodule and **`skeleton.manifest`** root copies; run **`./sync-skeleton`** — **`.cursor/skills/sync-skeleton/SKILL.md`**, **`.skeleton/INIT.MD`**. |
+| **`/sync-skeleton`** | Update **`.skeleton/`** submodule and manifest-listed root copies — **`.cursor/skills/sync-skeleton/SKILL.md`**, **`.skeleton/INIT.MD`**. |
 
 **“Identify” disambiguation:** spoken **identify (FR)** = register **`FR-NNNN`** + intake; **`/identify-frontier`** = parallel **tickets** only after **`tickets.md`** exists.
 
-Development standards: **`.claude/rules/development-standards.md`**. Doc sync: **`.claude/rules/cursor-claude-doc-sync.md`**.
+**Development standards:** **`.claude/rules/development-standards.md`**. **Binding rules:** **`.codex/rules/`** (see **`.codex/rules/session.md`**). **Doc sync:** **`.codex/rules/agent-doc-sync.md`**.
