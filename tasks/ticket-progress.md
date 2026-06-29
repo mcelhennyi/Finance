@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Active ticket** | — (**`FR-0006`** implementation tickets triad-complete on branch — run **`/finish-feature`**) |
-| **Active phase** | — |
+| **Active ticket** | **`T-FR-0006-08`** / **`T-FR-0006-09`** expansion tickets eligible after **`/identify-frontier`** |
+| **Active phase** | `TEST` |
 | **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** |
-| **Session status** | `ready` |
-| **Next agent should** | **`/finish-feature`** for **`FR-0006`** — open/update PR **`feat/FR-0006-budget-cash-flow-graph` → `master`** per skill; draft **#9**; registry **`90-closeout`** when merged. |
+| **Session status** | `planning` |
+| **Next agent should** | Run **`/identify-frontier`** for the **`FR-0006`** expansion, then start **Unified source/sink allocation primitive contracts** (**`T-FR-0006-08`**) and **Directional account handles and double-click linking** (**`T-FR-0006-09`**) in child worktrees. Do **not** run **`/finish-feature`** until **`T-FR-0006-08`**–**`T-FR-0006-11`** are TEST/DEV/VAL `done`. |
 
 ### Parallel streams (optional)
 
@@ -16,7 +16,7 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 
 | Stream label | Ticket(s) | `FR-NNNN` (if any) | Branch / worktree | Owner / note |
 |----------------|------------|--------------------|-------------------|--------------|
-| *(none)* | — | — | — | **`FR-0006`** tickets **`01`–`07`** triad-complete on **`feat/…`** |
+| *(none)* | — | — | — | **`FR-0006`** tickets **`01`–`07`** triad-complete; expansion tickets **`08`–`11`** pending on **`feat/…`** |
 
 **Completed features** (`REGISTRY.md` → **`complete`**) are **not** listed in **Parallel streams** — they are closed out with **`90-closeout.md`** in **`tasks/feature-history/FR-NNNN-<slug>/`** (see **`.cursor/skills/feature-request/SKILL.md`** → **Closeout**). **`FR-0002`** closeout: [`FR-0002-budget-entry-page/90-closeout.md`](feature-history/FR-0002-budget-entry-page/90-closeout.md). **`FR-0003`** closeout: [`FR-0003-bbd-projection-ui/90-closeout.md`](feature-history/FR-0003-bbd-projection-ui/90-closeout.md). **`FR-0004`** closeout: [`FR-0004-bbd-projection-experience/90-closeout.md`](feature-history/FR-0004-bbd-projection-experience/90-closeout.md).
 
@@ -54,6 +54,10 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0006-05 | Cash-flow time scrub and aggregated views | done | done | done | `FR-0006`; `cashFlowTimeAggregation.ts`, grain UI + table on **`CashFlowGraphPanel`**; Vitest |
 | T-FR-0006-06 | BBD-suggested cash-flow edges | done | done | done | `FR-0006`; **`bbdCashFlowSuggestions`**, Budget UI runs BBD default + **Add edge**; Vitest |
 | T-FR-0006-07 | Compose default for allocation auto-template | done | done | done | `FR-0006`; `docker-compose.yml` default `false`; `scripts/README.md` + `budget-plans-roadmap.md` |
+| T-FR-0006-08 | Unified source/sink allocation primitive contracts | todo | todo | todo | `FR-0006` expansion; add explicit source/sink allocation rows with graph account endpoints |
+| T-FR-0006-09 | Directional account handles and double-click linking | todo | todo | todo | `FR-0006` expansion; left=input/right=output handles, node roles, direct account linking |
+| T-FR-0006-10 | Orthogonal routing and obstacle-aware relayout | todo | todo | todo | `FR-0006` expansion; square edge routing and layout after graph/cluster changes |
+| T-FR-0006-11 | Expandable allocation clusters with filters and counts | todo | todo | todo | `FR-0006` expansion; account badges, allocation mini-nodes, filters, relayout |
 
 ---
 

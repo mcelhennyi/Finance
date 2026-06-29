@@ -165,7 +165,7 @@ After tickets land, run **`/identify-frontier`** and confirm the **parallel-capa
 
 1. "Ready to start implementation: run **`/develop-frontier`** for the current parallel-capable set — e.g. **Contract: public API surface** ([`T-FR-0007-01`](tasks/feature-history/FR-NNNN-<slug>/tickets.md)), **Implement batch ingest path** ([`T-FR-0007-02`](tasks/feature-history/FR-NNNN-<slug>/tickets.md)) — or implement one stream serially if you prefer."
 2. "Continue: proceed to the next items by **title** in dependency order (links in **`tickets.md`**), or re-run **`/identify-frontier`** if the queue changed."
-3. "Close this feature’s implementation: run **`/finish-feature`** (merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → `main`**) per **`docs/ai-context.md` §2d** — or **`/finish-frontier`** if integrating ticket/stage branches straight into **`main`**."
+3. "Close this feature’s implementation: when **`docs/ai-context.md` §2d** **feature-complete gate** is met, run **`/finish-feature`** (merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → default branch**) — or **`/finish-frontier`** if integrating ticket/stage branches straight into the default branch. Until the gate is met, keep work on **`feat/FR-NNNN-<slug>`** only."
 
 ---
 

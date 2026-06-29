@@ -12,6 +12,7 @@ import type {
   BbdDefaultScenarioResponse,
   BbdRunPayload,
   BbdRunResponse,
+  CashFlowAccountLinkRequest,
   CashFlowGraphDocument,
   FilterState,
   Filters,
@@ -176,6 +177,12 @@ export const api = {
 
   putBudgetCashFlowGraph: (planId: number, body: CashFlowGraphDocument) =>
     putJson<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`, body),
+
+  linkBudgetCashFlowAccounts: (planId: number, body: CashFlowAccountLinkRequest) =>
+    postJson<CashFlowGraphDocument>(
+      `/budget-allocation/plans/${planId}/cash-flow-graph/links`,
+      body,
+    ),
 
   listBudgetCategoryOptions: () => get<BudgetCategoryOptionsOut>('/budget-allocation/category-options'),
 

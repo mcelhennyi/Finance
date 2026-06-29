@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  cashFlowEdgeToFlowEdge,
   defaultNewEdgeSpec,
   edgeSummaryLabel,
   flowElementsToGraphDocument,
@@ -113,6 +114,26 @@ describe('cashFlowGraphFlow', () => {
         day_of_month: null,
       }),
     ).toBe('remainder')
+  })
+
+  it('maps edges with visible money-direction arrows', () => {
+    const edge = cashFlowEdgeToFlowEdge({
+      ref: 'pay_to_checking',
+      from_ref: 'payroll',
+      to_ref: 'checking',
+      label: 'Deposit',
+      amount_rule: 'fixed',
+      fixed_amount: '5000.00',
+      percent_of_inflow: null,
+      cadence: 'monthly',
+      day_of_month: null,
+    })
+
+    expect(edge.source).toBe('payroll')
+    expect(edge.target).toBe('checking')
+    expect(edge.animated).toBe(true)
+    expect(edge.markerEnd).toMatchObject({ type: 'arrowclosed' })
+    expect(edge.style).toMatchObject({ stroke: '#0f766e', strokeWidth: 2 })
   })
 
   it('defaultNewEdgeSpec is remainder monthly', () => {

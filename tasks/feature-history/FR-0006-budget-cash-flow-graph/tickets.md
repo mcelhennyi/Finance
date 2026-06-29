@@ -180,3 +180,150 @@ Resolve handoff **option A**: align **`docker-compose.yml`** (and **`scripts/REA
 - Keep behavior **explicit**; do not change runtime semantics beyond default env.
 
 ---
+
+### T-FR-0006-08 — Unified source/sink allocation primitive contracts
+
+**Title:** Unified source/sink allocation primitive contracts
+**Deps:** `T-FR-0006-03`
+
+#### Purpose
+
+Implement the contract from [`30-expand-2026-06-29-account-routing-allocations.md`](30-expand-2026-06-29-account-routing-allocations.md): allocation rows become explicit source or sink primitives. Rows may link to plan-local graph account endpoints through `from_account_ref` and `to_account_ref` so payroll, savings storage, and purchases are modeled consistently without a third transfer role.
+
+#### Existing changes required
+
+- Extend `AllocationItem` persistence, migration stubs, schemas, router mapping, services, seed YAML import/export, and API tests.
+- Update summary logic so source allocations can drive income totals and sink allocations can represent external spend or owned-account storage without double-counting net income/spend.
+- Preserve backward compatibility for existing expense-only rows by defaulting old rows to `allocation_role='sink'` with null endpoints.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Freeze allocation primitive contract | Backend tests cover default `allocation_role`, source/sink summary math, valid endpoint refs, invalid endpoint refs, graph-save rejection when a referenced account is deleted, and seed import/export round trips | todo |
+| **DEV** | Implement data model + API | ORM, SQL stub/migration, Pydantic schemas, service validation, router outputs, frontend types, and budget allocation payload helpers support `allocation_role`, `from_account_ref`, `to_account_ref`, and `counterparty` | todo |
+| **VAL** | Container verification | Docker backend tests for allocation + graph APIs pass; Docker frontend lint/test/build passes for updated TS contracts; no existing Budget expense rows break | todo |
+
+#### Implementation notes
+
+- Suggested fields: `allocation_role` (`source`, `sink`), `from_account_ref`, `to_account_ref`, optional `counterparty`.
+- Validate endpoint refs against `CashFlowNode.ref` for the same `plan_id` when non-null.
+- Do not FK to `cash_flow_nodes.id`; graph replace currently deletes/reinserts rows.
+- Existing `AllocationPlan.income_amount` remains a compatibility fallback. When a plan has source allocations, summaries should prefer those rows.
+
+#### Verification notes
+
+- Backend: `docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/test_api_budget_allocation.py tests/test_api_cash_flow_graph.py tests/test_allocation_contracts.py tests/test_seed_budget_allocation_yaml.py -q"`
+- Frontend: `docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"`
+
+---
+
+### T-FR-0006-09 — Directional account handles and double-click linking
+
+**Title:** Directional account handles and double-click linking
+**Deps:** `T-FR-0006-04`
+
+#### Purpose
+
+Make graph account linking direct on the node: left side is input, right side is output. Double-clicking an output side then an input side creates the account link through the existing graph API. Nodes show pure source, pure sink, source + sink, or unlinked role state.
+
+#### Existing changes required
+
+- Replace the current top/bottom node handles in `CashFlowGraphPanel` with left/right handles.
+- Move account-link behavior from the select-box block toward direct node-edge interactions while keeping an accessible fallback action.
+- Add tests for role derivation and link-state transitions in `cashFlowGraphFlow` or a new focused helper.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Define role/link behavior | Frontend unit tests cover source/sink/source+sink/unlinked role derivation, pending source selection, completed link, duplicate edge rejection, self-link rejection, and keyboard/action-menu fallback | todo |
+| **DEV** | Implement handles + gesture | Account nodes render left input/right output handles; double-click flow creates directed edges; existing save-before-link behavior remains; visible error state handles invalid links | todo |
+| **VAL** | Browser interaction check | Docker frontend checks pass; rendered Budget graph inspection confirms handles are visible and linkable at desktop and phone viewports with no console errors | todo |
+
+#### Implementation notes
+
+- Treat output-side double click as "start from this account"; input-side double click as "finish to this account."
+- A neutral/unlinked account may expose both handles until edge incidence establishes its role.
+- Keep a button/menu fallback for users who cannot use double-click.
+
+#### Verification notes
+
+- Frontend: `docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"`
+- Browser VAL: Budget -> Cash flow map; exercise source -> sink link, invalid self-link, duplicate link, and reload.
+
+---
+
+### T-FR-0006-10 — Orthogonal routing and obstacle-aware relayout
+
+**Title:** Orthogonal routing and obstacle-aware relayout
+**Deps:** `T-FR-0006-09`
+
+#### Purpose
+
+Replace default curved/overlapping graph lines with deterministic square routing. Edges leave right-side outputs, enter left-side inputs, reserve separate lanes for multiple outgoing lines, and route around visible account nodes and expanded allocation clusters.
+
+#### Existing changes required
+
+- Add a tested routing/layout helper under `frontend/src/lib/`.
+- Update `cashFlowGraphFlow` / React Flow edge rendering to use custom orthogonal paths.
+- Relayout graph nodes after graph load, account link creation, node drag where needed, and expansion/collapse events.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Route around common obstacles | Unit tests cover multiple outgoing edges from one node, crossing avoidance around one obstacle box, square path generation, stable lane ordering, and relayout after cluster height changes | todo |
+| **DEV** | Implement routing + relayout | Custom edge paths render with square corners; outgoing lanes do not overlap; layout helper reserves space for expanded clusters and avoids account-node overlap | todo |
+| **VAL** | Visual non-overlap check | Docker frontend checks pass; rendered graph inspection verifies nonblank orthogonal routes, no obvious overlap, and stable relayout after expand/collapse | todo |
+
+#### Implementation notes
+
+- Prefer a small deterministic helper before adding a layout/routing dependency.
+- Store user-dragged positions only for account nodes; allocation mini-node positions should be derived.
+- If multiple expanded accounts are too dense for first pass, document and enforce one-expanded-account-at-a-time until a later ticket.
+
+#### Verification notes
+
+- Frontend: `docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"`
+- Browser VAL: inspect desktop and 390px-width Budget graph states with several account links and one expanded allocation cluster.
+
+---
+
+### T-FR-0006-11 — Expandable allocation clusters with filters and counts
+
+**Title:** Expandable allocation clusters with filters and counts
+**Deps:** `T-FR-0006-08`, `T-FR-0006-10`
+
+#### Purpose
+
+Show each account's linked allocation count on the node and let operators expand that account to inspect allocation mini-nodes beneath it. Expanded allocations are explicitly source or sink allocations and can be filtered by size, cadence/frequency, allocation role, payment method, category, counterparty, endpoint role, and due-day range.
+
+#### Existing changes required
+
+- Pass or query allocation items in `CashFlowGraphPanel` and derive per-account total/visible counts from `from_account_ref` and `to_account_ref`.
+- Render allocation mini-nodes below the expanded account using the relayout helper from `T-FR-0006-10`.
+- Update Budget allocation UI fields so operators can set allocation role and account endpoints when creating or editing rows.
+- Document the operator workflow in `docs/design/budget-plans-roadmap.md` and `scripts/README.md` if validation commands or seed behavior change.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Define counts/filter behavior | Frontend tests cover account totals, source/sink splits, visible counts after filters, source/sink mini-node labels, empty account expansion, and relayout after filter changes | todo |
+| **DEV** | Implement expansion UI | Account badges show allocation counts and source/sink split; expanded clusters render mini-nodes in rows/columns; filters update visible rows/totals; Budget allocation forms expose allocation role and endpoints | todo |
+| **VAL** | Full Budget graph workflow | Docker frontend checks pass; rendered browser inspection covers linked paycheck source, savings sink, Amazon-style sink, filters, expand/collapse, phone viewport, and no overlap/console errors | todo |
+
+#### Implementation notes
+
+- Counts include any allocation where `from_account_ref` or `to_account_ref` equals the account ref.
+- Expanded visible totals should separate source and sink totals; sink totals with owned `to_account_ref` should be shown as storage/transfer-style sinks so they do not look like external spend.
+- Filters should be stateful per expanded account during the session but do not need persistence in the first pass.
+- Allocation mini-nodes are derived UI nodes, not persisted `CashFlowNode` rows.
+
+#### Verification notes
+
+- Frontend: `docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"`
+- Browser VAL: Budget -> Cash flow map and Allocation lines on desktop and phone; verify text fit, count badges, filter controls, relayout, and accessible fallback for linking.
+
+---

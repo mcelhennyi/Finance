@@ -12,3 +12,7 @@
 
 # Port to mention in help text (must match the published port in compose.yaml)
 #DEVELOP_DOCS_PORT="8000"
+
+# App Compose file/service used by project helpers such as ./develop seed-sync
+#DEVELOP_APP_COMPOSE_FILE="docker-compose.yml"
+#DEVELOP_APP_SERVICE="api"

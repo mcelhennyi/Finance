@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -32,6 +32,16 @@ const BUDGET_CATEGORY_DATALIST_ID = 'finance-budget-category-datalist'
 
 const EMPTY_GRAPH_HIGHLIGHT_REFS: string[] = []
 
+type BudgetSectionKey = 'plan' | 'summary' | 'cashFlowGraph' | 'planMoneyFlows' | 'lines'
+
+const DEFAULT_BUDGET_SECTION_OPEN_STATE: Record<BudgetSectionKey, boolean> = {
+  plan: true,
+  summary: true,
+  cashFlowGraph: true,
+  planMoneyFlows: true,
+  lines: true,
+}
+
 function FieldLabel(props: { children: string; tip?: string }) {
   const { children, tip } = props
   if (!tip) return <span className="text-slate-500">{children}</span>
@@ -62,12 +72,43 @@ function Kpi(props: { label: string; value: string; sub?: string; labelTip?: str
   )
 }
 
-function SectionTitle(props: { children: string; docsSection?: BudgetDocsSection }) {
+function CollapsibleSection(props: {
+  id: string
+  title: ReactNode
+  subtitle?: string
+  docsSection?: BudgetDocsSection
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  children: ReactNode
+  contentClassName?: string
+}) {
+  const contentClassName = props.contentClassName ?? 'mt-3'
+
   return (
-    <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{props.children}</h2>
-      {props.docsSection ? <BudgetDocsSectionLink section={props.docsSection} /> : null}
-    </div>
+    <details
+      id={props.id}
+      className="scroll-mt-24"
+      open={props.open}
+      onToggle={e => props.onOpenChange(e.currentTarget.open)}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            {props.title}
+          </span>
+          {props.subtitle ? (
+            <span className="mt-0.5 block text-xs text-slate-500">{props.subtitle}</span>
+          ) : null}
+        </span>
+        <span className="flex shrink-0 items-center gap-3">
+          {props.docsSection ? <BudgetDocsSectionLink section={props.docsSection} /> : null}
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+            {props.open ? 'Hide' : 'Show'}
+          </span>
+        </span>
+      </summary>
+      <div className={contentClassName}>{props.children}</div>
+    </details>
   )
 }
 
@@ -112,7 +153,11 @@ export function BudgetPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [loadModalOpen, setLoadModalOpen] = useState(false)
   const [addDestinationModalOpen, setAddDestinationModalOpen] = useState(false)
+  const [openSections, setOpenSections] = useState<Record<BudgetSectionKey, boolean>>(() => ({
+    ...DEFAULT_BUDGET_SECTION_OPEN_STATE,
+  }))
   const [addLinePanelOpen, setAddLinePanelOpen] = useState(false)
+  const [categoriesPanelOpen, setCategoriesPanelOpen] = useState(false)
   const [addCategoryPanelOpen, setAddCategoryPanelOpen] = useState(false)
   const [addAccountPanelOpen, setAddAccountPanelOpen] = useState(false)
   const newItemFirstFieldRef = useRef<HTMLInputElement>(null)
@@ -223,12 +268,13 @@ export function BudgetPage() {
   const categoryInventoryQuery = useQuery({
     queryKey: ['budgetCategoryInventory'],
     queryFn: () => api.listBudgetCategoryInventory(),
+    enabled: categoriesPanelOpen,
   })
 
   const categoryInventoryItemsQuery = useQuery({
     queryKey: ['budgetCategoryInventoryItems', expandedCategoryLabel],
     queryFn: () => api.listBudgetCategoryInventoryItems(expandedCategoryLabel!),
-    enabled: expandedCategoryLabel != null,
+    enabled: categoriesPanelOpen && expandedCategoryLabel != null,
   })
 
   const updateCategoryLineMut = useMutation({
@@ -396,6 +442,13 @@ export function BudgetPage() {
     setLoadModalOpen(false)
   }
 
+  const setBudgetSectionOpen = useCallback((section: BudgetSectionKey, open: boolean) => {
+    setOpenSections(cur => (cur[section] === open ? cur : { ...cur, [section]: open }))
+
+    if (!open && section === 'lines') setAddLinePanelOpen(false)
+    if (!open && section === 'cashFlowGraph') setAddAccountPanelOpen(false)
+  }, [])
+
   useEffect(() => {
     if (!loadModalOpen) return
     const onKey = (e: KeyboardEvent) => {
@@ -416,6 +469,7 @@ export function BudgetPage() {
 
   const goToAddAllocationLine = useCallback(() => {
     setAddDestinationModalOpen(false)
+    setBudgetSectionOpen('lines', true)
     setAddLinePanelOpen(true)
     setAddCategoryPanelOpen(false)
     setAddAccountPanelOpen(false)
@@ -423,10 +477,11 @@ export function BudgetPage() {
       document.getElementById(BUDGET_SCROLL_ANCHORS.add)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       window.requestAnimationFrame(() => newItemFirstFieldRef.current?.focus())
     })
-  }, [])
+  }, [setBudgetSectionOpen])
 
   const goToAddSavedCategory = useCallback(() => {
     setAddDestinationModalOpen(false)
+    setCategoriesPanelOpen(true)
     setAddCategoryPanelOpen(true)
     setAddLinePanelOpen(false)
     setAddAccountPanelOpen(false)
@@ -438,6 +493,7 @@ export function BudgetPage() {
 
   const goToAddAccount = useCallback(() => {
     setAddDestinationModalOpen(false)
+    setBudgetSectionOpen('cashFlowGraph', true)
     setAddAccountPanelOpen(true)
     setAddLinePanelOpen(false)
     setAddCategoryPanelOpen(false)
@@ -445,7 +501,7 @@ export function BudgetPage() {
       document.getElementById(BUDGET_SCROLL_ANCHORS.addAccount)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       window.requestAnimationFrame(() => document.getElementById('budget-add-account-first-field')?.focus())
     })
-  }, [])
+  }, [setBudgetSectionOpen])
 
   return (
     <>
@@ -525,6 +581,8 @@ export function BudgetPage() {
         {plans.length > 0 && (
           <a
             href={`#${BUDGET_SCROLL_ANCHORS.categories}`}
+            aria-expanded={categoriesPanelOpen}
+            onClick={() => setCategoriesPanelOpen(true)}
             className="font-semibold text-teal-700 hover:text-teal-900"
           >
             Categories ›
@@ -556,8 +614,15 @@ export function BudgetPage() {
 
       {activePlan && (
         <>
-          <div id={BUDGET_SCROLL_ANCHORS.plan} className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 scroll-mt-24">
-            <SectionTitle docsSection="planDetails">Plan</SectionTitle>
+          <CollapsibleSection
+            id={BUDGET_SCROLL_ANCHORS.plan}
+            title="Plan"
+            subtitle="Plan name, income, and saved-plan actions"
+            docsSection="planDetails"
+            open={openSections.plan}
+            onOpenChange={open => setBudgetSectionOpen('plan', open)}
+            contentClassName="mt-3 rounded-xl border border-slate-100 bg-white p-5 shadow-sm space-y-4"
+          >
             <div className="flex flex-wrap gap-4 items-end">
               <label className="flex flex-col gap-1 text-sm flex-1 min-w-[12rem]">
                 <FieldLabel tip={BUDGET_FIELD_TIPS.planName}>Name</FieldLabel>
@@ -625,25 +690,31 @@ export function BudgetPage() {
               </div>
             </div>
             <p className="text-xs text-slate-400">Period {activePlan.period_month} · currency {activePlan.currency}</p>
-          </div>
+          </CollapsibleSection>
 
-          {summaryQuery.isLoading && (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-24 rounded-xl bg-slate-100 animate-pulse" />
-              ))}
-            </div>
-          )}
+          <CollapsibleSection
+            id={BUDGET_SCROLL_ANCHORS.summary}
+            title="Monthly summary"
+            subtitle="Totals, account split, and remaining income"
+            docsSection="summary"
+            open={openSections.summary}
+            onOpenChange={open => setBudgetSectionOpen('summary', open)}
+          >
+            {summaryQuery.isLoading && (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-24 rounded-xl bg-slate-100 animate-pulse" />
+                ))}
+              </div>
+            )}
 
-          {summaryQuery.isError && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              Summary unavailable: {summaryErr}
-            </div>
-          )}
+            {summaryQuery.isError && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                Summary unavailable: {summaryErr}
+              </div>
+            )}
 
-          {summaryQuery.data && !summaryQuery.isLoading && (
-            <div id={BUDGET_SCROLL_ANCHORS.summary} className="scroll-mt-24">
-              <SectionTitle docsSection="summary">Monthly summary</SectionTitle>
+            {summaryQuery.data && !summaryQuery.isLoading && (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <Kpi
                   label="Total allocated"
@@ -670,11 +741,17 @@ export function BudgetPage() {
                   }
                 />
               </div>
-            </div>
-          )}
+            )}
+          </CollapsibleSection>
 
-          <div id={BUDGET_SCROLL_ANCHORS.cashFlowGraph} className="scroll-mt-24">
-            <SectionTitle docsSection="cashFlowMap">Cash flow map</SectionTitle>
+          <CollapsibleSection
+            id={BUDGET_SCROLL_ANCHORS.cashFlowGraph}
+            title="Cash flow map"
+            subtitle="Accounts, transfers, timing, and graph edits"
+            docsSection="cashFlowMap"
+            open={openSections.cashFlowGraph}
+            onOpenChange={open => setBudgetSectionOpen('cashFlowGraph', open)}
+          >
             <CashFlowGraphPanel
               planId={selectedPlanId}
               planIncomeMonthly={activePlan?.income_monthly ?? null}
@@ -682,22 +759,16 @@ export function BudgetPage() {
               addAccountPanelOpen={addAccountPanelOpen}
               onAddAccountPanelOpenChange={setAddAccountPanelOpen}
             />
-          </div>
+          </CollapsibleSection>
 
           {activePlan && (
-            <div id={BUDGET_SCROLL_ANCHORS.planMoneyFlows} className="scroll-mt-24">
-              <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-                <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                  <OutputHoverTip
-                    tip={BUDGET_FIELD_TIPS.planMoneyFlows}
-                    dashed={false}
-                    placement="below"
-                    className="inline"
-                  >
-                    Plan inflows & outflows
-                  </OutputHoverTip>
-                </h2>
-              </div>
+            <CollapsibleSection
+              id={BUDGET_SCROLL_ANCHORS.planMoneyFlows}
+              title="Plan inflows & outflows"
+              subtitle="Readable flow summary derived from the map"
+              open={openSections.planMoneyFlows}
+              onOpenChange={open => setBudgetSectionOpen('planMoneyFlows', open)}
+            >
               {planGraphQuery.isError ? (
                 <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-800">
                   Could not load the plan graph, so inflows and outflows are unavailable.
@@ -738,7 +809,7 @@ export function BudgetPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </CollapsibleSection>
           )}
 
           <datalist id={BUDGET_CATEGORY_DATALIST_ID}>
@@ -747,253 +818,20 @@ export function BudgetPage() {
             ))}
           </datalist>
 
-          <div id={BUDGET_SCROLL_ANCHORS.categories} className="scroll-mt-24">
-            <SectionTitle>Categories</SectionTitle>
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm space-y-4">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Each row is a category string. <strong>Lines</strong> counts allocation rows using that category
-                (all plans). <strong>Saved</strong> means the label is stored for quick pick — new lines and budget
-                seeding add categories here automatically. Open a nonzero line count to reassign individual lines;
-                delete is available once no allocation lines use the saved category.
-              </p>
-              {categoryOptionsQuery.isError && (
-                <p className="text-xs text-red-700" role="alert">
-                  Could not load merged category suggestions.
-                </p>
-              )}
-              {categoryInventoryQuery.isError && (
-                <p className="text-xs text-red-700" role="alert">
-                  Could not load category inventory.
-                </p>
-              )}
-              <div className="overflow-x-auto rounded-lg border border-slate-100">
-                <table className="w-full text-sm min-w-[28rem]">
-                  <thead>
-                    <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50/90 border-b border-slate-100">
-                      <th className="px-3 py-2">Category</th>
-                      <th className="px-3 py-2 tabular-nums">Lines</th>
-                      <th className="px-3 py-2">Saved</th>
-                      <th className="px-3 py-2 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categoryInventoryQuery.isLoading ? (
-                      <tr>
-                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-400">
-                          Loading…
-                        </td>
-                      </tr>
-                    ) : (categoryInventoryQuery.data?.items.length ?? 0) === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-500">
-                          No categories yet. Add a saved name or create allocation lines.
-                        </td>
-                      </tr>
-                    ) : (
-                      (categoryInventoryQuery.data?.items ?? []).map(row => {
-                        const isExpanded = expandedCategoryLabel === row.label
-                        const linkedLines = categoryInventoryItemsQuery.data?.items ?? []
-                        return (
-                          <Fragment key={row.label}>
-                            <tr className="border-b border-slate-50 last:border-0">
-                              <td className="px-3 py-2 font-medium text-slate-800">{row.label}</td>
-                              <td className="px-3 py-2 tabular-nums text-slate-700">
-                                {row.allocation_item_count > 0 ? (
-                                  <button
-                                    type="button"
-                                    className="font-semibold text-teal-700 underline decoration-dotted underline-offset-2 hover:text-teal-900"
-                                    aria-expanded={isExpanded}
-                                    onClick={() =>
-                                      setExpandedCategoryLabel(cur => (cur === row.label ? null : row.label))
-                                    }
-                                  >
-                                    {row.allocation_item_count}
-                                  </button>
-                                ) : (
-                                  row.allocation_item_count
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-slate-600">{row.catalog_id != null ? 'Yes' : '—'}</td>
-                              <td className="px-3 py-2 text-right whitespace-nowrap space-x-2">
-                                {row.catalog_id != null && row.allocation_item_count === 0 && (
-                                  <button
-                                    type="button"
-                                    className="text-xs font-semibold text-red-700 hover:text-red-900"
-                                    onClick={() => {
-                                      if (
-                                        window.confirm(
-                                          `Delete saved category "${row.label}" from the list? (No allocation lines use it.)`,
-                                        )
-                                      ) {
-                                        deleteCatalogMut.mutate(row.catalog_id!)
-                                      }
-                                    }}
-                                    disabled={deleteCatalogMut.isPending}
-                                  >
-                                    Delete
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                            {isExpanded && (
-                              <tr className="border-b border-slate-100 bg-slate-50/60">
-                                <td colSpan={4} className="px-3 py-3">
-                                  {categoryInventoryItemsQuery.isLoading ? (
-                                    <p className="text-xs text-slate-400">Loading linked lines…</p>
-                                  ) : categoryInventoryItemsQuery.isError ? (
-                                    <p className="text-xs text-red-700" role="alert">
-                                      Could not load linked allocation lines.
-                                    </p>
-                                  ) : linkedLines.length === 0 ? (
-                                    <p className="text-xs text-slate-500">No linked lines remain for this category.</p>
-                                  ) : (
-                                    <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white">
-                                      <table className="w-full min-w-[42rem] text-xs">
-                                        <thead>
-                                          <tr className="bg-white text-left text-[10px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                                            <th className="px-3 py-2">Plan</th>
-                                            <th className="px-3 py-2">Line</th>
-                                            <th className="px-3 py-2 tabular-nums">Monthly</th>
-                                            <th className="px-3 py-2">Current</th>
-                                            <th className="px-3 py-2">Replacement</th>
-                                            <th className="px-3 py-2 text-right">Action</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {linkedLines.map(line => {
-                                            const draft = categoryLineDrafts[line.id] ?? ''
-                                            const replacement = draft.trim()
-                                            return (
-                                              <tr key={line.id} className="border-b border-slate-50 last:border-0">
-                                                <td className="px-3 py-2 text-slate-600">
-                                                  <div className="font-medium text-slate-800">{line.plan_name}</div>
-                                                  <div>{formatPlanPeriodLabel(line.period_month)}</div>
-                                                </td>
-                                                <td className="px-3 py-2 text-slate-700">
-                                                  <div className="font-medium text-slate-800">{line.item_name}</div>
-                                                  <div className="text-slate-500">{line.cadence.replace(/_/g, ' ')}</div>
-                                                </td>
-                                                <td className="px-3 py-2 tabular-nums text-slate-700">
-                                                  {formatUsd(line.monthly_amount)}
-                                                </td>
-                                                <td className="px-3 py-2 text-slate-600">{line.category}</td>
-                                                <td className="px-3 py-2">
-                                                  <input
-                                                    className="w-full rounded border border-slate-200 px-2 py-1"
-                                                    value={draft}
-                                                    onChange={e =>
-                                                      setCategoryLineDrafts(cur => ({
-                                                        ...cur,
-                                                        [line.id]: e.target.value,
-                                                      }))
-                                                    }
-                                                    list={BUDGET_CATEGORY_DATALIST_ID}
-                                                    placeholder="New category"
-                                                    maxLength={100}
-                                                    aria-label={`Replacement category for ${line.item_name}`}
-                                                  />
-                                                </td>
-                                                <td className="px-3 py-2 text-right">
-                                                  <button
-                                                    type="button"
-                                                    disabled={
-                                                      updateCategoryLineMut.isPending ||
-                                                      !replacement ||
-                                                      replacement === line.category
-                                                    }
-                                                    className="text-xs font-semibold text-teal-700 hover:text-teal-900 disabled:opacity-50"
-                                                    onClick={() => {
-                                                      if (!replacement || replacement === line.category) return
-                                                      setUpdatingCategoryLineId(line.id)
-                                                      updateCategoryLineMut.mutate({ line, replacement })
-                                                    }}
-                                                  >
-                                                    {updatingCategoryLineId === line.id ? 'Saving…' : 'Relink'}
-                                                  </button>
-                                                </td>
-                                              </tr>
-                                            )
-                                          })}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            )}
-                          </Fragment>
-                        )
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <details
-                id={BUDGET_SCROLL_ANCHORS.addCategory}
-                className="scroll-mt-24 rounded-lg border border-slate-100 bg-slate-50/50"
-                open={addCategoryPanelOpen}
-                onToggle={e => setAddCategoryPanelOpen(e.currentTarget.open)}
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
-                  <span>Add saved category</span>
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                    {addCategoryPanelOpen ? 'Hide' : 'Expand to add'}
-                  </span>
-                </summary>
-                <div className="border-t border-slate-100 bg-white px-4 py-4 space-y-3">
-                  <p className="text-[11px] text-slate-500">
-                    Store a label for quick pick on new allocation lines. Lines and seeding can also create categories
-                    automatically.
-                  </p>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <label className="flex flex-col gap-1 text-sm min-w-[12rem] flex-1">
-                      <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                        Category name
-                      </span>
-                      <input
-                        ref={newCatalogInputRef}
-                        type="text"
-                        value={newCatalogLabel}
-                        onChange={e => setNewCatalogLabel(e.target.value)}
-                        placeholder="e.g. Childcare"
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
-                        list={BUDGET_CATEGORY_DATALIST_ID}
-                        maxLength={100}
-                        aria-label="New saved category name"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const t = newCatalogLabel.trim()
-                        if (!t) return
-                        addCatalogMut.mutate(t)
-                      }}
-                      disabled={addCatalogMut.isPending || !newCatalogLabel.trim()}
-                      className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
-                    >
-                      {addCatalogMut.isPending ? 'Adding…' : 'Add'}
-                    </button>
-                  </div>
-                  {addCatalogMut.isError && (
-                    <p className="text-xs text-red-700" role="alert">
-                      {addCatalogMut.error instanceof Error ? addCatalogMut.error.message : 'Add failed'}
-                    </p>
-                  )}
-                </div>
-              </details>
-            </div>
-          </div>
-
           {itemsQuery.isError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               Could not load items: {itemsErr}
             </div>
           )}
 
-          <div id={BUDGET_SCROLL_ANCHORS.lines} className="scroll-mt-24">
-            <SectionTitle docsSection="allocationLines">Allocation lines</SectionTitle>
+          <CollapsibleSection
+            id={BUDGET_SCROLL_ANCHORS.lines}
+            title="Allocation lines"
+            subtitle="Budget rows for this plan"
+            docsSection="allocationLines"
+            open={openSections.lines}
+            onOpenChange={open => setBudgetSectionOpen('lines', open)}
+          >
             <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1310,7 +1148,7 @@ export function BudgetPage() {
                 </div>
               </details>
             </div>
-          </div>
+          </CollapsibleSection>
 
           {formError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800" role="alert">
@@ -1342,6 +1180,256 @@ export function BudgetPage() {
                 .join(' ')}
             </div>
           )}
+
+          <CollapsibleSection
+            id={BUDGET_SCROLL_ANCHORS.categories}
+            title="Categories"
+            subtitle="Saved names, line counts, and relinking tools"
+            open={categoriesPanelOpen}
+            onOpenChange={open => {
+              setCategoriesPanelOpen(open)
+              if (!open) {
+                setExpandedCategoryLabel(null)
+                setCategoryLineDrafts({})
+                setAddCategoryPanelOpen(false)
+              }
+            }}
+            contentClassName="mt-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm space-y-4"
+          >
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Each row is a category string. <strong>Lines</strong> counts allocation rows using that category
+                (all plans). <strong>Saved</strong> means the label is stored for quick pick — new lines and budget
+                seeding add categories here automatically. Open a nonzero line count to reassign individual lines;
+                delete is available once no allocation lines use the saved category.
+              </p>
+              {categoryOptionsQuery.isError && (
+                <p className="text-xs text-red-700" role="alert">
+                  Could not load merged category suggestions.
+                </p>
+              )}
+              {categoryInventoryQuery.isError && (
+                <p className="text-xs text-red-700" role="alert">
+                  Could not load category inventory.
+                </p>
+              )}
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <table className="w-full text-sm min-w-[28rem]">
+                  <thead>
+                    <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50/90 border-b border-slate-100">
+                      <th className="px-3 py-2">Category</th>
+                      <th className="px-3 py-2 tabular-nums">Lines</th>
+                      <th className="px-3 py-2">Saved</th>
+                      <th className="px-3 py-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryInventoryQuery.isLoading ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-400">
+                          Loading…
+                        </td>
+                      </tr>
+                    ) : (categoryInventoryQuery.data?.items.length ?? 0) === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-4 text-xs text-slate-500">
+                          No categories yet. Add a saved name or create allocation lines.
+                        </td>
+                      </tr>
+                    ) : (
+                      (categoryInventoryQuery.data?.items ?? []).map(row => {
+                        const isExpanded = expandedCategoryLabel === row.label
+                        const linkedLines = categoryInventoryItemsQuery.data?.items ?? []
+                        return (
+                          <Fragment key={row.label}>
+                            <tr className="border-b border-slate-50 last:border-0">
+                              <td className="px-3 py-2 font-medium text-slate-800">{row.label}</td>
+                              <td className="px-3 py-2 tabular-nums text-slate-700">
+                                {row.allocation_item_count > 0 ? (
+                                  <button
+                                    type="button"
+                                    className="font-semibold text-teal-700 underline decoration-dotted underline-offset-2 hover:text-teal-900"
+                                    aria-expanded={isExpanded}
+                                    onClick={() =>
+                                      setExpandedCategoryLabel(cur => (cur === row.label ? null : row.label))
+                                    }
+                                  >
+                                    {row.allocation_item_count}
+                                  </button>
+                                ) : (
+                                  row.allocation_item_count
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-slate-600">{row.catalog_id != null ? 'Yes' : '—'}</td>
+                              <td className="px-3 py-2 text-right whitespace-nowrap space-x-2">
+                                {row.catalog_id != null && row.allocation_item_count === 0 && (
+                                  <button
+                                    type="button"
+                                    className="text-xs font-semibold text-red-700 hover:text-red-900"
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          `Delete saved category "${row.label}" from the list? (No allocation lines use it.)`,
+                                        )
+                                      ) {
+                                        deleteCatalogMut.mutate(row.catalog_id!)
+                                      }
+                                    }}
+                                    disabled={deleteCatalogMut.isPending}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr className="border-b border-slate-100 bg-slate-50/60">
+                                <td colSpan={4} className="px-3 py-3">
+                                  {categoryInventoryItemsQuery.isLoading ? (
+                                    <p className="text-xs text-slate-400">Loading linked lines…</p>
+                                  ) : categoryInventoryItemsQuery.isError ? (
+                                    <p className="text-xs text-red-700" role="alert">
+                                      Could not load linked allocation lines.
+                                    </p>
+                                  ) : linkedLines.length === 0 ? (
+                                    <p className="text-xs text-slate-500">No linked lines remain for this category.</p>
+                                  ) : (
+                                    <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white">
+                                      <table className="w-full min-w-[42rem] text-xs">
+                                        <thead>
+                                          <tr className="bg-white text-left text-[10px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                            <th className="px-3 py-2">Plan</th>
+                                            <th className="px-3 py-2">Line</th>
+                                            <th className="px-3 py-2 tabular-nums">Monthly</th>
+                                            <th className="px-3 py-2">Current</th>
+                                            <th className="px-3 py-2">Replacement</th>
+                                            <th className="px-3 py-2 text-right">Action</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {linkedLines.map(line => {
+                                            const draft = categoryLineDrafts[line.id] ?? ''
+                                            const replacement = draft.trim()
+                                            return (
+                                              <tr key={line.id} className="border-b border-slate-50 last:border-0">
+                                                <td className="px-3 py-2 text-slate-600">
+                                                  <div className="font-medium text-slate-800">{line.plan_name}</div>
+                                                  <div>{formatPlanPeriodLabel(line.period_month)}</div>
+                                                </td>
+                                                <td className="px-3 py-2 text-slate-700">
+                                                  <div className="font-medium text-slate-800">{line.item_name}</div>
+                                                  <div className="text-slate-500">{line.cadence.replace(/_/g, ' ')}</div>
+                                                </td>
+                                                <td className="px-3 py-2 tabular-nums text-slate-700">
+                                                  {formatUsd(line.monthly_amount)}
+                                                </td>
+                                                <td className="px-3 py-2 text-slate-600">{line.category}</td>
+                                                <td className="px-3 py-2">
+                                                  <input
+                                                    className="w-full rounded border border-slate-200 px-2 py-1"
+                                                    value={draft}
+                                                    onChange={e =>
+                                                      setCategoryLineDrafts(cur => ({
+                                                        ...cur,
+                                                        [line.id]: e.target.value,
+                                                      }))
+                                                    }
+                                                    list={BUDGET_CATEGORY_DATALIST_ID}
+                                                    placeholder="New category"
+                                                    maxLength={100}
+                                                    aria-label={`Replacement category for ${line.item_name}`}
+                                                  />
+                                                </td>
+                                                <td className="px-3 py-2 text-right">
+                                                  <button
+                                                    type="button"
+                                                    disabled={
+                                                      updateCategoryLineMut.isPending ||
+                                                      !replacement ||
+                                                      replacement === line.category
+                                                    }
+                                                    className="text-xs font-semibold text-teal-700 hover:text-teal-900 disabled:opacity-50"
+                                                    onClick={() => {
+                                                      if (!replacement || replacement === line.category) return
+                                                      setUpdatingCategoryLineId(line.id)
+                                                      updateCategoryLineMut.mutate({ line, replacement })
+                                                    }}
+                                                  >
+                                                    {updatingCategoryLineId === line.id ? 'Saving…' : 'Relink'}
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            )
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <details
+                id={BUDGET_SCROLL_ANCHORS.addCategory}
+                className="scroll-mt-24 rounded-lg border border-slate-100 bg-slate-50/50"
+                open={addCategoryPanelOpen}
+                onToggle={e => setAddCategoryPanelOpen(e.currentTarget.open)}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
+                  <span>Add saved category</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                    {addCategoryPanelOpen ? 'Hide' : 'Expand to add'}
+                  </span>
+                </summary>
+                <div className="border-t border-slate-100 bg-white px-4 py-4 space-y-3">
+                  <p className="text-[11px] text-slate-500">
+                    Store a label for quick pick on new allocation lines. Lines and seeding can also create categories
+                    automatically.
+                  </p>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="flex flex-col gap-1 text-sm min-w-[12rem] flex-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                        Category name
+                      </span>
+                      <input
+                        ref={newCatalogInputRef}
+                        type="text"
+                        value={newCatalogLabel}
+                        onChange={e => setNewCatalogLabel(e.target.value)}
+                        placeholder="e.g. Childcare"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                        list={BUDGET_CATEGORY_DATALIST_ID}
+                        maxLength={100}
+                        aria-label="New saved category name"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = newCatalogLabel.trim()
+                        if (!t) return
+                        addCatalogMut.mutate(t)
+                      }}
+                      disabled={addCatalogMut.isPending || !newCatalogLabel.trim()}
+                      className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                    >
+                      {addCatalogMut.isPending ? 'Adding…' : 'Add'}
+                    </button>
+                  </div>
+                  {addCatalogMut.isError && (
+                    <p className="text-xs text-red-700" role="alert">
+                      {addCatalogMut.error instanceof Error ? addCatalogMut.error.message : 'Add failed'}
+                    </p>
+                  )}
+                </div>
+              </details>
+          </CollapsibleSection>
         </>
       )}
 

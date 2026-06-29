@@ -80,6 +80,8 @@ def test_cash_flow_nodes_edges_round_trip_and_cascade() -> None:
     assert loaded is not None
     assert loaded.ref == "salary"
     assert loaded.from_node_id != loaded.to_node_id
+    assert loaded.from_node.ref == "income"
+    assert loaded.to_node.ref == "checking"
     assert float(loaded.fixed_amount) == 4000.0
 
     # Deleting plan cascades to nodes and edges

@@ -50,8 +50,12 @@ from finance.allocation.service import (
     update_allocation_plan,
 )
 from finance.allocation.summary import AllocationSummary
-from finance.cash_flow_graph.schemas import CashFlowGraphDocument
-from finance.cash_flow_graph.service import ensure_default_cash_flow_graph_if_empty, replace_plan_graph
+from finance.cash_flow_graph.schemas import CashFlowAccountLinkRequest, CashFlowGraphDocument
+from finance.cash_flow_graph.service import (
+    ensure_default_cash_flow_graph_if_empty,
+    link_plan_accounts,
+    replace_plan_graph,
+)
 from finance.db.models import AllocationItem, AllocationPlan
 from finance.db.session import get_session
 
@@ -367,3 +371,29 @@ def put_plan_cash_flow_graph(plan_id: int, payload: CashFlowGraphDocument) -> Ca
         doc = ensure_default_cash_flow_graph_if_empty(session, plan_id)
         assert doc is not None
         return doc
+
+
+@router.post(
+    "/budget-allocation/plans/{plan_id}/cash-flow-graph/links",
+    response_model=CashFlowGraphDocument,
+)
+def post_plan_cash_flow_graph_link(
+    plan_id: int,
+    payload: CashFlowAccountLinkRequest,
+) -> CashFlowGraphDocument:
+    """Create one persisted directed account-flow edge for this plan."""
+
+    with get_session() as session:
+        if ensure_default_cash_flow_graph_if_empty(session, plan_id) is None:
+            raise HTTPException(status_code=404, detail="allocation plan not found")
+        try:
+            return link_plan_accounts(session, plan_id, payload)
+        except ValueError as exc:
+            detail = str(exc)
+            if "already exists" in detail.lower():
+                code = 409
+            elif "not found" in detail.lower():
+                code = 404
+            else:
+                code = 400
+            raise HTTPException(status_code=code, detail=detail) from exc

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -127,3 +129,64 @@ def test_cash_flow_graph_put_plan_id_mismatch(cash_flow_api_client: TestClient) 
     }
     pr = c.put(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph", json=payload)
     assert pr.status_code == 400
+
+
+@pytest.mark.unit
+def test_cash_flow_graph_link_accounts_persists_directed_edge(
+    cash_flow_api_client: TestClient,
+) -> None:
+    c = cash_flow_api_client
+    r = c.post(
+        "/api/budget-allocation/plans",
+        json={"period_month": "2026-08-01", "name": "August"},
+    )
+    plan_id = r.json()["id"]
+
+    p = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph/links",
+        json={
+            "from_ref": "checking",
+            "to_ref": "savings",
+            "label": "Sweep",
+            "amount_rule": CashFlowAmountRule.PERCENT_OF_INFLOW.value,
+            "percent_of_inflow": "10",
+            "cadence": CashFlowCadence.MONTHLY.value,
+        },
+    )
+    assert p.status_code == 200, p.text
+    data = p.json()
+    linked = [
+        edge
+        for edge in data["edges"]
+        if edge["from_ref"] == "checking" and edge["to_ref"] == "savings"
+    ]
+    assert len(linked) == 1
+    assert linked[0]["label"] == "Sweep"
+    assert Decimal(linked[0]["percent_of_inflow"]) == Decimal("10")
+
+    g = c.get(f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph")
+    assert g.status_code == 200
+    assert linked[0] in g.json()["edges"]
+
+
+@pytest.mark.unit
+def test_cash_flow_graph_link_accounts_rejects_missing_endpoint(
+    cash_flow_api_client: TestClient,
+) -> None:
+    c = cash_flow_api_client
+    r = c.post(
+        "/api/budget-allocation/plans",
+        json={"period_month": "2026-09-01", "name": "September"},
+    )
+    plan_id = r.json()["id"]
+
+    p = c.post(
+        f"/api/budget-allocation/plans/{plan_id}/cash-flow-graph/links",
+        json={
+            "from_ref": "checking",
+            "to_ref": "missing",
+            "amount_rule": CashFlowAmountRule.REMAINDER.value,
+            "cadence": CashFlowCadence.MONTHLY.value,
+        },
+    )
+    assert p.status_code == 400

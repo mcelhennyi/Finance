@@ -154,6 +154,59 @@ class CashFlowEdgeSpec(BaseModel):
         return self
 
 
+class CashFlowAccountLinkRequest(BaseModel):
+    """Create one persisted account-to-account money-flow relationship."""
+
+    ref: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=64,
+        description="Optional stable edge ref; generated from endpoints when omitted.",
+    )
+    from_ref: str = Field(min_length=1, max_length=64)
+    to_ref: str = Field(min_length=1, max_length=64)
+    label: str = Field(default="", max_length=200)
+    amount_rule: CashFlowAmountRule = CashFlowAmountRule.REMAINDER
+    fixed_amount: Decimal | None = Field(default=None)
+    percent_of_inflow: Decimal | None = Field(default=None)
+    cadence: CashFlowCadence = CashFlowCadence.MONTHLY
+    day_of_month: int | None = Field(default=None, ge=1, le=31)
+
+    @field_validator("ref", "from_ref", "to_ref")
+    @classmethod
+    def link_ref_format(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not _REF_PATTERN.fullmatch(value):
+            raise ValueError(
+                "ref must start with a letter and contain only letters, digits, underscore, hyphen"
+            )
+        return value
+
+    @model_validator(mode="after")
+    def edge_shape(self) -> CashFlowAccountLinkRequest:
+        if self.from_ref == self.to_ref:
+            raise ValueError("cash-flow account link must flow between two different accounts")
+
+        self.to_edge_spec(self.ref or "e_temp")
+        return self
+
+    def to_edge_spec(self, ref: str) -> CashFlowEdgeSpec:
+        """Return a full edge spec after the API/service chooses the persisted ref."""
+
+        return CashFlowEdgeSpec(
+            ref=ref,
+            from_ref=self.from_ref,
+            to_ref=self.to_ref,
+            label=self.label,
+            amount_rule=self.amount_rule,
+            fixed_amount=self.fixed_amount,
+            percent_of_inflow=self.percent_of_inflow,
+            cadence=self.cadence,
+            day_of_month=self.day_of_month,
+        )
+
+
 class CashFlowGraphDocument(BaseModel):
     """Full graph document for one allocation plan (API / service boundary)."""
 

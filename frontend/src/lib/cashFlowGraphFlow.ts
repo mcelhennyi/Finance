@@ -4,7 +4,7 @@
  * See Also: tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md
  */
 
-import type { Edge, Node } from '@xyflow/react'
+import { MarkerType, type Edge, type Node } from '@xyflow/react'
 
 import type {
   CashFlowEdgeSpec,
@@ -15,6 +15,7 @@ import type {
 
 const GRID_X = 200
 const GRID_Y = 120
+const MONEY_FLOW_EDGE_COLOR = '#0f766e'
 
 function stableOffset(ref: string): { x: number; y: number } {
   let h = 0
@@ -46,6 +47,27 @@ export function edgeSummaryLabel(e: CashFlowEdgeSpec): string {
   return e.cadence
 }
 
+export function cashFlowEdgeToFlowEdge(e: CashFlowEdgeSpec): Edge<CashEdgeData> {
+  return {
+    id: e.ref,
+    source: e.from_ref,
+    target: e.to_ref,
+    label: edgeSummaryLabel(e),
+    animated: true,
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: MONEY_FLOW_EDGE_COLOR,
+      width: 18,
+      height: 18,
+    },
+    style: {
+      stroke: MONEY_FLOW_EDGE_COLOR,
+      strokeWidth: 2,
+    },
+    data: { spec: { ...e } },
+  }
+}
+
 export function graphDocumentToFlowElements(doc: CashFlowGraphDocument): {
   nodes: CashFlowRfNode[]
   edges: Edge<CashEdgeData>[]
@@ -62,13 +84,7 @@ export function graphDocumentToFlowElements(doc: CashFlowGraphDocument): {
     }
   })
 
-  const edges: Edge<CashEdgeData>[] = doc.edges.map(e => ({
-    id: e.ref,
-    source: e.from_ref,
-    target: e.to_ref,
-    label: edgeSummaryLabel(e),
-    data: { spec: { ...e } },
-  }))
+  const edges: Edge<CashEdgeData>[] = doc.edges.map(cashFlowEdgeToFlowEdge)
 
   return { nodes, edges }
 }

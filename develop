@@ -16,13 +16,23 @@ fi
 : "${DEVELOP_COMPOSE_FILE:=compose.yaml}"
 : "${DEVELOP_DOCS_SERVICE:=docs}"
 : "${DEVELOP_DOCS_PORT:=8000}"
+: "${DEVELOP_APP_COMPOSE_FILE:=docker-compose.yml}"
+: "${DEVELOP_APP_SERVICE:=api}"
 
 compose_abs() {
   echo "$REPO_ROOT/$DEVELOP_COMPOSE_FILE"
 }
 
+app_compose_abs() {
+  echo "$REPO_ROOT/$DEVELOP_APP_COMPOSE_FILE"
+}
+
 has_compose_file() {
   [[ -f "$(compose_abs)" ]]
+}
+
+has_app_compose_file() {
+  [[ -f "$(app_compose_abs)" ]]
 }
 
 require_docker() {
@@ -39,10 +49,23 @@ require_compose_file() {
   fi
 }
 
+require_app_compose_file() {
+  if ! has_app_compose_file; then
+    echo "develop: missing $(app_compose_abs) (set DEVELOP_APP_COMPOSE_FILE or add a compose file)." >&2
+    exit 1
+  fi
+}
+
 compose() {
   require_docker
   require_compose_file
   (cd "$REPO_ROOT" && docker compose -f "$DEVELOP_COMPOSE_FILE" "$@")
+}
+
+app_compose() {
+  require_docker
+  require_app_compose_file
+  (cd "$REPO_ROOT" && docker compose -f "$DEVELOP_APP_COMPOSE_FILE" "$@")
 }
 
 usage() {
@@ -60,6 +83,9 @@ Commands
   shell                Open an interactive shell in the ${DEVELOP_DOCS_SERVICE} container.
   run <cmd> [args]     Run a command in the ${DEVELOP_DOCS_SERVICE} container (e.g. mkdocs --version).
   ps                   Show Compose service status.
+  seed-sync [args]     Export DB-backed seed values to seed files via ${DEVELOP_APP_SERVICE}.
+                       Args pass to: python -m finance.dev_seed --sync-seeds
+                       Examples: seed-sync | seed-sync --plan-id 12
 
 Default doc URL: http://127.0.0.1:${DEVELOP_DOCS_PORT}/  (port comes from develop.conf and compose)
 
@@ -113,6 +139,10 @@ cmd_run() {
   compose run --rm "$DEVELOP_DOCS_SERVICE" "$@"
 }
 
+cmd_seed_sync() {
+  app_compose run --rm "$DEVELOP_APP_SERVICE" python -m finance.dev_seed --sync-seeds "$@"
+}
+
 main() {
   local cmd="${1:-}"
   if [[ -z "$cmd" ]]; then
@@ -127,6 +157,7 @@ main() {
     local) shift; cmd_local "$@" ;;
     shell) shift; cmd_shell "$@" ;;
     run) shift; cmd_run "$@" ;;
+    seed-sync) shift; cmd_seed_sync "$@" ;;
     ps)
       shift
       if has_compose_file; then

@@ -142,6 +142,23 @@ graph LR
   TFR0006_07_TEST["Compose default for allocation auto-template TEST (T-FR-0006-07)"] --> TFR0006_07_DEV["Compose default for allocation auto-template DEV (T-FR-0006-07)"]
   TFR0006_07_DEV --> TFR0006_07_VAL["Compose default for allocation auto-template VAL (T-FR-0006-07)"]
 
+  TFR0006_03_VAL --> TFR0006_08_TEST["Unified source/sink allocation primitive contracts TEST (T-FR-0006-08)"]
+  TFR0006_08_TEST --> TFR0006_08_DEV["Unified source/sink allocation primitive contracts DEV (T-FR-0006-08)"]
+  TFR0006_08_DEV --> TFR0006_08_VAL["Unified source/sink allocation primitive contracts VAL (T-FR-0006-08)"]
+
+  TFR0006_04_VAL --> TFR0006_09_TEST["Directional account handles and double-click linking TEST (T-FR-0006-09)"]
+  TFR0006_09_TEST --> TFR0006_09_DEV["Directional account handles and double-click linking DEV (T-FR-0006-09)"]
+  TFR0006_09_DEV --> TFR0006_09_VAL["Directional account handles and double-click linking VAL (T-FR-0006-09)"]
+
+  TFR0006_09_VAL --> TFR0006_10_TEST["Orthogonal routing and obstacle-aware relayout TEST (T-FR-0006-10)"]
+  TFR0006_10_TEST --> TFR0006_10_DEV["Orthogonal routing and obstacle-aware relayout DEV (T-FR-0006-10)"]
+  TFR0006_10_DEV --> TFR0006_10_VAL["Orthogonal routing and obstacle-aware relayout VAL (T-FR-0006-10)"]
+
+  TFR0006_08_VAL --> TFR0006_11_TEST["Expandable allocation clusters with filters and counts TEST (T-FR-0006-11)"]
+  TFR0006_10_VAL --> TFR0006_11_TEST
+  TFR0006_11_TEST --> TFR0006_11_DEV["Expandable allocation clusters with filters and counts DEV (T-FR-0006-11)"]
+  TFR0006_11_DEV --> TFR0006_11_VAL["Expandable allocation clusters with filters and counts VAL (T-FR-0006-11)"]
+
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
   class TFR0001_01_TEST,TFR0001_01_DEV,TFR0001_01_VAL triadDone

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from datetime import date
 from pathlib import Path
 
 from finance.db.session import get_session, init_db
@@ -43,9 +44,7 @@ def run_seed(directory: Path) -> int:
         print(f"Seed directory does not exist: {directory}", file=sys.stderr)
         return 1
 
-    paths = sorted(
-        p for p in directory.iterdir() if p.is_file() and p.suffix.lower() == ".csv"
-    )
+    paths = sorted(p for p in directory.iterdir() if p.is_file() and p.suffix.lower() == ".csv")
 
     init_db()
     errors = 0
@@ -90,7 +89,10 @@ def run_seed(directory: Path) -> int:
         with get_session() as session:
             n = apply_merchant_display_seed(session, seed_merchant_path)
         if n:
-            print(f"  • merchant displays: applied {n} override(s) from {seed_merchant_path}", flush=True)
+            print(
+                f"  • merchant displays: applied {n} override(s) from {seed_merchant_path}",
+                flush=True,
+            )
         elif seed_merchant_path.is_file():
             print(
                 f"  • merchant displays: {seed_merchant_path.name} — no overrides to apply (empty or invalid).",
@@ -117,6 +119,24 @@ def run_seed(directory: Path) -> int:
     return 0
 
 
+def _parse_month(value: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("expected YYYY-MM-DD") from exc
+
+
+def _export_budget_seed_cli(args: argparse.Namespace) -> int:
+    from finance.seed_budget_allocation_yaml import export_budget_seed_file_cli
+
+    return export_budget_seed_file_cli(
+        output=args.output,
+        plan_id=args.plan_id,
+        plan_name=args.plan_name,
+        period_month=args.period_month,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Ingest CSV files from a seed directory.")
     parser.add_argument(
@@ -130,7 +150,48 @@ def main() -> None:
         action="store_true",
         help="Write all DB merchant display overrides to data/seed-merchant-displays.json and exit.",
     )
+    parser.add_argument(
+        "--export-budget-default",
+        action="store_true",
+        help="Write a DB allocation plan to data/budget-default-plan.yaml and exit.",
+    )
+    parser.add_argument(
+        "--sync-seeds",
+        action="store_true",
+        help="Write all DB-backed seed files (merchant displays + budget default) and exit.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Budget seed output path (default: FINANCE_BUDGET_DEFAULT_YAML or data/budget-default-plan.yaml).",
+    )
+    parser.add_argument(
+        "--plan-id",
+        type=int,
+        default=None,
+        help="Allocation plan id to export to the budget seed.",
+    )
+    parser.add_argument(
+        "--plan-name",
+        default=None,
+        help="Allocation plan name to export when --plan-id is not provided.",
+    )
+    parser.add_argument(
+        "--period-month",
+        type=_parse_month,
+        default=None,
+        help="Planning month to export when --plan-id is not provided (YYYY-MM-DD).",
+    )
     args = parser.parse_args()
+    if args.sync_seeds:
+        from finance.seed_merchant_displays import export_seed_file_cli
+
+        merchant_code = export_seed_file_cli()
+        budget_code = _export_budget_seed_cli(args)
+        raise SystemExit(0 if merchant_code == 0 and budget_code == 0 else 1)
+    if args.export_budget_default:
+        raise SystemExit(_export_budget_seed_cli(args))
     if args.export_merchant_displays:
         from finance.seed_merchant_displays import export_seed_file_cli
 

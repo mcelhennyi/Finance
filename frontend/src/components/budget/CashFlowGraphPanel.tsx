@@ -29,6 +29,7 @@ import { suggestedEdgesFromBbdResponse } from '../../lib/bbdCashFlowSuggestions'
 import {
   CashEdgeData,
   CashFlowRfNode,
+  cashFlowEdgeToFlowEdge,
   defaultNewEdgeSpec,
   edgeSummaryLabel,
   flowElementsToGraphDocument,
@@ -173,6 +174,10 @@ export function CashFlowGraphPanel({
   const [addNotes, setAddNotes] = useState('')
   const [addIsActive, setAddIsActive] = useState(true)
   const [addError, setAddError] = useState<string | null>(null)
+  const [linkFromRef, setLinkFromRef] = useState('')
+  const [linkToRef, setLinkToRef] = useState('')
+  const [linkLabel, setLinkLabel] = useState('')
+  const [linkError, setLinkError] = useState<string | null>(null)
   const [grain, setGrain] = useState<TimeGrain>('month')
   const [bbdSuggestions, setBbdSuggestions] = useState<{
     edges: CashFlowEdgeSpec[]
@@ -195,6 +200,10 @@ export function CashFlowGraphPanel({
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
     setEditingAccountId(null)
+    setLinkFromRef(el.nodes[0]?.id ?? '')
+    setLinkToRef(el.nodes.find(n => n.id !== el.nodes[0]?.id)?.id ?? '')
+    setLinkLabel('')
+    setLinkError(null)
   }, [graphQuery.data, setEdges, setNodes])
 
   useEffect(() => {
@@ -234,6 +243,44 @@ export function CashFlowGraphPanel({
     },
   })
 
+  const linkMut = useMutation({
+    mutationFn: async () => {
+      if (planId == null) throw new Error('No plan')
+      const fromRef = linkFromRef.trim()
+      const toRef = linkToRef.trim()
+      if (!fromRef || !toRef) throw new Error('Choose source and destination accounts.')
+      if (fromRef === toRef) throw new Error('Choose two different accounts.')
+      if (edges.some(e => e.source === fromRef && e.target === toRef)) {
+        throw new Error('That account flow already exists.')
+      }
+
+      const doc = flowElementsToGraphDocument(planId, nodes, edges)
+      await api.putBudgetCashFlowGraph(planId, doc)
+      return api.linkBudgetCashFlowAccounts(planId, {
+        from_ref: fromRef,
+        to_ref: toRef,
+        label: linkLabel.trim(),
+        amount_rule: 'remainder',
+        fixed_amount: null,
+        percent_of_inflow: null,
+        cadence: 'monthly',
+        day_of_month: null,
+      })
+    },
+    onMutate: () => {
+      setLinkError(null)
+    },
+    onSuccess: data => {
+      if (planId != null) {
+        queryClient.setQueryData(['budgetCashFlowGraph', planId], data)
+      }
+      setLinkLabel('')
+    },
+    onError: error => {
+      setLinkError(error instanceof Error ? error.message : 'Could not link accounts')
+    },
+  })
+
   const bbdSuggestMut = useMutation({
     mutationFn: async () => {
       const def = await api.bbdDefaultScenario()
@@ -258,18 +305,7 @@ export function CashFlowGraphPanel({
       if (!connection.source || !connection.target) return
       const ref = newEdgeRef(connection.source, connection.target)
       const spec = defaultNewEdgeSpec(ref, connection.source, connection.target)
-      setEdges(eds =>
-        addEdge(
-          {
-            id: ref,
-            source: connection.source,
-            target: connection.target,
-            label: edgeSummaryLabel(spec),
-            data: { spec },
-          },
-          eds,
-        ),
-      )
+      setEdges(eds => addEdge(cashFlowEdgeToFlowEdge(spec), eds))
     },
     [setEdges],
   )
@@ -301,6 +337,11 @@ export function CashFlowGraphPanel({
     [edges, selectedEdgeId],
   )
   const accountListRows = useMemo(() => accountRows(nodes), [nodes])
+  const nodeLabelByRef = useMemo(
+    () => new Map(nodes.map(n => [n.id, n.data.spec.display_name || n.id])),
+    [nodes],
+  )
+  const canLinkAccounts = nodes.length >= 2
 
   const graphDocForAgg = useMemo(() => {
     if (planId == null) return null
@@ -388,6 +429,8 @@ export function CashFlowGraphPanel({
       data: { spec },
     }
     setNodes(nds => [...nds, next])
+    if (!linkFromRef) setLinkFromRef(ref)
+    else if (!linkToRef && linkFromRef !== ref) setLinkToRef(ref)
     setAddRef('')
     setAddName('')
     setAddInstitution('')
@@ -414,22 +457,15 @@ export function CashFlowGraphPanel({
     nodes.length,
     nodes,
     setNodes,
+    linkFromRef,
+    linkToRef,
   ])
 
   const addSuggestedEdge = useCallback(
     (spec: CashFlowEdgeSpec) => {
       setEdges(eds => {
         if (eds.some(e => e.id === spec.ref)) return eds
-        return [
-          ...eds,
-          {
-            id: spec.ref,
-            source: spec.from_ref,
-            target: spec.to_ref,
-            label: edgeSummaryLabel(spec),
-            data: { spec },
-          },
-        ]
+        return [...eds, cashFlowEdgeToFlowEdge(spec)]
       })
     },
     [setEdges],
@@ -602,6 +638,7 @@ export function CashFlowGraphPanel({
               onEdgesChange={handleEdgesChange}
               onConnect={onConnect}
               onSelectionChange={onSelectionChange}
+              connectionLineStyle={{ stroke: '#0f766e', strokeWidth: 2 }}
               fitView
               fitViewOptions={{ padding: 0.2 }}
               deleteKeyCode={['Backspace', 'Delete']}
@@ -630,6 +667,67 @@ export function CashFlowGraphPanel({
                 to change fields. Nest children under parents; save the graph to persist. Expand{' '}
                 <span className="font-medium text-slate-600">Add account</span> below to create a new node.
               </p>
+            </div>
+            <div className="border-y border-teal-100 bg-teal-50/40 py-3">
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(8rem,0.75fr)_auto] md:items-end">
+                <label className="block text-xs font-medium text-slate-600">
+                  Source account
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                    value={linkFromRef}
+                    onChange={e => setLinkFromRef(e.target.value)}
+                    disabled={!canLinkAccounts || linkMut.isPending}
+                    aria-label="Source account"
+                  >
+                    {nodes.map(n => (
+                      <option key={n.id} value={n.id}>
+                        {n.data.spec.display_name} ({n.id})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="hidden pb-2 text-center text-sm font-semibold text-teal-800 md:block">→</div>
+                <label className="block text-xs font-medium text-slate-600">
+                  Destination account
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                    value={linkToRef}
+                    onChange={e => setLinkToRef(e.target.value)}
+                    disabled={!canLinkAccounts || linkMut.isPending}
+                    aria-label="Destination account"
+                  >
+                    {nodes.map(n => (
+                      <option key={n.id} value={n.id}>
+                        {n.data.spec.display_name} ({n.id})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs font-medium text-slate-600">
+                  Label
+                  <input
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                    value={linkLabel}
+                    onChange={e => setLinkLabel(e.target.value)}
+                    disabled={!canLinkAccounts || linkMut.isPending}
+                    placeholder="Sweep"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => linkMut.mutate()}
+                  disabled={!canLinkAccounts || linkMut.isPending}
+                  className="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
+                >
+                  {linkMut.isPending ? 'Linking…' : 'Link accounts'}
+                </button>
+              </div>
+              {(linkError || linkMut.isError) && (
+                <p className="mt-2 text-xs text-red-700" role="alert">
+                  {linkError ||
+                    (linkMut.error instanceof Error ? linkMut.error.message : 'Could not link accounts')}
+                </p>
+              )}
             </div>
             <div className="overflow-x-auto rounded-lg border border-slate-100">
               <table className="min-w-[64rem] w-full text-xs">
@@ -988,6 +1086,10 @@ export function CashFlowGraphPanel({
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
               <div className="space-y-2">
                 <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Selected edge</div>
+                <div className="text-sm font-semibold text-slate-800">
+                  {nodeLabelByRef.get(selectedEdge.source) ?? selectedEdge.source} →{' '}
+                  {nodeLabelByRef.get(selectedEdge.target) ?? selectedEdge.target}
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <label className="block text-xs text-slate-600">
                     Label

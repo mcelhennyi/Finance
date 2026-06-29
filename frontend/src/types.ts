@@ -293,6 +293,18 @@ export interface CashFlowEdgeSpec {
   day_of_month: number | null
 }
 
+export interface CashFlowAccountLinkRequest {
+  ref?: string | null
+  from_ref: string
+  to_ref: string
+  label?: string
+  amount_rule?: CashFlowAmountRuleType
+  fixed_amount?: string | null
+  percent_of_inflow?: string | null
+  cadence?: CashFlowCadenceType
+  day_of_month?: number | null
+}
+
 export interface CashFlowGraphDocument {
   plan_id: number
   nodes: CashFlowNodeSpec[]

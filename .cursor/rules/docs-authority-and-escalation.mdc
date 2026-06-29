@@ -15,13 +15,17 @@ If you believe a design doc is wrong, **do not edit it silently**. Follow the **
 
 **Key discipline:** Never “just make it work” in code without spec backing. If the design does not support the interface you need, that is a **`DESIGN-GAP`**.
 
+**UI look and feel:** For **user-visible** UI design create/update requests, **static HTML mocks** in **`docs/design/mockups/`** (linked from the design doc) are required **before** UI implementation — see **`.cursor/rules/ui-design-mockups.mdc`**.
+
 ### Escalation tags
 
 | Tag | When to use | What to do |
 | --- | --- | --- |
 | **`DESIGN-GAP`** | The design is ambiguous or under-specified for what you must implement | **Stop** on that component. Flag it; do not guess. |
 | **`DESIGN-FLAW`** | A failing test or behavior shows a **wrong design assumption**, not a simple code bug | **Stop** validation on that component; document evidence; amend design via **`docs/ai-context.md`**. |
-| **`CODE-DEFECT`** | Behavior or tests fail against a **correct** design | Fix the code; no silent design edits. |
+| **`CODE-DEFECT`** | Behavior or tests fail against a **correct** design | Fix the code; no silent design edits (transient). |
+| **`REWORK-REQUIRED`** | Design/intent is settled and correct, but **shipped code or another doc is knowingly out of sync** with it | **Durable** flag — record the specific deviating file/spec and the intended end state; track until reworked; remove in the change that lands the rework. Full convention: **`rework-required.mdc`** (mirrored **`.claude/rules/rework-required.md`**). |
+| **`GROWTH`** | **v0 design is settled and implementable**, but a **named trigger/limit** will require a **design amendment** to an upgrade path | **Durable** flag — record trigger, limitation, upgrade, and v0 until triggered; amend design when the limit is hit; remove when upgrade ships or tag is retired with evidence. Full convention: **`growth-required.mdc`** (mirrored **`.claude/rules/growth-required.md`**). |
 
 **`COMPLETED`** and other workflow tags, if your project uses them, stay defined in **`docs/ai-context.md`**.
 
@@ -32,5 +36,7 @@ If you sense ambiguity or assumptions not grounded in **`docs/design/`**:
 - **Do not guess.** State the ambiguity.
 - Ask for clarification before proceeding.
 - If the gap is in the spec itself, treat it as **`DESIGN-GAP`**.
+
+**Numbered ids:** Before using a new `DG-`, `DF-`, `RW-`, `GR-`, `R-`, `DEC-`, `TS-`, or traceability tag id, **reserve it in `tasks/TAG-REGISTRY.md`**, commit, and **push** — see **`.cursor/rules/tag-reservation.mdc`**.
 
 Amendment block format and merge expectations: **`docs/ai-context.md`** (Docs authority and escalation).

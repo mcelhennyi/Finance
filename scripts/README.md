@@ -72,6 +72,18 @@ Override the path with **`FINANCE_SEED_MERCHANT_DISPLAYS`** (see `docker-compose
 
 Point **`FINANCE_BUDGET_DEFAULT_YAML`** at another file to customize. **`FINANCE_BUDGET_ALLOCATION_PERIOD_MONTH`** (ISO date) sets the planning month when **`period_month`** is omitted from the YAML. **`FINANCE_BUDGET_DEFAULT_SEED_ENABLED=false`** skips applying the YAML.
 
+To sync DB-backed seed values back to disk after editing them in the UI:
+
+```bash
+./develop seed-sync
+```
+
+This refreshes **`data/seed-merchant-displays.json`** and exports the matching Budget plan back to **`data/budget-default-plan.yaml`**. By default, the budget export selects the plan named in the current YAML for that YAML's **`period_month`**. If you renamed the plan in the UI or want a specific plan, pass its id:
+
+```bash
+./develop seed-sync --plan-id 12
+```
+
 ### What it does
 
 1. Builds and starts the **api** and **web** services from `docker-compose.yml` (FastAPI + Vite, with reload)

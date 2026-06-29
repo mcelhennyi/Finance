@@ -1,6 +1,7 @@
 """Tests for YAML budget default seeding."""
 
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -8,13 +9,15 @@ from sqlalchemy import select
 
 from finance.allocation.cadence import normalize_period_month
 from finance.allocation.enums import AllocationCadence, PaymentMethod, PlanIncomeCadence
-from finance.cash_flow_graph.service import get_plan_graph
+from finance.cash_flow_graph.service import get_plan_graph, replace_plan_graph
+from finance.cash_flow_graph.schemas import CashFlowGraphDocument
 from finance.db.models import AllocationPlan, BudgetCategoryLabel
 from finance.db.session import get_session, init_db
 from finance.seed_budget_allocation_yaml import (
     apply_budget_seed_yaml,
     default_budget_yaml_path,
     document_to_creates,
+    export_budget_seed_yaml,
     load_budget_seed_document,
     parse_budget_seed_yaml,
     try_seed_budget_default_yaml,
@@ -44,9 +47,7 @@ items:
 """
 
 
-MINIMAL_YAML_WITH_GRAPH = (
-    MINIMAL_YAML
-    + """
+MINIMAL_YAML_WITH_GRAPH = MINIMAL_YAML + """
 cash_flow_graph:
   nodes:
     - ref: payroll
@@ -72,7 +73,6 @@ cash_flow_graph:
       cadence: monthly
       day_of_month: null
 """
-)
 
 
 @pytest.fixture
@@ -186,3 +186,54 @@ def test_default_budget_yaml_path_resolves_repo_file(monkeypatch: pytest.MonkeyP
     monkeypatch.delenv("FINANCE_BUDGET_DEFAULT_YAML", raising=False)
     p = default_budget_yaml_path()
     assert p.name == "budget-default-plan.yaml"
+
+
+def test_export_budget_seed_yaml_uses_existing_seed_selector(isolated_db, tmp_path: Path) -> None:
+    path = tmp_path / "seed.yaml"
+    path.write_text(MINIMAL_YAML_WITH_GRAPH, encoding="utf-8")
+    init_db()
+    with get_session() as session:
+        apply_budget_seed_yaml(session, path)
+        plan = session.scalars(
+            select(AllocationPlan).where(AllocationPlan.period_month == date(2026, 5, 1))
+        ).first()
+        assert plan is not None
+        item = plan.items[0]
+        item.planned_amount = Decimal("1300.25")
+        item.notes = "Adjusted in the UI"
+        path_out, count, pm, name = export_budget_seed_yaml(session, path)
+
+    assert path_out == path
+    assert count == 1
+    assert pm == date(2026, 5, 1)
+    assert name == "Test plan"
+    doc = load_budget_seed_document(path)
+    assert doc.items[0].planned_amount == Decimal("1300.25")
+    assert doc.items[0].notes == "Adjusted in the UI"
+    assert doc.cash_flow_graph is not None
+    assert len(doc.cash_flow_graph.nodes) == 2
+    assert len(doc.cash_flow_graph.edges) == 1
+
+
+def test_export_budget_seed_yaml_plan_id_allows_renamed_plan(isolated_db, tmp_path: Path) -> None:
+    path = tmp_path / "seed.yaml"
+    path.write_text(MINIMAL_YAML_WITH_GRAPH, encoding="utf-8")
+    init_db()
+    with get_session() as session:
+        apply_budget_seed_yaml(session, path)
+        plan = session.scalars(
+            select(AllocationPlan).where(AllocationPlan.period_month == date(2026, 5, 1))
+        ).first()
+        assert plan is not None
+        plan.name = "Renamed in UI"
+        graph = get_plan_graph(session, plan.id)
+        assert graph is not None
+        replace_plan_graph(
+            session, plan.id, CashFlowGraphDocument(plan_id=plan.id, nodes=graph.nodes, edges=[])
+        )
+        export_budget_seed_yaml(session, path, plan_id=plan.id)
+
+    doc = load_budget_seed_document(path)
+    assert doc.plan.name == "Renamed in UI"
+    assert doc.cash_flow_graph is not None
+    assert len(doc.cash_flow_graph.edges) == 0

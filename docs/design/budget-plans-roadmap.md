@@ -2,7 +2,7 @@
 
 **Status:** Product roadmap + implemented baseline (**starter template** via env). Interactive cash-flow graph UI is **not** shipped yet.
 
-**See also:** [`budget-cash-flow-graph.md`](budget-cash-flow-graph.md), [`tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md`](../../tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md).
+**See also:** [`tasks/feature-history/FR-0006-budget-cash-flow-graph/`](../../tasks/feature-history/FR-0006-budget-cash-flow-graph/), [`tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md`](../../tasks/feature-history/FR-0002-budget-entry-page/operator-budget-allocation.md).
 
 ---
 
@@ -44,8 +44,13 @@ Implementation: `finance.allocation.default_template`, triggered from `list_allo
 
 ---
 
-## Cash-flow visualization (React Flow)
+## Allocation primitive and cash-flow visualization (React Flow)
 
 Static SVG placeholders are **removed**. The target UX is **[@xyflow/react](https://reactflow.dev/)** (or equivalent) rendering **nodes and edges from persisted user data** — not hard-coded diagrams.
 
-Persisted graph schema and editor milestones live in **`budget-cash-flow-graph.md`**.
+Persisted graph schema and editor milestones live in the **FR-0006** feature history. The 2026-06-29 expansion treats every plan money movement as an explicit source or sink allocation primitive:
+
+- **Source** allocations show how money arrives, e.g. Paycheck → Checking.
+- **Sink** allocations show how money is spent or stored, e.g. Chase Card → Amazon / shopping or Checking → High Yield Savings.
+
+Allocation rows can link to graph account endpoints (`from_account_ref` / `to_account_ref`) and carry `allocation_role` (`source` / `sink`) so the same primitive powers the allocation table, account source/sink counts, expanded allocation mini-nodes, and graph routes. Mock: [`mockups/fr-0006-account-routing-allocation-expansion.html`](mockups/fr-0006-account-routing-allocation-expansion.html).

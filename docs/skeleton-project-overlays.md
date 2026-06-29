@@ -15,26 +15,38 @@ Examples:
 | Base file (from template; may be overwritten on sync) | Project-owned companion (never touched by **`sync-skeleton`**) |
 |------------------------------------------------------|-------------------------------------------------------------------|
 | **`docs/ai-context.md`** | **`docs/ai-context.project.md`** |
-| **`CLAUDE.md`** | **`CLAUDE.project.md`** |
+| **`CLAUDE.md`** | *(prefer **`docs/ai-context.project.md`** for shared rules)* |
+| **`AGENTS.md`** | *(prefer **`docs/ai-context.project.md`** + **`.codex/project.md`**)* |
+
+### Codex-specific layout (`.codex/`)
+
+| Path | Sync behavior |
+| --- | --- |
+| **`.codex/README.md`**, **`.codex/rules/**`** | Manifest-listed — refreshed on **`./sync-skeleton`** |
+| **`.codex/project.md`** | Manifest-listed for **first init**; add to **`.syncignore`** at consumer root so local edits survive sync |
+
+See **`.codex/README.md`**.
 
 Rules:
 
-1. **Do not** list **`*.project.*`** paths in **`skeleton.manifest`** — they are not template sources under **`.skeleton/`**.
+1. **Do not** list **`*.project.*`** in **`skeleton.manifest`** as template sources under **`.skeleton/`** — consumers create them beside synced base files.
 2. **`./sync-skeleton`** does **not** read, write, merge, or delete **`*.project.*`** files; they follow normal git workflow only.
-3. Put durable **project-only** content in the **`.project.`** file. Keep the base file aligned with upstream skeleton changes; resolve conflicts by editing overlays, not by freezing the base file in **`.syncignore`** unless you intentionally opt out of template updates for that path.
+3. Put durable **project-only** content in overlays. Keep the base file aligned with upstream skeleton changes; resolve conflicts by editing overlays, not by freezing the base file in **`.syncignore`** unless you intentionally opt out of template updates for that path.
 
-The same pattern applies to other single-file roots when useful, as long as the companion name is exactly **`NAME.project.EXT`** (insert **`.project.`** before the final extension).
+The same **`NAME.project.EXT`** pattern applies to other single-file roots when useful, as long as the companion name is exactly **`NAME.project.EXT`** (insert **`.project.`** before the final extension).
 
 ## After every `sync-skeleton`
 
-**`./sync-skeleton`** does not merge template text into **`*.project.*`** files. After each run, **read** **`.skeleton/CHANGELOG.md`**: use **After sync: read the changelog (consumers and agents)** at the top of that file, then **`[Unreleased]` → Template** for **`Consumer manual:`** / **`[consumer manual]`** bullets that tell you what to port into this overlay (or into other repo-specific files). Maintainers add those bullets when template changes are only partially automated.
+**`./sync-skeleton`** does not merge template text into **`*.project.*`** or **syncignored** paths. After each run, **read** **`.skeleton/CHANGELOG.md`**: use **After sync: read the changelog (consumers and agents)** at the top of that file, then **`[Unreleased]` → Template** for **`Consumer manual:`** / **`[consumer manual]`** bullets that tell you what to port into overlays (or into other repo-specific files). Maintainers add those bullets when template changes are only partially automated.
 
 ## Agent behavior
 
-**`docs/ai-context.md`** and **`.cursor/rules/main.mdc`** define session bootstrap: load the base file, then the **`.project.`** file **when it exists**, in that order. Section numbers (for example **§4**) in an overlay refer to the **base** **`docs/ai-context.md`** unless the overlay states otherwise.
+**`docs/ai-context.md`** and **`.cursor/rules/main.mdc`** define session bootstrap: load the base file, then **`docs/ai-context.project.md`** **when it exists**, in that order. Section numbers (for example **§4**) in an overlay refer to the **base** **`docs/ai-context.md`** unless the overlay states otherwise.
 
-**`CLAUDE.md`** instructs Claude Code to load **`CLAUDE.project.md`** after the base file when present.
+**`CLAUDE.md`** instructs Claude Code to load **`docs/ai-context.project.md`** via the shared bootstrap in **`docs/ai-context.md`**.
+
+**`AGENTS.md`** instructs Codex to load **`docs/ai-context.project.md`**, then **`.codex/rules/session.md`**, then **`.codex/project.md`** when present.
 
 ## Maintainer note (skeleton upstream)
 
-When adding new **single-file** process docs to **`skeleton.manifest`**, document in the base file whether a **`*.project.*`** companion is supported and update this page if the pattern should apply.
+When adding new **single-file** process docs to **`skeleton.manifest`**, document in the base file whether a **`*.project.*`** or **`.codex/project.md`** companion is expected and update this page if the pattern should apply.

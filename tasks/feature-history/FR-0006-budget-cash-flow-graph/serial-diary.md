@@ -1,3 +1,23 @@
+## 2026-06-29 (session) — expansion design for account routing and allocation primitives
+
+**Stage:** expand-feature design / ticket expansion on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Added expansion addendum [`30-expand-2026-06-29-account-routing-allocations.md`](30-expand-2026-06-29-account-routing-allocations.md) and mock [`docs/design/mockups/fr-0006-account-routing-allocation-expansion.html`](../../../docs/design/mockups/fr-0006-account-routing-allocation-expansion.html). The expansion keeps **FR-0006** open and turns Budget allocations into explicit source/sink cash-movement primitives: source allocations fund accounts, while sink allocations consume/store from accounts so paycheck deposits, savings sweeps, and purchases use the same model. New tickets cover [**Unified source/sink allocation primitive contracts**](tickets.md) (**`T-FR-0006-08`**), [**Directional account handles and double-click linking**](tickets.md) (**`T-FR-0006-09`**), [**Orthogonal routing and obstacle-aware relayout**](tickets.md) (**`T-FR-0006-10`**), and [**Expandable allocation clusters with filters and counts**](tickets.md) (**`T-FR-0006-11`**).
+
+**Next:** Run **`/identify-frontier`**, then start **`T-FR-0006-08`** and **`T-FR-0006-09`** in child worktrees. Do **not** run **`/finish-feature`** until expansion tickets **`08`–`11`** are TEST/DEV/VAL `done`.
+
+---
+
+## 2026-06-29 (session) — directional account linking follow-up
+
+**Stage:** DEV/VAL on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Added **`POST /api/budget-allocation/plans/{plan_id}/cash-flow-graph/links`** to create one directed, relational **`CashFlowEdge`** between existing account nodes; **`CashFlowGraphPanel`** now renders money-flow edges with teal arrow markers and adds source / destination account controls that save current graph edits before creating the backend link. Selected edges show **source → destination** labels.
+
+**Validation:** `docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/test_cash_flow_graph_contracts.py tests/test_cash_flow_graph_models.py tests/test_api_cash_flow_graph.py -q"`; `docker compose run --rm web sh -c "npm run lint && npm test -- cashFlowGraphFlow.test.ts && npm run build"`; `./scripts/check-frontend-no-merge-markers.sh`; browser VAL on **Budget → Cash flow map** at desktop and **390×844** viewport (nonblank graph, arrow markers, account-link controls, no console errors).
+
+---
+
 ## 2026-05-10 (session) — finish-feature handoff + Budget UX
 
 **Stage:** VAL / handoff on **`feat/FR-0006-budget-cash-flow-graph`**
