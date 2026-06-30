@@ -15,6 +15,14 @@ export const ALLOCATION_ITEM_CADENCES = [
 
 export type AllocationItemCadence = (typeof ALLOCATION_ITEM_CADENCES)[number]
 
+export const ALLOCATION_ITEM_CADENCE_OPTIONS = [
+  'weekly',
+  'biweekly',
+  'monthly',
+  'quarterly',
+  'yearly',
+] as const satisfies readonly AllocationItemCadence[]
+
 export const PLAN_INCOME_CADENCES = [
   'weekly',
   'biweekly',
@@ -42,6 +50,17 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 /** Cash-flow graph node ref tied to each payment method (must exist in the plan graph). */
 export function graphNodeRefForPaymentMethod(pm: PaymentMethod): string {
   return pm === 'credit' ? 'ian_chase_sapphire' : 'checking'
+}
+
+export function allocationCadenceForUi(cadence: string): AllocationItemCadence {
+  if (cadence === 'twice_monthly') return 'biweekly'
+  return ALLOCATION_ITEM_CADENCES.includes(cadence as AllocationItemCadence)
+    ? cadence as AllocationItemCadence
+    : 'monthly'
+}
+
+export function allocationCadenceLabel(cadence: string): string {
+  return allocationCadenceForUi(cadence).replace(/_/g, ' ')
 }
 
 export function formatUsd(n: number): string {

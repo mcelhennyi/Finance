@@ -4,9 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { api } from '../api/client'
 import {
-  ALLOCATION_ITEM_CADENCES,
+  ALLOCATION_ITEM_CADENCE_OPTIONS,
   ALLOCATION_ROLES,
   PAYMENT_METHODS,
+  allocationCadenceForUi,
+  allocationCadenceLabel,
   allocationAccountRef,
   allocationItemCreateBody,
   allocationItemPutBody,
@@ -124,9 +126,7 @@ function itemToDraft(item: AllocationItem): ItemDraftInput {
     item_name: item.item_name,
     category: item.category,
     planned_amount: String(item.planned_amount),
-    cadence: (ALLOCATION_ITEM_CADENCES.includes(item.cadence as AllocationItemCadence)
-      ? item.cadence
-      : 'monthly') as AllocationItemCadence,
+    cadence: allocationCadenceForUi(item.cadence),
     allocation_role: baseRole,
     from_account_ref: fromAccountRef,
     to_account_ref: toAccountRef,
@@ -938,9 +938,9 @@ export function BudgetPage() {
                                 })
                               }
                             >
-                              {ALLOCATION_ITEM_CADENCES.map(c => (
+                              {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
                                 <option key={c} value={c}>
-                                  {c.replace(/_/g, ' ')}
+                                  {allocationCadenceLabel(c)}
                                 </option>
                               ))}
                             </select>
@@ -1033,7 +1033,7 @@ export function BudgetPage() {
                           <td className="px-3 py-2 font-medium text-slate-800">{item.item_name}</td>
                           <td className="px-3 py-2 text-slate-600">{item.category}</td>
                           <td className="px-3 py-2 tabular-nums">{formatUsd(item.planned_amount)}</td>
-                          <td className="px-3 py-2 text-slate-500">{item.cadence.replace(/_/g, ' ')}</td>
+                          <td className="px-3 py-2 text-slate-500">{allocationCadenceLabel(item.cadence)}</td>
                           <td className="px-3 py-2">
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
@@ -1160,9 +1160,9 @@ export function BudgetPage() {
                         setNewItem({ ...newItem, cadence: e.target.value as AllocationItemCadence })
                       }
                     >
-                      {ALLOCATION_ITEM_CADENCES.map(c => (
+                      {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
                         <option key={c} value={c}>
-                          {c.replace(/_/g, ' ')}
+                          {allocationCadenceLabel(c)}
                         </option>
                       ))}
                     </select>
@@ -1393,7 +1393,7 @@ export function BudgetPage() {
                                                 </td>
                                                 <td className="px-3 py-2 text-slate-700">
                                                   <div className="font-medium text-slate-800">{line.item_name}</div>
-                                                  <div className="text-slate-500">{line.cadence.replace(/_/g, ' ')}</div>
+                                                  <div className="text-slate-500">{allocationCadenceLabel(line.cadence)}</div>
                                                 </td>
                                                 <td className="px-3 py-2 tabular-nums text-slate-700">
                                                   {formatUsd(line.monthly_amount)}

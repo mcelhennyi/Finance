@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  ALLOCATION_ITEM_CADENCE_OPTIONS,
+  allocationCadenceForUi,
+  allocationCadenceLabel,
   allocationAccountRef,
   allocationItemCreateBody,
   allocationItemPutBody,
@@ -17,6 +20,18 @@ describe('formatUsd', () => {
   it('formats positive and negative amounts', () => {
     expect(formatUsd(1234.5)).toMatch(/\$1,234\.50/)
     expect(formatUsd(-10)).toMatch(/−\$10\.00/)
+  })
+})
+
+describe('allocation cadence display', () => {
+  it('shows only biweekly in allocation UI choices', () => {
+    expect(ALLOCATION_ITEM_CADENCE_OPTIONS).toContain('biweekly')
+    expect(ALLOCATION_ITEM_CADENCE_OPTIONS).not.toContain('twice_monthly')
+  })
+
+  it('maps legacy twice-monthly allocations to biweekly for display and editing', () => {
+    expect(allocationCadenceForUi('twice_monthly')).toBe('biweekly')
+    expect(allocationCadenceLabel('twice_monthly')).toBe('biweekly')
   })
 })
 

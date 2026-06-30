@@ -57,7 +57,7 @@ import {
   validateDirectionalAccountLink,
   type AccountNodeRole,
 } from '../../lib/cashFlowGraphFlow'
-import { ALLOCATION_ITEM_CADENCES, ALLOCATION_ROLES, PAYMENT_METHODS, formatUsd } from '../../lib/budgetAllocation'
+import { ALLOCATION_ITEM_CADENCE_OPTIONS, ALLOCATION_ROLES, PAYMENT_METHODS, allocationCadenceLabel, formatUsd } from '../../lib/budgetAllocation'
 import { CASH_NODE_KIND_OPTIONS, CASH_FLOW_REF_PATTERN } from '../../lib/cashFlowGraphKinds'
 import { BUDGET_SCROLL_ANCHORS } from './budgetDocAnchors'
 
@@ -996,9 +996,9 @@ export function CashFlowGraphPanel({
                     onChange={e => setActiveAllocationFilter('cadence', e.target.value)}
                   >
                     <option value="">Any</option>
-                    {ALLOCATION_ITEM_CADENCES.map(cadence => (
+                    {ALLOCATION_ITEM_CADENCE_OPTIONS.map(cadence => (
                       <option key={cadence} value={cadence}>
-                        {cadence.replace(/_/g, ' ')}
+                        {allocationCadenceLabel(cadence)}
                       </option>
                     ))}
                   </select>

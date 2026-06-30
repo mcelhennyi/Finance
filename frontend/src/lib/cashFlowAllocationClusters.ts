@@ -5,6 +5,7 @@
  */
 
 import type { AllocationItem, CashFlowNodeSpec } from '../types'
+import { allocationCadenceForUi } from './budgetAllocation'
 import type { RoutingBox } from './cashFlowGraphRouting'
 
 export type AllocationClusterFilters = {
@@ -92,7 +93,7 @@ function passesFilters(
 
   if (min != null && item.monthly_amount < min) return false
   if (max != null && item.monthly_amount > max) return false
-  if (filters.cadence && item.cadence !== filters.cadence) return false
+  if (filters.cadence && allocationCadenceForUi(item.cadence) !== filters.cadence) return false
   if (filters.allocationRole && item.allocation_role !== filters.allocationRole) return false
   if (filters.paymentMethod && item.payment_method !== filters.paymentMethod) return false
   if (!includesText(item.category, filters.categorySearch)) return false
