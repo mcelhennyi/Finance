@@ -1,6 +1,6 @@
 import '@xyflow/react/dist/style.css'
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Background,
@@ -141,6 +141,190 @@ function accountRows(nodes: CashFlowRfNode[]): { node: CashFlowRfNode; depth: nu
   }
   for (const root of roots.sort(byLabel)) visit(root, 0)
   return out
+}
+
+function AccountEditModal(props: {
+  node: CashFlowRfNode
+  parentOptions: CashFlowRfNode[]
+  onApply: (spec: CashFlowNodeSpec) => void
+}) {
+  const { node, parentOptions, onApply } = props
+  const [draft, setDraft] = useState(node.data.spec)
+  const draftRef = useRef(draft)
+
+  useEffect(() => {
+    setDraft(node.data.spec)
+  }, [node.data.spec])
+
+  useEffect(() => {
+    draftRef.current = draft
+  }, [draft])
+
+  const patchDraft = useCallback((partial: Partial<CashFlowNodeSpec>) => {
+    setDraft(cur => ({ ...cur, ...partial }))
+  }, [])
+
+  const commitAndClose = useCallback(() => {
+    onApply(draftRef.current)
+  }, [onApply])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') commitAndClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [commitAndClose])
+
+  return (
+    <div
+      data-cash-flow-account-edit-modal
+      className="fixed inset-0 z-[230] flex items-stretch justify-center overflow-y-auto bg-slate-900/45 p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="budget-edit-account-title"
+      onClick={e => {
+        if (e.target === e.currentTarget) commitAndClose()
+      }}
+    >
+      <div
+        className="flex min-h-[100dvh] w-full max-w-5xl flex-col border-slate-200 bg-white shadow-xl sm:min-h-0 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:border"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+          <div className="min-w-0">
+            <h2 id="budget-edit-account-title" className="truncate text-lg font-semibold text-slate-800">
+              Edit account
+            </h2>
+            <p className="mt-0.5 truncate font-mono text-xs text-slate-400">{node.id}</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close edit account"
+            onClick={commitAndClose}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          >
+            <span aria-hidden className="text-xl leading-none">
+              ×
+            </span>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+              Display name
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800"
+                value={draft.display_name}
+                onChange={e => patchDraft({ display_name: e.target.value })}
+                aria-label={`Display name for ${node.id}`}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Kind
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm capitalize"
+                value={draft.kind}
+                onChange={e => patchDraft({ kind: e.target.value as CashNodeKind })}
+              >
+                {KIND_OPTIONS.map(k => (
+                  <option key={k} value={k}>
+                    {cashNodeKindLabel(k)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Parent
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={draft.parent_ref ?? ''}
+                onChange={e => patchDraft({ parent_ref: e.target.value || null })}
+              >
+                <option value="">None</option>
+                {parentOptions.map(n => (
+                  <option key={n.id} value={n.id}>
+                    {n.data.spec.display_name} ({n.id})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+              Institution
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.institution ?? ''}
+                onChange={e => patchDraft({ institution: e.target.value || null })}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Currency
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase"
+                value={draft.currency ?? 'USD'}
+                onChange={e => patchDraft({ currency: e.target.value.toUpperCase() })}
+                maxLength={3}
+                aria-label={`Currency for ${node.id}`}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Balance
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm tabular-nums"
+                value={draft.current_balance ?? ''}
+                onChange={e => patchDraft({ current_balance: e.target.value.trim() || null })}
+                aria-label={`Current balance for ${node.id}`}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Balance date
+              <input
+                type="date"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.balance_as_of ?? ''}
+                onChange={e => patchDraft({ balance_as_of: e.target.value || null })}
+                aria-label={`Balance date for ${node.id}`}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Mask
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.account_mask ?? ''}
+                onChange={e => patchDraft({ account_mask: e.target.value || null })}
+              />
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={draft.is_active ?? true}
+                onChange={e => patchDraft({ is_active: e.target.checked })}
+                aria-label={`Active status for ${node.id}`}
+              />
+              Active
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-4">
+              Notes
+              <textarea
+                className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.notes ?? ''}
+                onChange={e => patchDraft({ notes: e.target.value })}
+              />
+            </label>
+          </div>
+        </div>
+        <div className="sticky bottom-0 flex justify-end border-t border-slate-100 bg-white px-4 py-3">
+          <button
+            type="button"
+            onClick={commitAndClose}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function CashFlowNodeView({ data }: NodeProps<CashFlowRfNode>) {
@@ -404,15 +588,6 @@ export function CashFlowGraphPanel({
   const closeAccountEditModal = useCallback(() => {
     setEditingAccountId(null)
   }, [])
-
-  useEffect(() => {
-    if (editingAccountId == null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeAccountEditModal()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [closeAccountEditModal, editingAccountId])
 
   const highlightKey = highlightNodeRefs.join('\0')
   useEffect(() => {
@@ -1461,161 +1636,19 @@ export function CashFlowGraphPanel({
             </details>
           </div>
 
-          {editingAccountNode && typeof document !== 'undefined' &&
-            (() => {
-              const node = editingAccountNode
-              const spec = node.data.spec
-              return createPortal(
-                <div
-                  data-cash-flow-account-edit-modal
-                  className="fixed inset-0 z-[230] flex items-stretch justify-center overflow-y-auto bg-slate-900/45 p-0 sm:p-4"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="budget-edit-account-title"
-                  onClick={e => {
-                    if (e.target === e.currentTarget) closeAccountEditModal()
-                  }}
-                >
-                  <div
-                    className="flex min-h-[100dvh] w-full max-w-5xl flex-col border-slate-200 bg-white shadow-xl sm:min-h-0 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:border"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                      <div className="min-w-0">
-                        <h2 id="budget-edit-account-title" className="truncate text-lg font-semibold text-slate-800">
-                          Edit account
-                        </h2>
-                        <p className="mt-0.5 truncate font-mono text-xs text-slate-400">{node.id}</p>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="Close edit account"
-                        onClick={closeAccountEditModal}
-                        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                      >
-                        <span aria-hidden className="text-xl leading-none">
-                          ×
-                        </span>
-                      </button>
-                    </div>
-                    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
-                          Display name
-                          <input
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800"
-                            value={spec.display_name}
-                            onChange={e => patchNode(node.id, { display_name: e.target.value })}
-                            aria-label={`Display name for ${node.id}`}
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Kind
-                          <select
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm capitalize"
-                            value={spec.kind}
-                            onChange={e => patchNode(node.id, { kind: e.target.value as CashNodeKind })}
-                          >
-                            {KIND_OPTIONS.map(k => (
-                              <option key={k} value={k}>
-                                {cashNodeKindLabel(k)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Parent
-                          <select
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                            value={spec.parent_ref ?? ''}
-                            onChange={e => patchNode(node.id, { parent_ref: e.target.value || null })}
-                          >
-                            <option value="">None</option>
-                            {editingAccountParentOptions.map(n => (
-                              <option key={n.id} value={n.id}>
-                                {n.data.spec.display_name} ({n.id})
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
-                          Institution
-                          <input
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                            value={spec.institution ?? ''}
-                            onChange={e => patchNode(node.id, { institution: e.target.value || null })}
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Currency
-                          <input
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase"
-                            value={spec.currency ?? 'USD'}
-                            onChange={e => patchNode(node.id, { currency: e.target.value.toUpperCase() })}
-                            maxLength={3}
-                            aria-label={`Currency for ${node.id}`}
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Balance
-                          <input
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm tabular-nums"
-                            value={spec.current_balance ?? ''}
-                            onChange={e => patchNode(node.id, { current_balance: e.target.value.trim() || null })}
-                            aria-label={`Current balance for ${node.id}`}
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Balance date
-                          <input
-                            type="date"
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                            value={spec.balance_as_of ?? ''}
-                            onChange={e => patchNode(node.id, { balance_as_of: e.target.value || null })}
-                            aria-label={`Balance date for ${node.id}`}
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600">
-                          Mask
-                          <input
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                            value={spec.account_mask ?? ''}
-                            onChange={e => patchNode(node.id, { account_mask: e.target.value || null })}
-                          />
-                        </label>
-                        <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600">
-                          <input
-                            type="checkbox"
-                            checked={spec.is_active ?? true}
-                            onChange={e => patchNode(node.id, { is_active: e.target.checked })}
-                            aria-label={`Active status for ${node.id}`}
-                          />
-                          Active
-                        </label>
-                        <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-4">
-                          Notes
-                          <textarea
-                            className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                            value={spec.notes ?? ''}
-                            onChange={e => patchNode(node.id, { notes: e.target.value })}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    <div className="sticky bottom-0 flex justify-end border-t border-slate-100 bg-white px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={closeAccountEditModal}
-                        className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  </div>
-                </div>,
-                document.body,
-              )
-            })()}
+          {editingAccountNode &&
+            typeof document !== 'undefined' &&
+            createPortal(
+              <AccountEditModal
+                node={editingAccountNode}
+                parentOptions={editingAccountParentOptions}
+                onApply={spec => {
+                  patchNode(editingAccountNode.id, spec)
+                  closeAccountEditModal()
+                }}
+              />,
+              document.body,
+            )}
 
           {selectedEdge && selectedEdge.data?.spec && (
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">

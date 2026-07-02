@@ -55,6 +55,7 @@ FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven s
 - T-FR-0006-14 focused frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowGraphKinds.test.ts"` - pass, **20** tests passed.
 - T-FR-0006-14 full frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **71** tests passed, production build passed with the existing Vite chunk-size warning.
 - T-FR-0006-14 Browser VAL - Budget allocation page inspected at desktop and **390px** viewport; allocation/account tables and mobile cards fit with page overflow **0**, changed table/card self-overflow **0**, allocation/account edit modals used the full phone viewport, and console errors were **0**.
+- T-FR-0006-14 modal typing polish - allocation and account edit modals keep draft state local until save/close; Docker frontend lint/test/build re-passed with **71** tests, and browser smoke typed **95** account-modal characters in **519ms** plus **98** allocation-modal characters in **377ms** with **0** console errors.
 
 ## Deferred / follow-up
 

@@ -178,6 +178,235 @@ function allocationRoleView(role: AllocationRole | null | undefined) {
       }
 }
 
+type GraphAccountOption = {
+  ref: string
+  label: string
+  kind: string
+}
+
+function AllocationLineEditModal(props: {
+  initialDraft: ItemDraftInput
+  editingItem: AllocationItem | null
+  graphAccountOptions: GraphAccountOption[]
+  categoryOptionsFor: (value: string) => string[]
+  fallbackAccountRefForDraft: (draft: ItemDraftInput) => string
+  setDraftAccount: (draft: ItemDraftInput, accountRef: string, role?: AllocationRole) => ItemDraftInput
+  onGraphPayHoverNodeRefChange: (nodeRef: string | null) => void
+  onClose: () => void
+  onSave: (draft: ItemDraftInput) => void
+  saving: boolean
+}) {
+  const {
+    initialDraft,
+    editingItem,
+    graphAccountOptions,
+    categoryOptionsFor,
+    fallbackAccountRefForDraft,
+    setDraftAccount,
+    onGraphPayHoverNodeRefChange,
+    onClose,
+    onSave,
+    saving,
+  } = props
+  const [draft, setDraft] = useState(initialDraft)
+
+  useEffect(() => {
+    setDraft(initialDraft)
+  }, [initialDraft])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      data-budget-allocation-edit-modal
+      className="fixed inset-0 z-[220] flex items-stretch justify-center overflow-y-auto bg-slate-900/45 p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="budget-edit-line-title"
+      onClick={e => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <form
+        className="flex min-h-[100dvh] w-full max-w-5xl flex-col border-slate-200 bg-white shadow-xl sm:min-h-0 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:border"
+        onClick={e => e.stopPropagation()}
+        onSubmit={e => {
+          e.preventDefault()
+          onSave(draft)
+        }}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+          <div className="min-w-0">
+            <h2 id="budget-edit-line-title" className="truncate text-lg font-semibold text-slate-800">
+              Edit allocation line
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {editingItem ? `${editingItem.item_name} · ${formatUsd(editingItem.monthly_amount)} monthly` : 'All fields'}
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close edit allocation"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          >
+            <span aria-hidden className="text-xl leading-none">
+              ×
+            </span>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+              Item name
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.item_name}
+                onChange={e => setDraft({ ...draft, item_name: e.target.value })}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Category
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={draft.category}
+                onChange={e => setDraft({ ...draft, category: e.target.value })}
+              >
+                <option value="">Choose category</option>
+                {categoryOptionsFor(draft.category).map(label => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Planned
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm tabular-nums"
+                value={draft.planned_amount}
+                onChange={e => setDraft({ ...draft, planned_amount: e.target.value })}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Cadence
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={draft.cadence}
+                onChange={e =>
+                  setDraft({
+                    ...draft,
+                    cadence: e.target.value as AllocationItemCadence,
+                  })
+                }
+              >
+                {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
+                  <option key={c} value={c}>
+                    {allocationCadenceLabel(c)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Role
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={draft.allocation_role ?? 'sink'}
+                onChange={e => {
+                  const role = e.target.value as AllocationRole
+                  setDraft(setDraftAccount(draft, fallbackAccountRefForDraft(draft), role))
+                }}
+              >
+                {ALLOCATION_ROLES.map(role => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label
+              className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2"
+              onMouseEnter={() => {
+                const ref = fallbackAccountRefForDraft(draft)
+                if (ref) onGraphPayHoverNodeRefChange(ref)
+              }}
+              onMouseLeave={() => onGraphPayHoverNodeRefChange(null)}
+            >
+              Account
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={fallbackAccountRefForDraft(draft)}
+                onChange={e => setDraft(setDraftAccount(draft, e.target.value))}
+              >
+                <option value="">Choose account</option>
+                {graphAccountOptions.map(option => (
+                  <option key={option.ref} value={option.ref}>
+                    {roleAccountLabel(draft.allocation_role ?? 'sink', option.label)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="grid gap-1 text-xs font-medium text-slate-600">
+              Monthly
+              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold tabular-nums text-teal-800">
+                {editingItem ? formatUsd(editingItem.monthly_amount) : '—'}
+              </div>
+            </div>
+            <label className="grid gap-1 text-xs font-medium text-slate-600">
+              Due day
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                inputMode="numeric"
+                value={draft.due_day}
+                onChange={e => setDraft({ ...draft, due_day: e.target.value })}
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+              Counterparty
+              <input
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.counterparty ?? ''}
+                onChange={e => setDraft({ ...draft, counterparty: e.target.value })}
+                placeholder="Employer, Amazon"
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-4">
+              Notes
+              <textarea
+                className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={draft.notes}
+                onChange={e => setDraft({ ...draft, notes: e.target.value })}
+              />
+            </label>
+          </div>
+        </div>
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 bg-white px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export function BudgetPage() {
   const queryClient = useQueryClient()
   const [ym, setYm] = useState(() => loadBudgetPagePrefs().ym)
@@ -482,10 +711,14 @@ export function BudgetPage() {
     }
   }
 
-  const handleSaveEdit = () => {
-    if (selectedPlanId == null || editingId == null || !editDraft) return
+  const handleSaveEdit = (draftInput: ItemDraftInput) => {
+    if (selectedPlanId == null || editingId == null) return
     try {
-      const draft = setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), editDraft.allocation_role ?? 'sink')
+      const draft = setDraftAccount(
+        draftInput,
+        fallbackAccountRefForDraft(draftInput),
+        draftInput.allocation_role ?? 'sink',
+      )
       const body = allocationItemPutBody(draft)
       updateItemMut.mutate({ itemId: editingId, body })
       setFormError(null)
@@ -493,15 +726,6 @@ export function BudgetPage() {
       setFormError(e instanceof Error ? e.message : 'Invalid item')
     }
   }
-
-  useEffect(() => {
-    if (editingId == null || !editDraft) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeEditModal()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [closeEditModal, editDraft, editingId])
 
   const formatPlanPeriodLabel = (periodMonth: string) => {
     try {
@@ -1579,187 +1803,18 @@ export function BudgetPage() {
         </div>
 
         {editingId != null && editDraft && (
-          <div
-            data-budget-allocation-edit-modal
-            className="fixed inset-0 z-[220] flex items-stretch justify-center overflow-y-auto bg-slate-900/45 p-0 sm:p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="budget-edit-line-title"
-            onClick={e => {
-              if (e.target === e.currentTarget) closeEditModal()
-            }}
-          >
-            <form
-              className="flex min-h-[100dvh] w-full max-w-5xl flex-col border-slate-200 bg-white shadow-xl sm:min-h-0 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:border"
-              onClick={e => e.stopPropagation()}
-              onSubmit={e => {
-                e.preventDefault()
-                handleSaveEdit()
-              }}
-            >
-              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                <div className="min-w-0">
-                  <h2 id="budget-edit-line-title" className="truncate text-lg font-semibold text-slate-800">
-                    Edit allocation line
-                  </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {editingItem ? `${editingItem.item_name} · ${formatUsd(editingItem.monthly_amount)} monthly` : 'All fields'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close edit allocation"
-                  onClick={closeEditModal}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                >
-                  <span aria-hidden className="text-xl leading-none">
-                    ×
-                  </span>
-                </button>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
-                    Item name
-                    <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={editDraft.item_name}
-                      onChange={e => setEditDraft({ ...editDraft, item_name: e.target.value })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600">
-                    Category
-                    <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                      value={editDraft.category}
-                      onChange={e => setEditDraft({ ...editDraft, category: e.target.value })}
-                    >
-                      <option value="">Choose category</option>
-                      {categoryOptionsFor(editDraft.category).map(label => (
-                        <option key={label} value={label}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600">
-                    Planned
-                    <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm tabular-nums"
-                      value={editDraft.planned_amount}
-                      onChange={e => setEditDraft({ ...editDraft, planned_amount: e.target.value })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600">
-                    Cadence
-                    <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                      value={editDraft.cadence}
-                      onChange={e =>
-                        setEditDraft({
-                          ...editDraft,
-                          cadence: e.target.value as AllocationItemCadence,
-                        })
-                      }
-                    >
-                      {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
-                        <option key={c} value={c}>
-                          {allocationCadenceLabel(c)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600">
-                    Role
-                    <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                      value={editDraft.allocation_role ?? 'sink'}
-                      onChange={e => {
-                        const role = e.target.value as AllocationRole
-                        setEditDraft(setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), role))
-                      }}
-                    >
-                      {ALLOCATION_ROLES.map(role => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label
-                    className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2"
-                    onMouseEnter={() => {
-                      const ref = fallbackAccountRefForDraft(editDraft)
-                      if (ref) setGraphPayHoverNodeRef(ref)
-                    }}
-                    onMouseLeave={() => setGraphPayHoverNodeRef(null)}
-                  >
-                    Account
-                    <select
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                      value={fallbackAccountRefForDraft(editDraft)}
-                      onChange={e => setEditDraft(setDraftAccount(editDraft, e.target.value))}
-                    >
-                      <option value="">Choose account</option>
-                      {graphAccountOptions.map(option => (
-                        <option key={option.ref} value={option.ref}>
-                          {roleAccountLabel(editDraft.allocation_role ?? 'sink', option.label)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="grid gap-1 text-xs font-medium text-slate-600">
-                    Monthly
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold tabular-nums text-teal-800">
-                      {editingItem ? formatUsd(editingItem.monthly_amount) : '—'}
-                    </div>
-                  </div>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600">
-                    Due day
-                    <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      inputMode="numeric"
-                      value={editDraft.due_day}
-                      onChange={e => setEditDraft({ ...editDraft, due_day: e.target.value })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
-                    Counterparty
-                    <input
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={editDraft.counterparty ?? ''}
-                      onChange={e => setEditDraft({ ...editDraft, counterparty: e.target.value })}
-                      placeholder="Employer, Amazon"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-4">
-                    Notes
-                    <textarea
-                      className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={editDraft.notes}
-                      onChange={e => setEditDraft({ ...editDraft, notes: e.target.value })}
-                    />
-                  </label>
-                </div>
-              </div>
-              <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 bg-white px-4 py-3">
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={updateItemMut.isPending}
-                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
-                >
-                  {updateItemMut.isPending ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </form>
-          </div>
+          <AllocationLineEditModal
+            initialDraft={editDraft}
+            editingItem={editingItem}
+            graphAccountOptions={graphAccountOptions}
+            categoryOptionsFor={categoryOptionsFor}
+            fallbackAccountRefForDraft={fallbackAccountRefForDraft}
+            setDraftAccount={setDraftAccount}
+            onGraphPayHoverNodeRefChange={setGraphPayHoverNodeRef}
+            onClose={closeEditModal}
+            onSave={handleSaveEdit}
+            saving={updateItemMut.isPending}
+          />
         )}
 
         {loadModalOpen && (

@@ -1,3 +1,13 @@
+## 2026-07-01 (session) - responsive modal typing follow-up
+
+**Stage:** post-VAL polish on **`feat/FR-0006-budget-cash-flow-graph`**
+
+**Recap (plain English):** Fixed slow typing inside the new full-screen edit modals by keeping allocation and account form drafts local to each modal. Allocation lines still save only on **Save**; account graph edits apply once when the modal closes instead of patching React Flow on every keystroke.
+
+**Validation:** Docker frontend lint/test/build passed with **71** tests and the existing Vite chunk-size warning. Browser smoke on the example Budget plan typed **95** characters into the account modal in **519ms** and **98** characters into the allocation modal in **377ms**, with matched field values and **0** console errors.
+
+---
+
 ## 2026-07-01 (session) - responsive Budget width expansion completed
 
 **Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-14-responsive-budget-width`**
