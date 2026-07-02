@@ -1,3 +1,21 @@
+## 2026-07-01 (session) - responsive Budget width expansion completed
+
+**Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-14-responsive-budget-width`**
+
+**Recap (plain English):** Completed [**Responsive Budget tables and full-screen edit forms**](tickets.md) (**`T-FR-0006-14`**) for the Budget allocation and cash-flow account surfaces. Allocation lines now fit as a desktop table or phone cards, use compact role signals, and omit account linkage from the table in favor of graph/modal detail. Allocation and account edit actions open wide/full-screen modals. The graph account table no longer uses a large minimum width, and the mobile header/tooltip overflow called out in earlier closeout notes is resolved.
+
+**Validation:** Focused frontend helper tests passed with **20** tests; full Docker frontend lint/test/build passed with **71** tests and the existing Vite chunk-size warning. Browser VAL at desktop and **390px** confirmed page overflow **0**, changed table/card overflow **0**, allocation/account edit modals full-screen on phone, and **0** console errors.
+
+---
+
+## 2026-07-01 (session) - responsive Budget width expansion started
+
+**Stage:** expand-feature / ticket implementation on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-14-responsive-budget-width`**
+
+**Recap (plain English):** Added a post-closeout FR-0006 expansion for [**Responsive Budget tables and full-screen edit forms**](tickets.md) (**`T-FR-0006-14`**) after the user asked for width-fit formatting, priority-based column hiding, compact color/shorthand signals, and full-screen edit forms instead of cramped inline row editing. The work stays inside FR-0006 because it refines the Budget allocation and cash-flow graph surfaces already open in PR #9.
+
+---
+
 ## 2026-06-29 (session) - allocation controls and graph layout cleanup completed
 
 **Stage:** VAL / closeout on **`feat/FR-0006-budget-cash-flow-graph--T-FR-0006-13-allocation-controls-graph-layout`**

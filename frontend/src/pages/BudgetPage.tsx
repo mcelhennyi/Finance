@@ -12,6 +12,7 @@ import {
   allocationAccountRef,
   allocationItemCreateBody,
   allocationItemPutBody,
+  allocationRoleCompactLabel,
   draftWithAllocationAccount,
   formatUsd,
   graphNodeRefForPaymentMethod,
@@ -21,7 +22,7 @@ import {
   type ItemDraftInput,
   type PaymentMethod,
 } from '../lib/budgetAllocation'
-import { coverageAccountLabelFromGraph, planMoneyFlowPhrases } from '../lib/budgetPlanMoneyFlows'
+import { planMoneyFlowPhrases } from '../lib/budgetPlanMoneyFlows'
 import { firstOfMonthFromYm } from '../lib/monthRange'
 import { loadBudgetPagePrefs, persistBudgetPagePrefs } from '../lib/budgetPagePrefs'
 import type { AllocationItem, AllocationPlan, BudgetCategoryLinkedAllocationItem } from '../types'
@@ -159,6 +160,22 @@ function roleAccountLabel(role: AllocationRole, accountLabel: string): string {
   return role === 'source'
     ? `Source into ${accountLabel}`
     : `Sink from ${accountLabel}`
+}
+
+function allocationRoleView(role: AllocationRole | null | undefined) {
+  return role === 'source'
+    ? {
+        label: allocationRoleCompactLabel(role),
+        rowClass: 'border-l-4 border-l-emerald-200 bg-emerald-50/45',
+        badgeClass: 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100',
+        cardClass: 'border-l-emerald-200 bg-emerald-50/50',
+      }
+    : {
+        label: allocationRoleCompactLabel(role),
+        rowClass: 'border-l-4 border-l-rose-200',
+        badgeClass: 'bg-rose-50 text-rose-800 ring-1 ring-rose-100',
+        cardClass: 'border-l-rose-200 bg-white',
+      }
 }
 
 export function BudgetPage() {
@@ -429,6 +446,16 @@ export function BudgetPage() {
   const plansErr = plansQuery.error instanceof Error ? plansQuery.error.message : null
   const itemsErr = itemsQuery.error instanceof Error ? itemsQuery.error.message : null
   const summaryErr = summaryQuery.error instanceof Error ? summaryQuery.error.message : null
+  const editingItem = useMemo(
+    () => (itemsQuery.data?.items ?? []).find(item => item.id === editingId) ?? null,
+    [editingId, itemsQuery.data?.items],
+  )
+
+  const closeEditModal = useCallback(() => {
+    setEditingId(null)
+    setEditDraft(null)
+    setGraphPayHoverNodeRef(null)
+  }, [])
 
   const handleSavePlanMeta = () => {
     if (selectedPlanId == null) return
@@ -466,6 +493,15 @@ export function BudgetPage() {
       setFormError(e instanceof Error ? e.message : 'Invalid item')
     }
   }
+
+  useEffect(() => {
+    if (editingId == null || !editDraft) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeEditModal()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [closeEditModal, editDraft, editingId])
 
   const formatPlanPeriodLabel = (periodMonth: string) => {
     try {
@@ -845,264 +881,205 @@ export function BudgetPage() {
             onOpenChange={open => setBudgetSectionOpen('lines', open)}
           >
             <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="hidden md:block">
+                <table className="w-full table-fixed text-sm" data-budget-allocation-lines-table>
                   <thead>
                     <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100 bg-slate-50/80">
-                      <th className="px-3 py-3">
+                      <th className="w-[36%] px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.item} dashed={false} placement="below" className="inline font-semibold">
                           Item
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3">
-                        <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.category} dashed={false} placement="below" className="inline font-semibold">
-                          Category
-                        </OutputHoverTip>
-                      </th>
-                      <th className="px-3 py-3">
+                      <th className="w-[18%] px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.planned} dashed={false} placement="below" className="inline font-semibold">
                           Planned
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3">
-                        <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.cadence} dashed={false} placement="below" className="inline font-semibold">
-                          Cadence
-                        </OutputHoverTip>
-                      </th>
-                      <th className="px-3 py-3">Role</th>
-                      <th className="px-3 py-3">
+                      <th className="w-[16%] px-3 py-3">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.monthly} dashed={false} placement="below" className="inline font-semibold">
                           Monthly
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3">
-                        <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.account} dashed={false} placement="below" className="inline font-semibold">
-                          Account
-                        </OutputHoverTip>
-                      </th>
-                      <th className="px-3 py-3">
+                      <th className="hidden w-[14%] px-3 py-3 lg:table-cell">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.due} dashed={false} placement="below" className="inline font-semibold">
-                          Due
+                          Timing
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3">Counterparty</th>
-                      <th className="px-3 py-3 min-w-[8rem]">
+                      <th className="hidden w-[12%] px-3 py-3 xl:table-cell">
                         <OutputHoverTip tip={BUDGET_FIELD_TIPS.columns.notes} dashed={false} placement="below" className="inline font-semibold">
-                          Notes
+                          Detail
                         </OutputHoverTip>
                       </th>
-                      <th className="px-3 py-3 text-right">Actions</th>
+                      <th className="w-[18%] px-3 py-3 text-right lg:w-[16%]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(itemsQuery.data?.items ?? []).map(item =>
-                      editingId === item.id && editDraft ? (
-                        <tr key={item.id} className="border-b border-slate-50 bg-teal-50/40 align-top">
-                          <td className="px-3 py-2">
-                            <input
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.item_name}
-                              onChange={e => setEditDraft({ ...editDraft, item_name: e.target.value })}
-                            />
+                    {(itemsQuery.data?.items ?? []).map(item => {
+                      const role = item.allocation_role ?? 'sink'
+                      const roleView = allocationRoleView(role)
+                      const draft = itemToDraft(item)
+                      const accountRef = fallbackAccountRefForDraft(draft)
+                      const detailBits = [item.counterparty?.trim() || null, item.notes?.trim() ? 'Notes' : null]
+                        .filter(Boolean)
+                        .join(' · ')
+                      return (
+                        <tr
+                          key={item.id}
+                          className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/60 ${roleView.rowClass}`}
+                          onMouseEnter={() => setGraphPayHoverNodeRef(accountRef)}
+                          onMouseLeave={() => setGraphPayHoverNodeRef(null)}
+                        >
+                          <td className="min-w-0 px-3 py-3">
+                            <div className="flex min-w-0 items-start gap-2">
+                              <span
+                                className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${roleView.badgeClass}`}
+                              >
+                                {roleView.label}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="truncate font-medium text-slate-800" title={item.item_name}>
+                                  {item.item_name}
+                                </div>
+                                <div className="mt-0.5 truncate text-xs text-slate-500" title={item.category}>
+                                  {item.category || 'Uncategorized'}
+                                </div>
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-3 py-2">
-                            <select
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.category}
-                              onChange={e => setEditDraft({ ...editDraft, category: e.target.value })}
-                              aria-label="Category"
-                            >
-                              <option value="">Choose category</option>
-                              {categoryOptionsFor(editDraft.category).map(label => (
-                                <option key={label} value={label}>
-                                  {label}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="px-3 py-3">
+                            <div className="tabular-nums text-slate-800">{formatUsd(item.planned_amount)}</div>
+                            <div className="mt-0.5 truncate text-xs text-slate-500">
+                              {allocationCadenceLabel(item.cadence)}
+                            </div>
                           </td>
-                          <td className="px-3 py-2">
-                            <input
-                              className="w-full rounded border border-slate-200 px-2 py-1 tabular-nums"
-                              value={editDraft.planned_amount}
-                              onChange={e => setEditDraft({ ...editDraft, planned_amount: e.target.value })}
-                            />
-                          </td>
-                          <td className="px-3 py-2">
-                            <select
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.cadence}
-                              onChange={e =>
-                                setEditDraft({
-                                  ...editDraft,
-                                  cadence: e.target.value as AllocationItemCadence,
-                                })
-                              }
-                            >
-                              {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
-                                <option key={c} value={c}>
-                                  {allocationCadenceLabel(c)}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-3 py-2">
-                            <select
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.allocation_role ?? 'sink'}
-                              onChange={e => {
-                                const role = e.target.value as AllocationRole
-                                setEditDraft(setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), role))
-                              }}
-                            >
-                              {ALLOCATION_ROLES.map(role => (
-                                <option key={role} value={role}>
-                                  {role}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-3 py-2 text-slate-500 tabular-nums">{formatUsd(item.monthly_amount)}</td>
-                          <td
-                            className="px-3 py-2"
-                            onMouseEnter={() =>
-                              setGraphPayHoverNodeRef(fallbackAccountRefForDraft(editDraft))
-                            }
-                            onMouseLeave={() => setGraphPayHoverNodeRef(null)}
-                          >
-                            <select
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={fallbackAccountRefForDraft(editDraft)}
-                              onChange={e =>
-                                setEditDraft(setDraftAccount(editDraft, e.target.value))
-                              }
-                              aria-label="Allocation account"
-                            >
-                              <option value="">Choose account</option>
-                              {graphAccountOptions.map(option => (
-                                <option key={option.ref} value={option.ref}>
-                                  {roleAccountLabel(editDraft.allocation_role ?? 'sink', option.label)}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-3 py-2">
-                            <input
-                              className="w-14 rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.due_day}
-                              onChange={e => setEditDraft({ ...editDraft, due_day: e.target.value })}
-                            />
-                          </td>
-                          <td className="px-3 py-2">
-                            <input
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.counterparty ?? ''}
-                              onChange={e => setEditDraft({ ...editDraft, counterparty: e.target.value })}
-                              placeholder="Employer, Amazon"
-                            />
-                          </td>
-                          <td className="px-3 py-2">
-                            <input
-                              className="w-full rounded border border-slate-200 px-2 py-1"
-                              value={editDraft.notes}
-                              onChange={e => setEditDraft({ ...editDraft, notes: e.target.value })}
-                            />
-                          </td>
-                          <td className="px-3 py-2 text-right whitespace-nowrap space-x-2">
-                            <button
-                              type="button"
-                              onClick={handleSaveEdit}
-                              disabled={updateItemMut.isPending}
-                              className="text-xs font-semibold text-white bg-teal-600 rounded-lg px-2 py-1"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(null)
-                                setEditDraft(null)
-                              }}
-                              className="text-xs text-slate-500"
-                            >
-                              Cancel
-                            </button>
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                          <td className="px-3 py-2 font-medium text-slate-800">{item.item_name}</td>
-                          <td className="px-3 py-2 text-slate-600">{item.category}</td>
-                          <td className="px-3 py-2 tabular-nums">{formatUsd(item.planned_amount)}</td>
-                          <td className="px-3 py-2 text-slate-500">{allocationCadenceLabel(item.cadence)}</td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                item.allocation_role === 'source'
-                                  ? 'bg-emerald-50 text-emerald-800'
-                                  : 'bg-rose-50 text-rose-800'
-                              }`}
-                            >
-                              {item.allocation_role}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 tabular-nums text-teal-800 font-medium">
+                          <td className="px-3 py-3 tabular-nums font-semibold text-teal-800">
                             {formatUsd(item.monthly_amount)}
                           </td>
-                          <td
-                            className="px-3 py-2 text-slate-600"
-                            onMouseEnter={() => {
-                              const draft = itemToDraft(item)
-                              setGraphPayHoverNodeRef(fallbackAccountRefForDraft(draft))
-                            }}
-                            onMouseLeave={() => setGraphPayHoverNodeRef(null)}
-                          >
-                            {(() => {
-                              const draft = itemToDraft(item)
-                              const accountRef = fallbackAccountRefForDraft(draft)
-                              const role = item.allocation_role ?? 'sink'
-                              const label = graphAccountOptionByRef.get(accountRef)?.label
-                                ?? coverageAccountLabelFromGraph(draft.payment_method, planGraphQuery.data ?? undefined)
-                              return (
-                                <span className="font-medium text-slate-800">
-                                  {roleAccountLabel(role, label)}
-                                </span>
-                              )
-                            })()}
+                          <td className="hidden px-3 py-3 text-slate-500 lg:table-cell">
+                            <div className="truncate">{item.due_day != null ? `Day ${item.due_day}` : 'No due day'}</div>
+                            {item.counterparty ? (
+                              <div className="mt-0.5 truncate text-xs" title={item.counterparty}>
+                                {item.counterparty}
+                              </div>
+                            ) : null}
                           </td>
-                          <td className="px-3 py-2 text-slate-500">{item.due_day ?? '—'}</td>
-                          <td className="px-3 py-2 text-slate-500">{item.counterparty || '—'}</td>
-                          <td className="px-3 py-2 text-slate-500 max-w-xs truncate" title={item.notes}>
-                            {item.notes || '—'}
+                          <td className="hidden px-3 py-3 text-slate-500 xl:table-cell">
+                            <span className="block truncate" title={item.notes || detailBits || undefined}>
+                              {item.notes?.trim() || detailBits || '—'}
+                            </span>
                           </td>
-                          <td className="px-3 py-2 text-right space-x-2 whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(item.id)
-                                setEditDraft(itemToDraft(item))
-                              }}
-                              className="text-xs font-semibold text-teal-700 hover:text-teal-900"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm('Remove this allocation line?')) {
-                                  deleteItemMut.mutate(item.id)
-                                }
-                              }}
-                              disabled={deleteItemMut.isPending}
-                              className="text-xs text-red-600 hover:text-red-800"
-                            >
-                              Delete
-                            </button>
+                          <td className="px-3 py-3 text-right">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <button
+                                type="button"
+                                data-budget-allocation-edit
+                                onClick={() => {
+                                  setFormError(null)
+                                  setEditingId(item.id)
+                                  setEditDraft(itemToDraft(item))
+                                }}
+                                className="rounded-lg border border-teal-100 bg-white px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-50 hover:text-teal-900"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm('Remove this allocation line?')) {
+                                    deleteItemMut.mutate(item.id)
+                                  }
+                                }}
+                                disabled={deleteItemMut.isPending}
+                                className="rounded-lg border border-red-100 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-800 disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ),
-                    )}
+                      )
+                    })}
                   </tbody>
                 </table>
+              </div>
+              <div className="grid gap-2 p-3 md:hidden" data-budget-allocation-cards>
+                {(itemsQuery.data?.items ?? []).map(item => {
+                  const role = item.allocation_role ?? 'sink'
+                  const roleView = allocationRoleView(role)
+                  const draft = itemToDraft(item)
+                  const accountRef = fallbackAccountRefForDraft(draft)
+                  return (
+                    <article
+                      key={item.id}
+                      className={`min-w-0 overflow-hidden rounded-lg border border-slate-100 border-l-4 p-3 shadow-sm ${roleView.cardClass}`}
+                      onMouseEnter={() => setGraphPayHoverNodeRef(accountRef)}
+                      onMouseLeave={() => setGraphPayHoverNodeRef(null)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${roleView.badgeClass}`}
+                            >
+                              {roleView.label}
+                            </span>
+                            <span className="truncate font-semibold text-slate-800" title={item.item_name}>
+                              {item.item_name}
+                            </span>
+                          </div>
+                          <div className="mt-1 truncate text-xs text-slate-500" title={item.category}>
+                            {item.category || 'Uncategorized'} · {allocationCadenceLabel(item.cadence)}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="tabular-nums text-sm font-semibold text-teal-800">
+                            {formatUsd(item.monthly_amount)}
+                          </div>
+                          <div className="text-[11px] tabular-nums text-slate-500">
+                            {formatUsd(item.planned_amount)}
+                          </div>
+                        </div>
+                      </div>
+                      {(item.due_day != null || item.counterparty || item.notes) && (
+                        <div className="mt-2 line-clamp-2 text-xs text-slate-600">
+                          {[
+                            item.due_day != null ? `Day ${item.due_day}` : null,
+                            item.counterparty?.trim() || null,
+                            item.notes?.trim() || null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      )}
+                      <div className="mt-3 flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          data-budget-allocation-edit
+                          onClick={() => {
+                            setFormError(null)
+                            setEditingId(item.id)
+                            setEditDraft(itemToDraft(item))
+                          }}
+                          className="rounded-lg border border-teal-100 bg-white px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-50 hover:text-teal-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm('Remove this allocation line?')) {
+                              deleteItemMut.mutate(item.id)
+                            }
+                          }}
+                          disabled={deleteItemMut.isPending}
+                          className="rounded-lg border border-red-100 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-800 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
               {(itemsQuery.data?.items.length ?? 0) === 0 && !itemsQuery.isLoading && (
                 <p className="px-4 py-8 text-center text-sm text-slate-400">
@@ -1288,14 +1265,16 @@ export function BudgetPage() {
                   Could not load category inventory.
                 </p>
               )}
-              <div className="overflow-x-auto rounded-lg border border-slate-100">
-                <table className="w-full text-sm min-w-[28rem]">
+              <div className="overflow-hidden rounded-lg border border-slate-100">
+                <table className="w-full table-fixed text-sm">
                   <thead>
                     <tr className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50/90 border-b border-slate-100">
-                      <th className="px-3 py-2">Category</th>
-                      <th className="px-3 py-2 tabular-nums">Lines</th>
-                      <th className="px-3 py-2">Saved</th>
-                      <th className="px-3 py-2 text-right">Actions</th>
+                      <th className="w-[52%] px-3 py-2">Category</th>
+                      <th className="w-[18%] px-3 py-2 tabular-nums">Lines</th>
+                      <th className="hidden w-[12%] px-3 py-2 sm:table-cell">
+                        <span className="sr-only">Saved</span>
+                      </th>
+                      <th className="w-[30%] px-3 py-2 text-right sm:w-[18%]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1318,7 +1297,12 @@ export function BudgetPage() {
                         return (
                           <Fragment key={row.label}>
                             <tr className="border-b border-slate-50 last:border-0">
-                              <td className="px-3 py-2 font-medium text-slate-800">{row.label}</td>
+                              <td className="min-w-0 px-3 py-2 font-medium text-slate-800">
+                                <div className="truncate" title={row.label}>{row.label}</div>
+                                <div className="mt-0.5 text-[11px] text-slate-400 sm:hidden">
+                                  {row.catalog_id != null ? 'Saved' : 'Not saved'}
+                                </div>
+                              </td>
                               <td className="px-3 py-2 tabular-nums text-slate-700">
                                 {row.allocation_item_count > 0 ? (
                                   <button
@@ -1335,7 +1319,13 @@ export function BudgetPage() {
                                   row.allocation_item_count
                                 )}
                               </td>
-                              <td className="px-3 py-2 text-slate-600">{row.catalog_id != null ? 'Yes' : '—'}</td>
+                              <td className="hidden px-3 py-2 text-slate-600 sm:table-cell">
+                                {row.catalog_id != null ? (
+                                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-teal-500" aria-label="Saved" />
+                                ) : (
+                                  <span className="text-slate-300">—</span>
+                                )}
+                              </td>
                               <td className="px-3 py-2 text-right whitespace-nowrap space-x-2">
                                 {row.catalog_id != null && row.allocation_item_count === 0 && (
                                   <button
@@ -1369,16 +1359,15 @@ export function BudgetPage() {
                                   ) : linkedLines.length === 0 ? (
                                     <p className="text-xs text-slate-500">No linked lines remain for this category.</p>
                                   ) : (
-                                    <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white">
-                                      <table className="w-full min-w-[42rem] text-xs">
+                                    <div className="overflow-hidden rounded-lg border border-slate-100 bg-white">
+                                      <table className="w-full table-fixed text-xs">
                                         <thead>
                                           <tr className="bg-white text-left text-[10px] font-semibold uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                                            <th className="px-3 py-2">Plan</th>
-                                            <th className="px-3 py-2">Line</th>
-                                            <th className="px-3 py-2 tabular-nums">Monthly</th>
-                                            <th className="px-3 py-2">Current</th>
-                                            <th className="px-3 py-2">Replacement</th>
-                                            <th className="px-3 py-2 text-right">Action</th>
+                                            <th className="w-[28%] px-3 py-2">Plan</th>
+                                            <th className="w-[26%] px-3 py-2">Line</th>
+                                            <th className="hidden w-[14%] px-3 py-2 tabular-nums sm:table-cell">Monthly</th>
+                                            <th className="w-[30%] px-3 py-2">Replacement</th>
+                                            <th className="w-[16%] px-3 py-2 text-right">Action</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -1387,18 +1376,24 @@ export function BudgetPage() {
                                             const replacement = draft.trim()
                                             return (
                                               <tr key={line.id} className="border-b border-slate-50 last:border-0">
-                                                <td className="px-3 py-2 text-slate-600">
-                                                  <div className="font-medium text-slate-800">{line.plan_name}</div>
-                                                  <div>{formatPlanPeriodLabel(line.period_month)}</div>
+                                                <td className="min-w-0 px-3 py-2 text-slate-600">
+                                                  <div className="truncate font-medium text-slate-800" title={line.plan_name}>
+                                                    {line.plan_name}
+                                                  </div>
+                                                  <div className="truncate">{formatPlanPeriodLabel(line.period_month)}</div>
                                                 </td>
-                                                <td className="px-3 py-2 text-slate-700">
-                                                  <div className="font-medium text-slate-800">{line.item_name}</div>
-                                                  <div className="text-slate-500">{allocationCadenceLabel(line.cadence)}</div>
+                                                <td className="min-w-0 px-3 py-2 text-slate-700">
+                                                  <div className="truncate font-medium text-slate-800" title={line.item_name}>
+                                                    {line.item_name}
+                                                  </div>
+                                                  <div className="truncate text-slate-500">
+                                                    {allocationCadenceLabel(line.cadence)}
+                                                    <span className="sm:hidden"> · {formatUsd(line.monthly_amount)}</span>
+                                                  </div>
                                                 </td>
-                                                <td className="px-3 py-2 tabular-nums text-slate-700">
+                                                <td className="hidden px-3 py-2 tabular-nums text-slate-700 sm:table-cell">
                                                   {formatUsd(line.monthly_amount)}
                                                 </td>
-                                                <td className="px-3 py-2 text-slate-600">{line.category}</td>
                                                 <td className="px-3 py-2">
                                                   <input
                                                     className="w-full rounded border border-slate-200 px-2 py-1"
@@ -1582,6 +1577,190 @@ export function BudgetPage() {
             </button>
           </div>
         </div>
+
+        {editingId != null && editDraft && (
+          <div
+            data-budget-allocation-edit-modal
+            className="fixed inset-0 z-[220] flex items-stretch justify-center overflow-y-auto bg-slate-900/45 p-0 sm:p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="budget-edit-line-title"
+            onClick={e => {
+              if (e.target === e.currentTarget) closeEditModal()
+            }}
+          >
+            <form
+              className="flex min-h-[100dvh] w-full max-w-5xl flex-col border-slate-200 bg-white shadow-xl sm:min-h-0 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:border"
+              onClick={e => e.stopPropagation()}
+              onSubmit={e => {
+                e.preventDefault()
+                handleSaveEdit()
+              }}
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                <div className="min-w-0">
+                  <h2 id="budget-edit-line-title" className="truncate text-lg font-semibold text-slate-800">
+                    Edit allocation line
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {editingItem ? `${editingItem.item_name} · ${formatUsd(editingItem.monthly_amount)} monthly` : 'All fields'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close edit allocation"
+                  onClick={closeEditModal}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <span aria-hidden className="text-xl leading-none">
+                    ×
+                  </span>
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+                    Item name
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={editDraft.item_name}
+                      onChange={e => setEditDraft({ ...editDraft, item_name: e.target.value })}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600">
+                    Category
+                    <select
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={editDraft.category}
+                      onChange={e => setEditDraft({ ...editDraft, category: e.target.value })}
+                    >
+                      <option value="">Choose category</option>
+                      {categoryOptionsFor(editDraft.category).map(label => (
+                        <option key={label} value={label}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600">
+                    Planned
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm tabular-nums"
+                      value={editDraft.planned_amount}
+                      onChange={e => setEditDraft({ ...editDraft, planned_amount: e.target.value })}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600">
+                    Cadence
+                    <select
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={editDraft.cadence}
+                      onChange={e =>
+                        setEditDraft({
+                          ...editDraft,
+                          cadence: e.target.value as AllocationItemCadence,
+                        })
+                      }
+                    >
+                      {ALLOCATION_ITEM_CADENCE_OPTIONS.map(c => (
+                        <option key={c} value={c}>
+                          {allocationCadenceLabel(c)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600">
+                    Role
+                    <select
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={editDraft.allocation_role ?? 'sink'}
+                      onChange={e => {
+                        const role = e.target.value as AllocationRole
+                        setEditDraft(setDraftAccount(editDraft, fallbackAccountRefForDraft(editDraft), role))
+                      }}
+                    >
+                      {ALLOCATION_ROLES.map(role => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label
+                    className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2"
+                    onMouseEnter={() => {
+                      const ref = fallbackAccountRefForDraft(editDraft)
+                      if (ref) setGraphPayHoverNodeRef(ref)
+                    }}
+                    onMouseLeave={() => setGraphPayHoverNodeRef(null)}
+                  >
+                    Account
+                    <select
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={fallbackAccountRefForDraft(editDraft)}
+                      onChange={e => setEditDraft(setDraftAccount(editDraft, e.target.value))}
+                    >
+                      <option value="">Choose account</option>
+                      {graphAccountOptions.map(option => (
+                        <option key={option.ref} value={option.ref}>
+                          {roleAccountLabel(editDraft.allocation_role ?? 'sink', option.label)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="grid gap-1 text-xs font-medium text-slate-600">
+                    Monthly
+                    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold tabular-nums text-teal-800">
+                      {editingItem ? formatUsd(editingItem.monthly_amount) : '—'}
+                    </div>
+                  </div>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600">
+                    Due day
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      inputMode="numeric"
+                      value={editDraft.due_day}
+                      onChange={e => setEditDraft({ ...editDraft, due_day: e.target.value })}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2">
+                    Counterparty
+                    <input
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={editDraft.counterparty ?? ''}
+                      onChange={e => setEditDraft({ ...editDraft, counterparty: e.target.value })}
+                      placeholder="Employer, Amazon"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-4">
+                    Notes
+                    <textarea
+                      className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={editDraft.notes}
+                      onChange={e => setEditDraft({ ...editDraft, notes: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 bg-white px-4 py-3">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateItemMut.isPending}
+                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  {updateItemMut.isPending ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {loadModalOpen && (
           <div

@@ -41,6 +41,10 @@ export const ALLOCATION_ROLES = ['source', 'sink'] as const
 
 export type AllocationRole = (typeof ALLOCATION_ROLES)[number]
 
+export function allocationRoleCompactLabel(role: AllocationRole | null | undefined): 'SRC' | 'SINK' {
+  return role === 'source' ? 'SRC' : 'SINK'
+}
+
 /** Table / KPI shorthand for the account implied by each payment method. */
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Checking',

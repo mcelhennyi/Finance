@@ -8,6 +8,7 @@ import {
   allocationItemCreateBody,
   allocationItemPutBody,
   allocationItemUpdateBody,
+  allocationRoleCompactLabel,
   draftWithAllocationAccount,
   dueDayFromInput,
   formatUsd,
@@ -32,6 +33,14 @@ describe('allocation cadence display', () => {
   it('maps legacy twice-monthly allocations to biweekly for display and editing', () => {
     expect(allocationCadenceForUi('twice_monthly')).toBe('biweekly')
     expect(allocationCadenceLabel('twice_monthly')).toBe('biweekly')
+  })
+})
+
+describe('allocation role compact labels', () => {
+  it('keeps table role signals short and stable', () => {
+    expect(allocationRoleCompactLabel('source')).toBe('SRC')
+    expect(allocationRoleCompactLabel('sink')).toBe('SINK')
+    expect(allocationRoleCompactLabel(undefined)).toBe('SINK')
   })
 })
 

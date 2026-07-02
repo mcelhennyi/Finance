@@ -14,7 +14,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
   const brandMark = (
     <>
       <img src="/logo.png" alt="" className="h-9 w-9 rounded-lg" width={36} height={36} />
-      <span className="text-lg font-bold text-teal-600 tracking-tight">
+      <span className="hidden text-lg font-bold text-teal-600 tracking-tight min-[430px]:inline">
         Finance <span className="text-slate-400 font-normal">Hub</span>
       </span>
     </>
@@ -23,7 +23,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center gap-6 w-full min-w-0">
+        <div className="max-w-screen-2xl mx-auto flex h-14 w-full min-w-0 items-center gap-2 px-3 sm:gap-6 sm:px-6">
           {onNavigate ? (
             <button
               type="button"
@@ -39,7 +39,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
             </div>
           )}
           {onNavigate && (
-            <nav className="flex items-center gap-1 text-sm shrink-0">
+            <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm">
               <button
                 type="button"
                 onClick={() => onNavigate('dashboard')}
@@ -87,7 +87,7 @@ export function Layout({ dateRange, children, activePage = 'dashboard', onNaviga
             </nav>
           )}
           {(onNavigate || dateRange) && (
-            <div className="ml-auto flex items-center gap-3 shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
               {dateRange && <span className="text-xs text-slate-400">{dateRange}</span>}
               {onNavigate && (
                 <button

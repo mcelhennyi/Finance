@@ -416,3 +416,46 @@ Implement the follow-up expansion from [`30-expand-2026-06-29-allocation-control
 - Frontend focused: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowAllocationClusters.test.ts cashFlowGraphFlow.test.ts"`
 - Frontend full: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"`
 - Browser VAL: Budget allocation page at desktop and 390px phone viewport; verify removed controls, category/account dropdown options, source/sink stacks, route samples, and console errors.
+
+---
+
+### T-FR-0006-14 - Responsive Budget tables and full-screen edit forms
+
+**Title:** Responsive Budget tables and full-screen edit forms
+**Deps:** `T-FR-0006-13`
+
+#### Purpose
+
+Implement the follow-up expansion from [`30-expand-2026-07-01-responsive-budget-width.md`](30-expand-2026-07-01-responsive-budget-width.md): allocation and cash-flow account tables should fit the viewport instead of requiring horizontal scroll for normal data. Dense fields should be prioritized, compacted, hidden at breakpoints, or moved into a full-screen/wide edit modal.
+
+#### Existing changes required
+
+- Replace allocation-line inline edit rows with a full-screen-on-phone modal that exposes every allocation field.
+- Replace cash-flow account inline edit rows with a full-screen-on-phone modal that exposes every account field.
+- Redesign allocation rows so account linkage and obvious role text do not consume primary columns; use colored row treatment, compact role badges, secondary text, and mobile cards.
+- Redesign cash-flow account rows to remove the `64rem` minimum width and hide lower-priority columns such as institution, mask, notes, and binary active labels as width tightens.
+- Reduce repeated fields in category relinking where practical so the expanded table fits better.
+
+#### Phases
+
+| Phase | Goal | Exit criteria | Status |
+|-------|------|---------------|--------|
+| **TEST** | Pin responsive priority | Focused frontend tests cover any new responsive helper/label behavior, and the ticket diary records the field-priority contract | done |
+| **DEV** | Implement fit-to-width UI | Allocation and account tables fit the screen; dense edit controls use wide/full-screen modals; lower-priority fields collapse or move to secondary text | done |
+| **VAL** | Browser viewport verification | Docker frontend checks pass; rendered Budget inspection covers desktop and 390px allocation/account tables, edit modals, and no console errors | done |
+
+**VAL notes:** Allocation lines now render as a fit-to-width desktop table and mobile cards with role color/badges; account linkage is in the graph/modal instead of a default table column. Allocation edit and cash-flow account edit use wide desktop/full-screen mobile modals. The graph account table no longer uses a `64rem` minimum and collapses lower-priority fields. `Layout` and `OutputHoverTip` no longer create 390px page overflow. Docker frontend lint/test/build passed with **71** Vitest tests and the existing Vite chunk-size warning. Browser VAL passed on desktop and **390px**: changed tables/cards reported zero page overflow, the allocation/account modals measured full viewport on mobile, and console errors were **0**.
+
+#### Implementation notes
+
+- Allocation table P0 fields: item, category hint, monthly amount, action controls.
+- Allocation table P1 fields: planned amount, cadence, due/counterparty when present.
+- Allocation account is available in the graph and edit modal; do not allocate a default table column to it.
+- Account table P0 fields: account name/ref, kind, balance summary, action controls.
+- Account table P1/P2 fields: parent, institution, mask, notes, active state; hide or compact before introducing horizontal overflow.
+
+#### Verification notes
+
+- Frontend focused: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowGraphKinds.test.ts"` - pass, **20** focused tests.
+- Frontend full: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **71** tests; production build passed with the existing Vite chunk-size warning.
+- Browser VAL: Budget allocation page at desktop and 390px phone viewport; allocation/account tables and cards fit with zero page overflow, edit allocation/account modals use full viewport on phone, and console errors were **0**.

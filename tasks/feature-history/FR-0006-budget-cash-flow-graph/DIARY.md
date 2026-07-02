@@ -4,6 +4,17 @@ Consolidated newest-first diary for **FR-0006**. Raw source logs remain in [`ser
 
 ---
 
+## 2026-07-01 - responsive Budget width
+
+**Source file:** `parallel/T-FR-0006-14-responsive-budget-width.md`
+**Git ref:** `feat/FR-0006-budget-cash-flow-graph--T-FR-0006-14-responsive-budget-width`
+
+Completed the post-closeout responsive width expansion. Allocation lines now fit as a desktop table or phone cards, use compact source/sink role signals, and omit account linkage from the table because graph/modal detail carries that field. Allocation and cash-flow account edit actions open wide desktop/full-screen mobile modals. The cash-flow account table no longer uses a large minimum width, lower-priority fields collapse at breakpoints, and the mobile app header/tooltip overflow from earlier closeout notes is resolved.
+
+Validation passed: focused frontend helper tests (`20` tests), full Docker frontend lint/test/build (`71` tests, existing Vite chunk-size warning), and browser VAL on desktop and 390px Budget views. Browser measurements found page overflow `0`, changed table/card overflow `0`, full-screen mobile allocation/account modals, and `0` console errors.
+
+---
+
 ## 2026-06-29 - allocation controls and graph layout cleanup
 
 **Source file:** `parallel/T-FR-0006-13-allocation-controls-graph-layout.md`

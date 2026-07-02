@@ -4,7 +4,7 @@
 
 ## Executive summary
 
-FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven surface. The completed feature includes graph contracts, ORM persistence, CRUD APIs, the React Flow Budget panel, explicit BBD suggestions, source/sink allocation primitives with role-aware account dropdowns, directional account linking, orthogonal routing, expandable allocation clusters with filters and counts, edge/label deconfliction, pure source/sink graph stacking, and endpoint-safe routing.
+FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven surface. The completed feature includes graph contracts, ORM persistence, CRUD APIs, the React Flow Budget panel, explicit BBD suggestions, source/sink allocation primitives with role-aware account dropdowns, directional account linking, orthogonal routing, expandable allocation clusters with filters and counts, edge/label deconfliction, pure source/sink graph stacking, endpoint-safe routing, and responsive Budget tables with full-screen edit forms.
 
 ## Delivered surfaces
 
@@ -15,6 +15,7 @@ FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven s
 | Budget graph UI | `frontend/src/components/budget/CashFlowGraphPanel.tsx`, `frontend/src/lib/cashFlowGraphFlow.ts` |
 | Routing and clusters | `frontend/src/lib/cashFlowGraphRouting.ts`, `frontend/src/lib/cashFlowAllocationClusters.ts` |
 | Budget allocation forms | `frontend/src/pages/BudgetPage.tsx`, `frontend/src/lib/budgetAllocation.ts`, `frontend/src/types.ts` |
+| Responsive Budget chrome | `frontend/src/components/Layout.tsx`, `frontend/src/components/OutputHoverTip.tsx`, `frontend/src/lib/cashFlowGraphKinds.ts` |
 | Operator/design docs | `docs/design/budget-plans-roadmap.md`, `scripts/README.md` |
 
 ## Tickets
@@ -34,6 +35,7 @@ FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven s
 | `T-FR-0006-11` | Expandable allocation clusters with filters and counts | TEST / DEV / VAL **done** |
 | `T-FR-0006-12` | Edge and label deconfliction | TEST / DEV / VAL **done** |
 | `T-FR-0006-13` | Allocation controls and graph layout cleanup | TEST / DEV / VAL **done** |
+| `T-FR-0006-14` | Responsive Budget tables and full-screen edit forms | TEST / DEV / VAL **done** |
 
 ## Validation
 
@@ -50,12 +52,14 @@ FR-0006 ships the Budget cash-flow graph as a persisted, editable, data-driven s
 - T-FR-0006-13 focused frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowAllocationClusters.test.ts cashFlowGraphFlow.test.ts"` - pass, **42** tests passed.
 - T-FR-0006-13 full frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **65** tests passed, production build passed with the existing Vite chunk-size warning.
 - T-FR-0006-13 Browser VAL - Budget allocation page inspected at desktop and **390px** viewport; confirmed no plan-income, approximate Time view, endpoint, or payment-method allocation controls; category/account dropdowns present; pure sources stacked left, pure sinks stacked right; sampled route geometry had **0** node-body hits and no console errors.
+- T-FR-0006-14 focused frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm test -- budgetAllocation.test.ts cashFlowGraphKinds.test.ts"` - pass, **20** tests passed.
+- T-FR-0006-14 full frontend gate: `docker compose run --rm --no-deps -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"` - pass, **71** tests passed, production build passed with the existing Vite chunk-size warning.
+- T-FR-0006-14 Browser VAL - Budget allocation page inspected at desktop and **390px** viewport; allocation/account tables and mobile cards fit with page overflow **0**, changed table/card self-overflow **0**, allocation/account edit modals used the full phone viewport, and console errors were **0**.
 
 ## Deferred / follow-up
 
 | Item | Tracking |
 |------|----------|
-| Existing 390px page-level horizontal overflow from app chrome / inactive tooltip spans; graph states stayed nonblank and overlap-free. | Ticket diaries `parallel/T-FR-0006-09-directional-linking.md` through `parallel/T-FR-0006-11-allocation-clusters.md` |
 | Existing Vite large-chunk warning for the current bundle shape. | Future frontend performance/code-splitting follow-up if it becomes a release blocker |
 | Docker docs route is not wired for this repo (`./develop build` expects a `docs` service). | Project tooling follow-up; host `mkdocs build --strict` passed |
 
@@ -76,4 +80,4 @@ Review and merge PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) when 
 - **Merge commit:** *pending human merge*
 - **Feature branch:** `feat/FR-0006-budget-cash-flow-graph` (retained on remote)
 - **Pull request:** [#9](https://github.com/mcelhennyi/Finance/pull/9)
-- **Handoff:** [`handoffs/2026-06-29-finish-feature-allocation-controls-graph-layout.md`](handoffs/2026-06-29-finish-feature-allocation-controls-graph-layout.md)
+- **Handoff:** [`handoffs/2026-07-01-finish-feature-responsive-budget-width.md`](handoffs/2026-07-01-finish-feature-responsive-budget-width.md)

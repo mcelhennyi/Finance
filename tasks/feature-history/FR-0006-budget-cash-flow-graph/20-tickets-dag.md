@@ -112,3 +112,25 @@ flowchart TB
 **Status:** **T-FR-0006-13** is TEST/DEV/VAL `done`.
 
 **Parallel note:** **T-FR-0006-13** is intentionally serial because it updates the same allocation UI and routing helpers completed by the earlier FR-0006 expansions.
+
+---
+
+## Expansion addendum - 2026-07-01 responsive Budget width
+
+Addendum: [`30-expand-2026-07-01-responsive-budget-width.md`](30-expand-2026-07-01-responsive-budget-width.md).
+
+| ID | Title (required - human-facing name) | Type | Deps (ticket IDs) | Summary of change (1-2 lines) | Suggested order group | Link |
+|----|----------------------------------------|------|---------------------|------------------------------|------------------------|------|
+| T-FR-0006-14 | Responsive Budget tables and full-screen edit forms | Story | `T-FR-0006-13` | Fit allocation/account tables to viewport width, collapse lower-priority fields, and replace inline row editing with wide/full-screen modals | P0 | [tickets.md](tickets.md) |
+
+```mermaid
+flowchart TB
+  T13["Allocation controls and graph layout cleanup (T-FR-0006-13)"]
+  T14["Responsive Budget tables and full-screen edit forms (T-FR-0006-14)"]
+
+  T13 --> T14
+```
+
+**Status:** **T-FR-0006-14** is TEST/DEV/VAL `done`.
+
+**Parallel note:** **T-FR-0006-14** is intentionally serial because it updates the same allocation lines and graph account tables completed by **T-FR-0006-13**.

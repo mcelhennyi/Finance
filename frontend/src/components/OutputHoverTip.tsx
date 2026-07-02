@@ -17,7 +17,7 @@ export function OutputHoverTip(props: {
 }) {
   const dashed = props.dashed !== false
   const baseBubble =
-    'pointer-events-none absolute left-1/2 z-[280] w-max max-w-[min(22rem,calc(100vw-3rem))] -translate-x-1/2 overflow-y-auto rounded-md bg-slate-950 px-3 py-2 text-left text-[10px] font-normal normal-case whitespace-normal leading-snug text-white shadow-xl ring-1 ring-white/10 opacity-0 transition-none group-hover:opacity-100'
+    'pointer-events-none absolute left-1/2 z-[280] hidden w-max max-w-[min(22rem,calc(100vw-3rem))] -translate-x-1/2 overflow-y-auto rounded-md bg-slate-950 px-3 py-2 text-left text-[10px] font-normal normal-case whitespace-normal leading-snug text-white shadow-xl ring-1 ring-white/10 group-hover:block group-focus-within:block'
   const bubbleCls =
     props.placement === 'below'
       ? `${baseBubble} top-full mt-2`
