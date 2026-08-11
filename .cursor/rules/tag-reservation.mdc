@@ -1,0 +1,56 @@
+---
+description: Reserve numbered documentation and workflow tag ids before use
+alwaysApply: true
+---
+
+# Tag and id reservation
+
+Before creating or referencing any **durable numbered id** in design docs, tickets, traceability comments, or handoffs, **reserve it in the registry and push** so parallel agents do not collide.
+
+## Registry files
+
+| What | Where |
+|------|--------|
+| **All tag families** (gaps, rework, growth, refinements, decisions, trade studies, traceability, tickets summary) | **`tasks/TAG-REGISTRY.md`** |
+| **Feature requests** `FR-NNNN` | **`tasks/feature-history/REGISTRY.md`** (also listed in TAG-REGISTRY) |
+
+Session bootstrap: load **`tasks/TAG-REGISTRY.md`** after **`REGISTRY.md`** (see **`docs/ai-context.md`**).
+
+## Mandatory workflow
+
+1. **Read** the registry section for the tag family and **area letter** (define new areas in **`tasks/TAG-REGISTRY.md`** and **`docs/design/documentation-style.md`** before first use).
+2. **Reserve:** add a row with status **`reserved`**, date, one-line intent, and target path (may be `TBD`).
+3. **Bump** the section **`next_id`** / **`next_*`** counter.
+4. **`git commit` and `git push` to the default branch** — **before** writing the id into design docs, code, or tickets.
+5. **Use** the reserved id only in the owning doc(s) named in the row; cross-doc references reuse the same id (do not allocate twice).
+
+**`FR-NNNN`:** follow the existing rule in **`docs/ai-context.md` §2b** — update **`REGISTRY.md`**, minimal feature stub, then **commit and push immediately**.
+
+**`T-FR-NNNN-xx`:** bump **`next_xx`** in the feature's **`tickets.md`** and add a summary row in **`TAG-REGISTRY.md`** in the same commit.
+
+## Tag families (must reserve)
+
+| Tag | Id pattern | Registry section |
+|-----|------------|------------------|
+| `DESIGN-GAP` | `DG-<area><n>` | Design gaps |
+| `DESIGN-FLAW` | `DF-<area><n>` | Design flaws |
+| `REWORK-REQUIRED` | `RW-<area><n>` | Rework required — **`.cursor/rules/rework-required.mdc`** |
+| `GROWTH` | `GR-<area><n>` | Growth — **`.cursor/rules/growth-required.mdc`**; evaluable triggers — **`growth-monitoring.mdc`** |
+| `REFINEMENT` | `R-<area><n>` | Refinements |
+| Design decision | `DEC-<area><n>` | Decisions |
+| Trade study | `TS-<area><n>` | Trade studies |
+| Code traceability | `@<prefix>-<area>-<n>` | Traceability |
+| Amendment block | per `docs/ai-context.md` | Amendments |
+| Feature | `FR-NNNN` | **`REGISTRY.md`** |
+| Ticket | `T-FR-NNNN-xx` | Implementation tickets + feature `tickets.md` |
+
+**Do not register:** `CODE-DEFECT`, `COMPLETED` (transient / workflow, no durable id).
+
+## Discipline
+
+- **Never** reuse a retired or allocated number for a different meaning.
+- **Never** place a new `DG-` / `RW-` / `GR-` / `R-` / `DEC-` / `TS-` id in prose without a prior registry commit on the remote default branch.
+- When a tag is removed from design, set registry status to **`retired`** in the same change — do not delete the row.
+- If two agents conflict on push, **pull**, reconcile counters from the remote registry, re-reserve the next free id, push again — do not silently renumber published docs.
+
+Full tables and area definitions: **`tasks/TAG-REGISTRY.md`**.

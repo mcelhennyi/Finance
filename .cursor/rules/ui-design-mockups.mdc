@@ -1,0 +1,44 @@
+---
+description: Require static HTML mocks before UI implementation when creating or updating UI design
+alwaysApply: true
+---
+
+## UI design HTML mocks (required before implementation)
+
+When the user asks to **create or update UI design** — screens, flows, layout, chrome, tokens-as-used, plugin surfaces, dashboard tiles, or any **visible** product behavior in **`docs/design/`** — agents must deliver **static HTML mockups** that show the **exact look and feel** (layout, typography, color, spacing, states) **before** opening or extending **React / Mantle / app implementation** tickets or writing production UI code.
+
+### When this applies
+
+- New or revised **UI** sections in **`docs/design/…`** (including Mantle shell, hub dashboard, plugin chrome).
+- **`/feature-request`** design stages (**Stages 1..N**) that specify user-visible UI.
+- **`/audit-design`** on docs whose scope includes user-visible surfaces (mocks are a **readiness** item).
+
+### When this does not apply
+
+- **Non-UI** design only (APIs, persistence, deployment, Spark contracts) with no layout change.
+- **Prose-only** fixes (typos, cross-links) that do not change specified UI.
+- User **explicitly** waives mocks for a named doc or feature (record the waiver in the design diary or intake).
+
+### Deliverables (in order)
+
+1. **HTML mock(s)** under **`docs/design/mockups/`**:
+   - Self-contained **`.html`** files openable in a browser (no build step required).
+   - Use **realistic copy** and representative data; avoid lorem-only wireframes when layout depends on content length.
+   - For additions or revisions to an existing UI, update the current UI as the example whenever possible: inspect/render the existing route or component, keep its real chrome/tokens/layout, and show the proposed change in place. If the current UI cannot be used, state the exception in the design diary/addendum.
+   - Add **desktop and phone** variants when breakpoints, safe areas, or touch targets matter (`*-desktop.html`, `*-iphone.html`, or team-equivalent names).
+   - Share CSS via a sibling **`.css`** file when multiple mocks reuse tokens (e.g. **`docs/design/mockups/<slug>-mock.css`**).
+2. **Design doc update:** link each mock from the authoritative **`docs/design/…`** doc (relative paths). State which mock is canonical per viewport.
+3. **Only then:** ticket bodies, **`T-FR-NNNN-xx`** DEV work, or React/Mantle implementation — mocks are the visual source of truth until amended.
+
+### Quality bar
+
+- Mocks must reflect **design tokens and shell rules** from the project’s UI design docs (e.g. Mantle / dashboard specs), not generic placeholders.
+- Include **key states** the design calls out (empty, loading, error, populated, edit mode) as separate files or clearly labeled sections in one file.
+- If the user rejects a mock, **revise the HTML** and design links before implementation; do not “fix forward” only in code.
+
+### Exceptions and gaps
+
+- If a mock cannot be produced without a **`DESIGN-GAP`** decision, **stop** implementation, flag the gap, and still ship the mock for the settled portions.
+- **`/audit-design`:** UI components without linked mocks → **Needs design work** (or **Blocked** if layout is unspecified).
+
+Full workflow ties: **`docs/design/documentation-style.md`**, **`.claude/rules/ui-design-mockups.md`**, **`feature-request`** skill **Stages 1..N**.

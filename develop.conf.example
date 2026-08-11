@@ -12,3 +12,19 @@
 
 # Port to mention in help text (must match the published port in compose.yaml)
 #DEVELOP_DOCS_PORT="8000"
+
+# Actor/profile graph server used by ./develop profiles up/down/restart/status/logs
+#PROFILE_SERVER_HOST="127.0.0.1"
+#PROFILE_SERVER_PORT="9732"
+#PROFILE_GRAPH_ROOT="docs/design/actors"
+#PROFILE_SERVER_STATE_DIR=".tmp/profile-server"
+#PROFILE_SERVER_WATCH="0"
+
+# Live NCBI for ./develop --serve (genomic-desktop). Without this, known-dataset and
+# corpus-mirror workflows use offline fixtures in the dev bridge.
+#export LZ_NCBI_LIVE_SMOKE=1
+# Optional NCBI API key (or use a gitignored .env file): raises rate limit to 10 req/s.
+#export LZ_NCBI_API_KEY="your-ncbi-api-key"
+# Optional smoke caps — only when "Quick catalog preview (dev)" is checked in the UI:
+#export LZ_NCBI_MIRROR_MAX_PAGES=1
+#export LZ_NCBI_MIRROR_PAGE_SIZE=100

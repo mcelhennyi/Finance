@@ -1,0 +1,80 @@
+---
+description: GROWTH — durable tag for conditional design upgrades when a limit or issue is hit
+alwaysApply: true
+---
+
+## GROWTH tag
+
+Mirrors **`.claude/rules/growth-required.md`**. Keep both files aligned when
+editing (per **`.cursor/rules/cursor-claude-doc-sync.mdc`**).
+
+`GROWTH` is a **project-specific** documentation tag (it is *not* one of the
+canonical escalation tags in `docs/ai-context.md` — `DESIGN-GAP` /
+`DESIGN-FLAW` / `CODE-DEFECT`). It records a **durable, conditional upgrade
+path**: the **v0 design is correct until a stated issue or limitation
+appears**, then the design **must be amended** to the named option — not
+implemented silently in code alone.
+
+### When to use it
+
+Use `GROWTH` when **all** of the following hold:
+
+- **v0 is specified and implementable now** (unlike `DESIGN-GAP`, which blocks),
+- A **measurable trigger, scale limit, or operational issue** is named that
+  would force a **design change** (architecture, on-disk layout, algorithm tier),
+- An **upgrade option** is named (what the design becomes after amendment),
+- The tag should **persist** until the trigger fires and the upgrade lands (or
+  the trigger is disproven and the tag is removed with evidence).
+
+### How it differs from other tags
+
+| Tag | Meaning | Lifetime |
+| --- | --- | --- |
+| `DESIGN-GAP` | Not specified yet — **stop, do not guess** | until specified |
+| `DESIGN-FLAW` | Design assumption proven wrong — amend now | until amended |
+| `CODE-DEFECT` | Code fails a **correct** design — fix code | transient |
+| `REWORK-REQUIRED` | Settled design; **code/doc deviates** today | until rework ships |
+| **`GROWTH`** | Settled **v0**; **design must change** when trigger/limit hits | until upgrade ships or tag retired with evidence |
+| `REFINEMENT` | Deferred detail; v0 path still clear | until refined |
+
+`GROWTH` = "ship v0 as written; when *this* limit bites, amend the design to
+*that* upgrade — track it so we do not pretend v0 scales forever."
+
+### Format
+
+- Block form (preferred):
+
+  ```markdown
+  > <span class="design-doc-growth">GROWTH GR-Xn</span> — **Trigger:** …
+  > **Limitation:** … **Upgrade:** … **v0 until triggered:** …
+  ```
+
+- Inline form: `<span class="design-doc-growth">GROWTH</span>`.
+- Id convention: `GR-<AREA-LETTER><n>` scoped to the owning doc
+  (`GR-S1` in `@PROJ-<AREA>-<n>`, …). Reuse the same id from trade studies or
+  cross-doc restatements.
+- **Reservation:** allocate **`GR-…`** only via **`tasks/TAG-REGISTRY.md`**
+  (**commit and push** before use) — **`.cursor/rules/tag-reservation.mdc`**.
+
+CSS class `design-doc-growth` (teal) lives in
+`docs/stylesheets/labzero-extra.css`, parallel to `design-doc-refine`,
+`design-doc-gap`, and `design-doc-rework`.
+
+### Discipline
+
+- Do **not** implement the upgrade path in code while v0 is still authoritative
+  unless the trigger has been measured and the design amended in the same change.
+- When the trigger fires: amend design per `docs/ai-context.md`, implement,
+  **remove** the `GROWTH` tag (or replace with a short "resolved" note in the
+  amendment block).
+- Every tag must state **trigger**, **limitation**, **upgrade**, and **v0**
+  so it is actionable cold.
+- Surface `GROWTH` tags in handoffs and ticket planning like `REWORK-REQUIRED`.
+
+### Runtime monitoring (evaluable triggers)
+
+When a **`GR-…`** trigger is **objectively measurable** at runtime, implement
+optional monitoring and **`GROWTH_TRIGGERED`** logging per
+**`.cursor/rules/growth-monitoring.mdc`** (mirrored **`.claude/rules/growth-monitoring.md`**).
+Monitors must be **compile-outable** and **runtime-disableable** so v0 stays
+efficient. Add a **`Monitor:`** line to the design block when evaluable.

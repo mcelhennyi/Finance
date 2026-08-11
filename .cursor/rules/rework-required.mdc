@@ -1,0 +1,70 @@
+---
+description: REWORK-REQUIRED — durable tag flagging code/docs known to deviate from settled developer intent
+alwaysApply: true
+---
+
+## REWORK-REQUIRED tag
+
+Mirrors **`.claude/rules/rework-required.md`**. Keep both files aligned when
+editing (per **`.cursor/rules/cursor-claude-doc-sync.mdc`** when present, or
+the project's equivalent agent-sync rule).
+
+`REWORK-REQUIRED` is a documentation tag that records a **durable,
+intentional flag that a piece of design or shipped code is known to deviate
+from current developer intent and must be reworked.** It complements the
+escalation tags in **`docs/ai-context.md`** (`DESIGN-GAP` / `DESIGN-FLAW` /
+`CODE-DEFECT`).
+
+### When to use it
+
+Use `REWORK-REQUIRED` when **all** of the following hold:
+
+- The **design doc is correct / is the intended target** (source of truth),
+- **Existing code, or another existing doc, is known to conflict** with that
+  intent — a deliberate decision the current implementation/spec no longer
+  reflects, not a bug against a correct design, and
+- A **persistent, auditable marker** is wanted that survives until the
+  rework lands.
+
+### How it differs from the escalation tags
+
+| Tag | Meaning | Lifetime |
+| --- | --- | --- |
+| `DESIGN-GAP` | Design ambiguous / unspecified — **stop, do not guess** | until specified |
+| `DESIGN-FLAW` | Design assumption proven wrong — amend the design | until amended |
+| `CODE-DEFECT` | Code fails a **correct** design — just fix the code | transient |
+| **`REWORK-REQUIRED`** | Intent settled; **known code/doc deviates** and must be reworked to match | **durable** until rework ships |
+
+`CODE-DEFECT` = "code is wrong, fix it now." `REWORK-REQUIRED` = "intended
+design is recorded here; current code/doc consciously does not match it yet
+— track the divergence, do not mistake the implementation for the target."
+
+### Format
+
+- Block form (preferred):
+
+  ```markdown
+  > REWORK-REQUIRED RW-Xn — <conflict>. <conflicting file(s)/spec>.
+  > Intended state: <target>. Tracked for rework.
+  ```
+
+- Inline form: `REWORK-REQUIRED` (optionally wrapped in a project highlight
+  span/class if the project publishes a styled docs site).
+- Id convention: `RW-<AREA-LETTER><n>` scoped to the owning doc (mirrors the
+  project traceability `@PROJ-<AREA>-<NUMBER>` scheme). Reuse the same id
+  from any doc that restates the divergence.
+- **Reservation:** allocate **`RW-…`** only via **`tasks/TAG-REGISTRY.md`**
+  (**commit and push** before use) — **`.cursor/rules/tag-reservation.mdc`**.
+
+Styling is project-owned: a project that publishes a docs site may define a
+highlight class (e.g. `design-doc-rework`) in its own stylesheet. The
+skeleton defines the **tag and discipline**, not the CSS.
+
+### Discipline
+
+- Never silently edit a design doc to match deviating code — the doc is the
+  source of truth; flag the code with `REWORK-REQUIRED`.
+- Every tag must name the **specific file/spec** that deviates and the
+  **intended end state**, actionable cold.
+- When the rework lands, **remove** the tag in the same change.
+- Treat `REWORK-REQUIRED` like `DESIGN-GAP` for handoffs / ticket planning.

@@ -1,0 +1,58 @@
+---
+name: "source-command-feature-request"
+description: "End-to-end feature request: FR-NNNN registry, layered design, tickets + DAG, then optional /identify-frontier, /develop-frontier; /finish-feature only after docs/ai-context.md §2d feature-complete gate (or /finish-frontier). Resume with /feature-request-continue."
+---
+
+# source-command-feature-request
+
+Use this skill when the user asks to run the migrated source command `feature-request`.
+
+## Command Template
+
+# /feature-request
+
+Follow the Cursor project skill **`.cursor/skills/feature-request/SKILL.md`**.
+
+## End every turn for the user
+
+End each response with **Executive summary**, **Suggested next step**, and **Options** when more than one reasonable path exists — see **User-facing close (required)** and **`reference-templates.md` → User-facing session close** in that skill.
+
+## Prerequisite (recommended)
+
+When a **top-level design doc** under **`docs/design/`** already exists, run **`/audit-design <path>`** first; then **`/feature-request <same path>`** when verdict is **Ready** or accepted **Caution**.
+
+## What this is
+
+- **Not** a replacement for `identify-frontier` / `develop-frontier` / `finish-feature` / `finish-frontier`.
+- A **product-sized** flow: **intake** → **interface-first design** (skeleton, then depth as needed) → **`20-tickets-dag.md`** (Jira/Asana-friendly markdown, Mermaid DAG) → **prompt** to implement → **`/develop-frontier`** when tickets (**`T-FR-NNNN-xx`**) are in the tracker → **prompt** to **`/finish-feature`** when **`docs/ai-context.md` §2d** **feature-complete gate** is met (or **`/finish-frontier`** if integrating straight to the default branch).
+- For additions to an already selected **`FR-NNNN`**, use **`/expand-feature`** instead of allocating a new feature id; simple UI tweaks use a worktree plus docs HTML mock, while larger additions write a **`30-expand-*`** addendum and append same-FR tickets.
+- For **large** features, use **subagents early** per **`docs/ai-context.md` §1b** (e.g. per subsystem design or codebase survey) before consolidating artifacts.
+- **Parallel features:** several **`FR-NNNN`** may be in flight; each has its own **`tasks/feature-history/FR-…/`** directory. **`/develop-frontier`** still batches tickets (**`T-FR-NNNN-xx`**) from the **global** graph — see **`docs/ai-context.md` §2c** and **`tasks/ticket-progress.md` → Parallel streams**.
+- **Human-readable naming:** In prompts, diaries, and handoffs, lead with each ticket’s **title** from **`tickets.md`**; use the **`T-FR-NNNN-xx`** id with a **link** to the canonical **`###`** section for detail (full rule in **`.cursor/skills/feature-request/SKILL.md` → Human-readable names vs ticket ids**).
+- **Plain-English ticket bodies:** New and not-yet-started tickets must include **In plain English**, **Why this exists**, **Out of scope**, and **Done when (plain English)** before technical acceptance criteria — **`.cursor/skills/feature-request/SKILL.md` → Plain-English ticket writing**.
+
+## Compose with existing commands (do not fork behavior)
+
+1. **Before develop:** land tickets (**`T-FR-NNNN-xx`**) in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, **`tasks/feature-history/TICKET-SOURCES.md`**, **`docs/design/tickets-initial.md`** (DAG index), and **`tasks/ticket-progress.md`** (or a PR-ready “Proposed patch” in `20-tickets-dag.md` if you cannot commit yet).
+2. **Parallel handoff (optional, recommended):** `/identify-frontier`
+3. **Implement:** `/develop-frontier` (feature worktree at **`.worktrees/FR-NNNN-<slug>/feature/`**; ticket/stage child worktrees under the same feature folder)
+4. **Integrate:** `/finish-feature` after **§2d** gate (default branch PR) or `/finish-frontier` (direct default branch)
+
+**Development commands:** during implementation, run build/test/lint/package-manager/doc/dev-server commands inside Docker / Docker Compose / Dev Container / CI images where possible. Use **`./develop run …`**, `docker compose run …`, or the configured Dev Container before host-local commands; document exceptions in feature diaries or handoffs.
+
+**Web UI validation:** for any ticket that creates or changes user-visible web UI, required **VAL** includes **`docs/ai-context.md` → Web UI validation**: scripted frontend checks plus rendered browser inspection. Use project overlays / stack conventions for commands, local URL, browser-capable tool, and route/state matrix; document exceptions in feature diaries or handoffs.
+
+**Doc site during design / VAL:** when **`docs/`** or **`mkdocs.yml`** change, use **`./develop help`** and run **`./develop up`** (Docker Compose) or **`./develop local`** (venv fallback; document why host-local was used); use **`./develop build`** for a static check. Optional **`develop.conf`**; see root **`README.md`** and **`.cursor/skills/feature-request/SKILL.md`** (local dev / Docker section).
+
+## “Identify” disambiguation
+
+- Spoken **identify (FR)** in the lifecycle = **register `FR-NNNN` + write intake** in `tasks/feature-history/`.
+- `/identify-frontier` = **parallel tickets** (`T-FR-NNNN-xx`) from the ticket graph; run **only after** tickets exist.
+
+## Artifacts and registry
+
+- Allocate **`FR-NNNN`** in **`tasks/feature-history/REGISTRY.md`**; never reuse an id. **Push that registry change (and minimal feature stub) to `main` immediately** so concurrent features deconflict on a single source of truth.
+- All stage notes in **`tasks/feature-history/FR-NNNN-<slug>/`**: `serial-diary.md` (serial), **`parallel/*.md`** (per parallel subagent), **`handoffs/*.md`** (continue / milestone / closeout — **canonical** for this feature), optional **`DIARY.md`** (merged newest-first stack). Closeout recap in **`90-closeout.md`**; optional short pointer in **`tasks/handoffs/`** only.
+- **Repo-root `CURRENT.md`:** on **`feat/FR-NNNN-<slug>`** and ticket branches under that feature, maintain **`CURRENT.md`** at the repository root as the branch-local “where we are” file; refresh through the lifecycle; remove it when merging to **`main`** (see **`.cursor/skills/feature-request/SKILL.md` → Branch state (`CURRENT.md`)**). On **`main`** during design-only work, prefer the feature **`README.md`** instead of a competing per-feature root file.
+
+**Templates:** `.cursor/skills/feature-request/reference-templates.md`

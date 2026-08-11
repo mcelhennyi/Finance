@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Status"
+  short_description: "Summarize feature progress in plain English"
+  default_prompt: "Use $feature-status to explain what is done and what is next for this feature."

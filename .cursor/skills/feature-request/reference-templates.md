@@ -118,21 +118,102 @@ sequenceDiagram
   U->>S: …
 ```
 
+## Actor profile doc
+
+Use when a feature creates or changes seeded users, personas, role fixtures, demo accounts, E2E actors, stakeholders, antagonists, guiding figures, or outside-force actors. Prefer a project-level doc such as **`docs/design/seed-actor-profiles.md`** so multiple features can share actors. Use **`docs/design/actor-driven-development.md`** for the reusable theory, story graph, guiding-figure, app-readable graph, and validation process; use **`docs/design/profile-server-app.md`** when planning the generic `./develop profiles` viewer.
+
+````markdown
+# Seed actor profiles
+
+## Seed coverage contract
+
+Every seeded user-like record must have a profile before the owning ticket reaches VAL.
+
+## App-readable graph contract
+
+Machine-readable actor/story graph data lives under `docs/design/actors/`: `actors/*.md`, `stories/*.md`, `edges.jsonl`, `index.json`, and `actor-graph.json`. Rebuild the index after profile/story/edge edits and fail validation if the generated files are stale.
+
+## Source inventory
+
+| Source | Actors covered |
+|--------|----------------|
+| | |
+
+## Outside-force and guiding-figure inventory
+
+| Actor or figure | Class | Force / principle | Related roled actors |
+|-----------------|-------|-------------------|----------------------|
+| | Stakeholder / antagonist / guiding figure | | |
+
+## Actor story relationship graph
+
+```mermaid
+flowchart LR
+  AStory["Actor A: source story<br/>story/a/source-flow"]
+  BStory["Actor B: handler story<br/>story/b/handler-flow"]
+  AStory -->|"handled by story/b/handler-flow"| BStory
+```
+
+## Story-edge table
+
+| Origin story | Affected actor | Handler story | Coverage note |
+|--------------|----------------|---------------|---------------|
+| `story/a/source-flow` | Actor B | `story/b/handler-flow` | |
+
+## Profile: <Actor Name>
+
+**Seed anchors:** `<token>`, `<user_id>`, `<member_id>`, `<fixture id>`
+
+**Role:** …
+
+**Personality:** …
+
+**Job and life context:** …
+
+**Routine:** …
+
+| Story key | Trigger | Expected flow | UI surfaces | Backend/data surfaces | Time and persistence |
+|-----------|---------|---------------|-------------|-----------------------|----------------------|
+| `story/<actor>/<flow>` | | | | | |
+
+**Security boundaries:** …
+
+**Test duties:** …
+
+**Growth-dream candidates:** …
+
+## Guiding figure: <Name or Archetype>
+
+**Anchor:** `guide/<slug>`
+
+**Principle lens:** …
+
+**Decision bias:** …
+
+**Affected actors:** …
+
+**Story pressure:** …
+
+**Guardrails:** …
+````
+
 ---
 
 ## Tickets + dependency DAG (Jira/Asana-ready)
 
 **Human-facing rule:** The **Title** column is the primary name in prompts, diaries, and handoffs. Use **ID** for deps, branches, and `ticket-progress.md`. When talking to the user, pair **title + linked id** to `tickets.md` (see **`.cursor/skills/feature-request/SKILL.md` → Human-readable names vs ticket ids**).
 
+**Plain-English rule:** Titles, DAG **Summary of change**, and every new/not-yet-started ticket body must pass a cold-read test — see **`.cursor/skills/feature-request/SKILL.md` → Plain-English ticket writing**. Prefer a little clear context over dense jargon.
+
 ```markdown
 # FR-NNNN — Work breakdown and DAG
 
 ## Ticket table
 
-| ID | Title (required — human-facing name) | Type | Deps (ticket IDs) | Summary of change (1–2 lines) | Suggested order group | Link (optional) |
-|----|----------------------------------------|------|---------------------|------------------------------|------------------------|-----------------|
-| T-FR-0007-01 | Contract: public API surface | Story/Task | none | … | P0 foundation | [details](tickets.md#anchor-after-promote) |
-| T-FR-0007-02 | Implement batch ingest path | Story/Task | T-FR-0007-01 | … | P1 | [details](tickets.md#…) |
+| ID | Title (required — human-facing name) | Type | Deps (ticket IDs) | Summary of change (plain English, 1–2 lines) | Suggested order group | Link (optional) |
+|----|----------------------------------------|------|---------------------|----------------------------------------------|------------------------|-----------------|
+| T-FR-0007-01 | Contract: public API surface | Story/Task | none | Lock the shared request/response shapes so UI and backend agree before either side builds. | P0 foundation | [details](tickets.md#anchor-after-promote) |
+| T-FR-0007-02 | Implement batch ingest path | Story/Task | T-FR-0007-01 | Accept a batch of records, store them safely, and return clear success/failure per item. | P1 | [details](tickets.md#…) |
 
 **Parallelization rule:** Any two tickets with **disjoint** transitive file/code ownership and **all deps in earlier VAL-done** can run in parallel (same rule as `identify-frontier`).
 
@@ -147,7 +228,7 @@ Use a **second** code fence in the real doc (nesting is invalid inside one templ
 
 ## Map to feature **`tickets.md`** + global index
 
-- For each **`T-FR-NNNN-xx`**: add **`###`** sections to **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** with **Deps:** matching the DAG and **Phases** tables.
+- For each **`T-FR-NNNN-xx`**: add **`###`** sections to **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** using the **Canonical ticket body** below, with **Deps:** matching the DAG and **Phases** tables.
 - Register the feature path in **`tasks/feature-history/TICKET-SOURCES.md`**.
 - Extend **`docs/design/tickets-initial.md`**: feature table row + **global mermaid** edges / **`triadDone`** as needed.
 - Add rows to **`tasks/ticket-progress.md`**.
@@ -159,13 +240,58 @@ After tickets land, run **`/identify-frontier`** and confirm the **parallel-capa
 
 ---
 
+## Canonical ticket body (plain English first)
+
+Use this shape for every **new** ticket and when refreshing a **not-yet-started** ticket (no phase `done` or `in progress`). Do **not** rewrite completed or in-flight tickets unless the user asks.
+
+```markdown
+### T-FR-NNNN-xx — <verb-led title>
+
+**Title:** <same as heading>
+**Type:** Story/Task/…
+**Deps:** none | T-FR-NNNN-yy, …
+**Order group:** P0 / P1 / …
+
+**In plain English:**
+<2–4 short sentences. Who benefits, what changes, what “done” looks like.
+Everyday words first; define any necessary term once.>
+
+**Why this exists:**
+<One sentence: unlocks … / closes … / removes …>
+
+**Out of scope:**
+- <what this ticket must not do>
+
+**Done when (plain English):**
+- <observable outcome a cold reader can check>
+- …
+
+**Primary files:**
+
+- `path/…`
+
+**Acceptance criteria:**
+
+- <precise, testable bullets for implementers; may stay technical>
+
+**Phases:**
+
+| Phase | Status | Notes |
+|---|---|---|
+| TEST | — | … |
+| DEV | — | … |
+| VAL | — | … |
+```
+
+---
+
 ## User prompts (copy-paste)
 
 **After design + tickets are written:** name work by **title**, with ticket id linked to **`tickets.md`** for detail (example pattern):
 
 1. "Ready to start implementation: run **`/develop-frontier`** for the current parallel-capable set — e.g. **Contract: public API surface** ([`T-FR-0007-01`](tasks/feature-history/FR-NNNN-<slug>/tickets.md)), **Implement batch ingest path** ([`T-FR-0007-02`](tasks/feature-history/FR-NNNN-<slug>/tickets.md)) — or implement one stream serially if you prefer."
 2. "Continue: proceed to the next items by **title** in dependency order (links in **`tickets.md`**), or re-run **`/identify-frontier`** if the queue changed."
-3. "Close this feature’s implementation: run **`/finish-feature`** (merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → `main`**) per **`docs/ai-context.md` §2d** — or **`/finish-frontier`** if integrating ticket/stage branches straight into **`main`**."
+3. "Close this feature’s implementation: when **`docs/ai-context.md` §2d** **feature-complete gate** is met, run **`/finish-feature`** (merge ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validate, **PR → default branch**) — or **`/finish-frontier`** if integrating ticket/stage branches straight into the default branch. Until the gate is met, keep work on **`feat/FR-NNNN-<slug>`** only."
 
 ---
 
