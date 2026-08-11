@@ -1,4 +1,4 @@
 interface:
   display_name: "Feature Status"
-  short_description: "Summarize feature progress in plain English"
-  default_prompt: "Use $feature-status to explain what is done and what is next for this feature."
+  short_description: "Summarize ticket and wave progress"
+  default_prompt: "Use $feature-status to explain what is done, what remains, and the ticket and wave fractions for this feature."

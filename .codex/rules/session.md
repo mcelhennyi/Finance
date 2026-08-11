@@ -40,6 +40,11 @@ For any user-visible web UI work, follow required **Web UI validation** in **`do
 
 Slash-style prompts resolve via **`.agents/skills/source-command-*`** → canonical **`.cursor/skills/`** (see **`AGENTS.md`** command table). Use **`/expand-feature`** for same-**`FR-NNNN`** additions: simple UI tweaks get a dedicated worktree plus docs HTML mock, while involved changes get addendum design + same-FR ticket expansion before returning to the normal frontier workflow.
 
+Before the first **`/develop-frontier`** wave and every later wave, sync and
+land the latest skeleton from a clean default-branch integration worktree,
+refresh each affected feature integration branch, and stop before ticket
+dispatch if that gate cannot complete cleanly.
+
 Manual documentation and feature explanations are distinct workflows: **`/explain-feature`** writes completed-feature before/after HTML under **`tasks/feature-history/FR-NNNN-<slug>/`** and runs during **`/finish-feature`** closeout; **`/explain-and-document`** writes requested explanations into the static HTML manual under **`docs/manual/`**, while **`/update-manual`** refreshes that manual from the last reviewed code hash and also runs during **`/finish-feature`** closeout. Do not treat ordinary explanatory questions as automatic manual updates unless the user invokes or clearly requests that workflow.
 
 ## Subagents

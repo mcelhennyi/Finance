@@ -1,6 +1,6 @@
 ---
 name: "source-command-feature-status"
-description: "Give a concise plain-English feature status with a BLUF and a table of done, upcoming, blocked, and skipped work with rough complexity signals."
+description: "Give a concise plain-English feature status with a BLUF, tickets-left and waves-left fractions, and a table of done, upcoming, blocked, and skipped work with rough complexity signals."
 ---
 
 # source-command-feature-status
@@ -18,6 +18,9 @@ Follow the canonical project skill
 ## Required outcome
 
 - Return a standalone, two-to-four-sentence **BLUF** first.
+- Give **Tickets left / total tickets** and **Waves left / total waves** as
+  verified fractions immediately after the BLUF; use `unknown/unknown` rather
+  than guessing when canonical evidence is incomplete.
 - Follow with one status table containing **Done**, **Upcoming**, and applicable
   **Blocked** and **Skipped** rows.
 - Give each item a **Low**, **Medium**, or **High** complexity signal.

@@ -93,7 +93,7 @@ Applies to **C++, TypeScript, and other implementation files** unless a formatte
 
 - **Ahead of large work:** Prefer delegation before broad exploration or multi-file refactors. Follow **`docs/ai-context.md` §1b**.
 - **Per ticket:** **TEST → DEV → VAL** serially in **one** worktree unless the team directs otherwise.
-- **Parallel tickets:** **`/develop-frontier`** — one subagent per **ticket id**; then **`/finish-feature`** (per **`FR-NNNN`**, **`docs/ai-context.md` §2d**; **mandatory closeout** plus **`/explain-feature`** and fresh-context **`/update-manual`** when gate passes) or **`/finish-frontier`** as the team chose.
+- **Parallel tickets:** **`/develop-frontier`** — before every wave, sync and land the latest skeleton from a clean default-branch integration worktree and refresh affected feature branches; then launch one subagent per **ticket id**. After integration, use **`/finish-feature`** (per **`FR-NNNN`**, **`docs/ai-context.md` §2d**; **mandatory closeout** plus **`/explain-feature`** and fresh-context **`/update-manual`** when gate passes) or **`/finish-frontier`** as the team chose.
 
 ## Feature request and frontier (compose)
 

@@ -2,11 +2,12 @@
 name: feature-status
 description: >-
   Give a concise, plain-English status update for a project feature, including
-  a BLUF, verified completed outcomes, remaining work, blockers, intentionally
-  skipped work, and a rough complexity signal for each item. Use when the user
-  asks for feature status, a progress update, what is done, what is left, where
-  a feature stands, or what comes next. Return the update in the conversation
-  unless the user asks for a saved artifact.
+  a BLUF, tickets-left and waves-left fractions, verified completed outcomes,
+  remaining work, blockers, intentionally skipped work, and a rough complexity
+  signal for each item. Use when the user asks for feature status, a progress
+  update, what is done, what is left, where a feature stands, or what comes
+  next. Return the update in the conversation unless the user asks for a saved
+  artifact.
 ---
 
 # Feature Status
@@ -31,7 +32,18 @@ knowing the repository, ticket system, or internal vocabulary.
 4. Group related technical tickets into user-visible outcomes. Keep useful ids
    in parentheses after the plain-English description rather than making the
    reader decode them.
-5. Return the compact structure below. Do not create or modify a project file
+5. Calculate both progress fractions from the same verified evidence:
+   - **Tickets left / total tickets:** Count canonical `### T-FR-NNNN-xx`
+     tickets for the feature. A ticket remains until TEST, DEV, and VAL are all
+     `done` in `tasks/ticket-progress.md`.
+   - **Waves left / total waves:** Prefer the feature's documented dependency
+     waves in `20-tickets-dag.md` or the latest frontier handoff. If waves are
+     not named, derive stable topological layers from the canonical ticket
+     dependencies. A wave remains while any ticket assigned to it remains.
+   Reconcile duplicate or stale tracker rows against canonical `tickets.md`.
+   If either fraction cannot be established from consistent evidence, show
+   `unknown/unknown` for that fraction and explain the missing evidence briefly.
+6. Return the compact structure below. Do not create or modify a project file
    unless the user explicitly requests a saved artifact.
 
 ## Output contract
@@ -43,6 +55,8 @@ knowing the repository, ticket system, or internal vocabulary.
 
 <Two to four sentences stating what the feature is for, what is done, what is
 left, and any material blocker or decision.>
+
+**Progress:** Tickets left **<remaining>/<total>** · Waves left **<remaining>/<total>**
 
 ## Status
 
@@ -60,6 +74,10 @@ detail. If **Done** or **Upcoming** has no work, include one row stating
 `Nothing material completed yet` or `Nothing material remains` and use `—` for
 complexity. Include **Blocked** and **Skipped** rows only when evidence supports
 them; do not add empty placeholder rows.
+
+Keep both progress numerators in **left / total** order. Do not invert them into
+completed / total. Counts are evidence summaries, not estimates; never round,
+guess, or treat a partially completed ticket or wave as complete.
 
 ## Complexity scale
 
@@ -100,6 +118,8 @@ What remains is release hardening around existing-data migration and unusual
 permission combinations. The migration rehearsal is blocked until a sanitized,
 production-sized dataset is available, while support for obsolete browsers was
 intentionally excluded from this release.
+
+**Progress:** Tickets left **2/8** · Waves left **1/3**
 
 ## Status
 

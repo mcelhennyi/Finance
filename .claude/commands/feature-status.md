@@ -1,5 +1,5 @@
 ---
-description: Explain what is done, upcoming, blocked, or skipped for a feature in concise plain English.
+description: Explain ticket and wave progress plus what is done, upcoming, blocked, or skipped for a feature in concise plain English.
 ---
 
 # /feature-status
