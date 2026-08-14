@@ -13,7 +13,8 @@
 | FR-0004 | `FR-0004-bbd-projection-experience/` | `complete` | **`T-FR-0004-01`** through **`T-FR-0004-05`** in [`FR-0004-bbd-projection-experience/tickets.md`](FR-0004-bbd-projection-experience/tickets.md) | Merged to default branch (PR [#7](https://github.com/mcelhennyi/Finance/pull/7), 2026-05-10): immersive BBD UI — dock, **`bbdVizModel`**, story dashboard, lazy **`three`** spatial view, **`scripts/bbd-projection/`**. |
 | FR-0005 | `FR-0005-budget-page-docs-dock/` | `complete` | **`T-FR-0005-01`** in [`FR-0005-budget-page-docs-dock/tickets.md`](FR-0005-budget-page-docs-dock/tickets.md) | Budget **`BudgetGuideContent`** modal (parity with BBD docs), **`budgetFieldTips`** + hover labels, floating dock (month, cutoff, jumps, save). |
 | FR-0006 | `FR-0006-budget-cash-flow-graph/` | `in-progress` | **`T-FR-0006-01`** through **`T-FR-0006-07`** in [`FR-0006-budget-cash-flow-graph/tickets.md`](FR-0006-budget-cash-flow-graph/tickets.md) | Persisted **`CashNode`/`CashFlowEdge`**, CRUD API, Budget **React Flow** panel, time scrub, BBD edge suggestions, Compose **`FINANCE_ALLOCATION_AUTO_TEMPLATE`** default review. |
+| FR-0007 | `FR-0007-business-finance-management/` | `design` | Pending design and ticket breakdown | Business workspace for accounts, credit cards, income, expenses, deductions, tax obligations, reserves, payments, and a future governed transfer into personal income/budgeting. |
 
-**next_id:** `7`
+**next_id:** `8`
 
 **Allocating a new `FR-NNNN`:** Create directory **`tasks/feature-history/FR-NNNN-<slug>/`**, add a row to the table, set **`next_id`** to **NNNN+1**, and add the ticket file path to **`TICKET-SOURCES.md`**.
