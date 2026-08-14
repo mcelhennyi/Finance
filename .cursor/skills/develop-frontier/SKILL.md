@@ -3,7 +3,8 @@ name: develop-frontier
 description: >-
   Identifies the dependency-valid parallel ticket set, launches one subagent per
   ticket to complete TEST→DEV→VAL in separate worktrees, merges ticket work into
-  feat/FR-NNNN-slug, refreshes the skeleton before every wave, then runs
+  feat/FR-NNNN-slug, checks the skeleton hash before every wave and syncs only
+  when it changed, then runs
   finish-feature only when docs/ai-context.md §2d feature-complete gate is met
   (otherwise finish-frontier per policy).
   Use when the user says develop the frontier,
@@ -24,35 +25,47 @@ End-to-end: **discover** parallel-capable tickets, ensure each owning feature ha
 - **Development commands:** inside each ticket worktree, run build/test/lint/package-manager/dev-server/doc-build commands through Docker / Docker Compose / Dev Container / CI images where possible (for example **`./develop run …`**, `docker compose run …`, or the configured Dev Container). Host-local commands are exceptions and must be noted in the ticket diary or handoff.
 - **Web UI validation:** any frontier ticket that creates or changes user-visible web UI must satisfy **`docs/ai-context.md` → Web UI validation** before **VAL** is marked `done`: scripted frontend checks plus rendered browser inspection using the project’s documented commands, local URL, browser-capable tool, and route/state matrix.
 
-## 0 — Sync the skeleton, then refresh the frontier
+## 0 — Check the skeleton hash, sync only on change, then refresh the frontier
 
-Run this gate before the first wave and repeat it before every later wave. A
-wave must not launch from stale skeleton guidance or template files.
+Run this read-first gate before the first wave and repeat it before every later
+wave. Do not run `sync-skeleton` unless the remote skeleton hash differs from
+the consumer's pinned `.skeleton` gitlink hash.
 
 1. In a clean integration worktree based on the current remote default branch,
-   run **`./sync-skeleton`** (or
-   **`bash .skeleton/scripts/sync-skeleton.sh`** when the wrapper is absent).
+   initialize `.skeleton` only when its checkout is missing. Read the configured
+   `.skeleton` tracking branch from `.gitmodules`, fetch only that submodule
+   remote ref with `git -C .skeleton fetch origin <tracking-branch>`, and compare:
+   - pinned consumer hash: `git rev-parse HEAD:.skeleton`
+   - fetched remote hash: `git -C .skeleton rev-parse FETCH_HEAD`
    Never overwrite a dirty checkout; use a separate clean worktree or stop.
-2. Read **`.skeleton/CHANGELOG.md`** and apply required consumer-manual updates.
-   Review and validate all staged changes. If the sync changed anything, commit
-   and push the sync to the remote default branch using project policy before
-   continuing.
-3. Ensure every feature integration branch that may own a ticket in this wave
-   contains that landed skeleton-sync commit before creating child ticket
-   worktrees. Prefer merging the updated default branch; do not rewrite shared
-   feature history unless project policy explicitly allows it.
-4. Re-read this skill from the refreshed project files, then follow
+   If the tracking branch or either hash cannot be resolved, stop; do not guess
+   that the skeleton is current.
+2. If the hashes are equal, record the no-op and **do not run**
+   `sync-skeleton`, apply deprecations, copy manifest paths, read the changelog,
+   stage files, create a sync commit, push, or refresh feature branches for a
+   nonexistent update. Continue directly to frontier discovery.
+3. If the hashes differ, run **`./sync-skeleton`** (or
+   **`bash .skeleton/scripts/sync-skeleton.sh`** when the wrapper is absent).
+   Read **`.skeleton/CHANGELOG.md`** for the changed range and apply required
+   consumer-manual updates. Review and validate every staged change, then
+   commit and push the sync to the remote default branch using project policy.
+4. Only after an actual sync, ensure every feature integration branch that may
+   own a ticket in this wave contains the landed skeleton-sync commit before
+   creating child ticket worktrees. Prefer merging the updated default branch;
+   do not rewrite shared feature history unless project policy explicitly
+   allows it. Re-read this skill from the refreshed project files.
+5. Follow
    **`identify-frontier`** or read the latest
    **`tasks/handoffs/*-parallel-frontier.md`**.
-5. If the parallel set is **empty**, stop and report.
-6. Remember the set is **global** across all tickets — it may span **multiple
+6. If the parallel set is **empty**, stop and report.
+7. Remember the set is **global** across all tickets — it may span **multiple
    `FR-NNNN`** features. Each subagent still owns **one ticket** and **one child
    worktree** under its owning feature folder, so mixed-feature batches stay
    clear (`docs/ai-context.md` §2c).
 
-If the skeleton update, changelog reconciliation, validation, commit, push, or
-feature-branch refresh cannot complete cleanly, record it as the current
-blocker and stop before launching the wave.
+If the hash check fails, or an actual skeleton update, changelog reconciliation,
+validation, commit, push, or feature-branch refresh cannot complete cleanly,
+record it as the current blocker and stop before launching the wave.
 
 ## 1 — Orchestrator setup
 

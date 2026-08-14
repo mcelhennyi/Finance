@@ -27,6 +27,10 @@ Follow the Cursor project skill **`.cursor/skills/expand-feature/SKILL.md`**.
   **`T-FR-0006-08`** after **`T-FR-0006-07`**.
 - Completed tickets are historical: create follow-up tickets for rework instead
   of silently changing done ticket scope.
+- **Bug-fix expansion:** ingest open **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**
+  reports, create same-FR tickets, set each report’s **Solving ticket**, and
+  amend **`docs/design/`** (and mocks/manual) when the fix would leave docs
+  untruthful. See **`.cursor/skills/expand-feature/SKILL.md` → Bug-fix expansion**.
 - When mocking an additional UI feature, update the current UI if possible as
   the example and save the HTML under **`docs/design/mockups/`**.
 

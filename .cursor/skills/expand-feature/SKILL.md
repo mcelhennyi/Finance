@@ -59,6 +59,10 @@ user-facing close.
   **`/finish-feature`** until every original and expansion ticket in the
   feature's **`tickets.md`** has TEST / DEV / VAL = `done` in
   **`tasks/ticket-progress.md`**.
+- **Bug-fix expansion:** when the user asks to fix outstanding
+  **`/feature-bug`** reports, ingest **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**
+  (see **Bug-fix expansion** below). Do not start this path from
+  **`/feature-bug`** itself unless the operator said every issue is ingested.
 - **Lightweight work still uses git isolation.** Create a dedicated child
   worktree under **`.worktrees/FR-NNNN-<slug>/`** from the feature branch, for
   example **`stage-expand-<short-slug>/`** on
@@ -82,6 +86,40 @@ If the target feature is `complete`, has a merged integration PR, or its
 Recommend **`/feature-request`** for a new FR unless the user explicitly wants a
 post-closeout expansion recorded against the old feature.
 
+## Bug-fix expansion
+
+Standard pre-PR path: **`/feature-request`** → develop to completion → **manual
+test** → **`/feature-bug`** until every issue is ingested → **this command** to
+ticket and fix outstanding bugs.
+
+When the expansion is “fix outstanding bugs” (user said so, or **`bugs/`** has
+**Status: open** rows and the ask is to address them):
+
+1. Read **`bugs/README.md`** and every **`open`** (and **`ticketed`** but
+   unsolved) report it lists, including dated pre-skill filenames. Prefer
+   **`BUG-FR-NNNN-xx-*.md`** when allocating new reports.
+2. Write a **`30-expand-YYYY-MM-DD-bug-fixes.md`** (or `-bug-fixes-b` if that
+   name exists) whose raw request lists each bug id and title.
+3. Create **same-FR tickets** from the reports. Prefer **one ticket per bug**.
+   Group only when several reports share one root cause; name every ingested
+   **`BUG-FR-NNNN-xx`** in that ticket body.
+4. **Immediately update each bug report and the README row:**
+   - **Status:** `ticketed`
+   - **Solving ticket:** **`T-FR-NNNN-xx`** (link to **`tickets.md`**)
+   - Link the addendum
+5. When that ticket’s VAL is marked **`done`**, set the bug **Status** to
+   **`done`**.
+6. **Docs must stay truthful wrt the fix.** For each bug:
+   - **`code-defect` / `layout`:** if code was wrong against a correct spec,
+     leave the spec; fix code. If the mock/manual described the broken UI, update
+     those to the corrected behavior.
+   - **`design-conflict` / `product-follow-up`:** **amend `docs/design/` first**
+     (auditable amendment per **`docs/ai-context.md`**). Do **not** ship code
+     that contradicts the still-authoritative spec. After the amendment, tickets
+     implement the new truth, and mocks/manual/operator docs follow.
+7. Do not implement a `product-follow-up` as if it were a miss against current
+   design.
+
 ## Read before designing
 
 For the chosen feature, read:
@@ -89,6 +127,8 @@ For the chosen feature, read:
 - **`README.md`**, **`00-intake.md`**, every **`10-design-*.md`**,
   **`20-tickets-dag.md`**, **`tickets.md`**, newest **`handoffs/*.md`**,
   **`serial-diary.md`**, and **`parallel/*.md`** / **`DIARY.md`** when present.
+- **`bugs/README.md`** and every open report it lists (including dated
+  pre-skill filenames) when **`bugs/`** exists.
 - **`tasks/ticket-progress.md`**, **`tasks/feature-history/REGISTRY.md`**,
   **`tasks/feature-history/TICKET-SOURCES.md`**, and
   **`docs/design/tickets-initial.md`**.
@@ -283,3 +323,6 @@ by title.
 - [ ] Feature-complete next steps no longer ignore expansion tickets.
 - [ ] User-facing response ends with **Executive summary**, **Suggested next
       step**, and **Options** when more than one path is reasonable.
+- [ ] Bug-fix expansions: every ingested **`BUG-FR-NNNN-xx`** has **Solving
+      ticket** set; design/mocks/manual were amended when the fix would otherwise
+      leave docs untruthful.

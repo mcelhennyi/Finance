@@ -39,7 +39,8 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 | Step | Command / skill | Role |
 |------|------------------|------|
 | Pre-ticket design readiness (optional) | `audit-design` / `/audit-design` | Plain-English audit of a top-level **`docs/design/…`** doc before registering **`FR-NNNN`** — **`.cursor/skills/audit-design/SKILL.md`**. |
-| Same-feature expansion | `expand-feature` / `/expand-feature` | Adds a sub-feature/change to an existing **`FR-NNNN`** with process scaled to the ask: simple UI worktree + docs HTML mock, or **`30-expand-*`** addendum + same-FR tickets/tracker/DAG for larger changes — **`.cursor/skills/expand-feature/SKILL.md`**. |
+| Same-feature expansion | `expand-feature` / `/expand-feature` | Adds a sub-feature/change to an existing **`FR-NNNN`** with process scaled to the ask: simple UI worktree + docs HTML mock, or **`30-expand-*`** addendum + same-FR tickets/tracker/DAG for larger changes — **`.cursor/skills/expand-feature/SKILL.md`**. Bug-fix expansions ingest **`bugs/`** from **`/feature-bug`**. |
+| Pre-PR / manual-test bug log | `feature-bug` / `/feature-bug` | Writes **`BUG-FR-NNNN-xx`** reports under **`tasks/feature-history/FR-NNNN-<slug>/bugs/`** (no tickets yet) — **`.cursor/skills/feature-bug/SKILL.md`**. |
 | Parallel handoff for **tickets** (`T-FR-NNNN-xx`) | `identify-frontier` / `/identify-frontier` | Recomputes who can run in parallel from **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** (DAG hints in **`tickets-initial.md`**). |
 | Implement parallel set | `develop-frontier` / `/develop-frontier` | One child worktree per ticket under **`.worktrees/FR-NNNN-<slug>/`**; **TEST→DEV→VAL** per ticket. |
 | Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, **PR to `main`** for human review; **never** auto-deletes remote branches. |

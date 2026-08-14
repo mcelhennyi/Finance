@@ -39,6 +39,10 @@ Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets usi
 1. Verify every **`### T-FR-NNNN-xx`** in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** has **TEST**, **DEV**, and **VAL** = **`done`** in **`tasks/ticket-progress.md`** for that **`FR-NNNN`**.
 2. If **not** all **`done`**: `git push -u origin feat/FR-NNNN-<slug>`; append or refresh **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`** with the next frontier — **stop**. Do **not** open a default-branch PR or write **`90-closeout.md`** until the gate passes.
 3. If all **`done`**: proceed to **§4** and **§5** (closeout is **required**, not optional).
+4. If **`bugs/README.md`** still has **Status: open** rows, **do not** open the
+   default-branch PR. Tell the operator to finish **`/feature-bug`** ingest (if
+   testing continues) then **`/expand-feature`** for a bug-fix expansion. Open
+   reports are outstanding feature work, not closeout.
 
 ### Already merged to the default branch
 

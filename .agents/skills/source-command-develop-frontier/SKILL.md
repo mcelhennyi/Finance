@@ -1,6 +1,6 @@
 ---
 name: "source-command-develop-frontier"
-description: "Refreshes and lands the latest skeleton before every wave, identifies the dependency-valid parallel ticket set, launches one subagent per ticket to complete TEST→DEV→VAL in separate .worktrees child worktrees, merges to feat/FR-NNNN-slug, then runs finish-feature only when §2d gate is met (else finish-frontier per policy) with a mandatory validation gate."
+description: "Checks the skeleton hash before every wave and syncs only when it changed, identifies the dependency-valid parallel ticket set, launches one subagent per ticket to complete TEST→DEV→VAL in separate .worktrees child worktrees, merges to feat/FR-NNNN-slug, then runs finish-feature only when §2d gate is met (else finish-frontier per policy) with a mandatory validation gate."
 ---
 
 # source-command-develop-frontier
@@ -13,7 +13,7 @@ Use this skill when the user asks to run the migrated source command `develop-fr
 
 Follow the Cursor project skill **`develop-frontier`** (`.cursor/skills/develop-frontier/SKILL.md`).
 
-End-to-end: refresh and land the latest skeleton before every wave, discover parallel-capable tickets (**global** graph — may span **multiple** **`FR-NNNN`** features per **`docs/ai-context.md` §2c**), run one subagent per ticket in a dedicated child worktree under **`.worktrees/FR-NNNN-<slug>/`**, execute **TEST → DEV → VAL** serially per ticket, merge ticket work into **`feat/FR-NNNN-<slug>`**, validate, and push **that feature branch**. Run **`finish-feature`** (PR to the default branch) **only** when **`docs/ai-context.md` §2d** **feature-complete gate** is met; otherwise run **`/identify-frontier`** for the next wave. Use **`finish-frontier`** when integrating straight into the default branch per **`docs/ai-context.md` §2d**.
+End-to-end: compare the pinned and remote skeleton hashes before every wave, sync and land only a real skeleton update, discover parallel-capable tickets (**global** graph — may span **multiple** **`FR-NNNN`** features per **`docs/ai-context.md` §2c**), run one subagent per ticket in a dedicated child worktree under **`.worktrees/FR-NNNN-<slug>/`**, execute **TEST → DEV → VAL** serially per ticket, merge ticket work into **`feat/FR-NNNN-<slug>`**, validate, and push **that feature branch**. Run **`finish-feature`** (PR to the default branch) **only** when **`docs/ai-context.md` §2d** **feature-complete gate** is met; otherwise run **`/identify-frontier`** for the next wave. Use **`finish-frontier`** when integrating straight into the default branch per **`docs/ai-context.md` §2d**.
 
 ## Preconditions
 
@@ -22,22 +22,30 @@ End-to-end: refresh and land the latest skeleton before every wave, discover par
 - **Development commands:** build/test/lint/package-manager/dev-server/doc-build commands run in Docker / Docker Compose / Dev Container / CI images where possible. Use repo wrappers such as **`./develop run …`** or `docker compose run …`; document host-local exceptions in the ticket diary or handoff.
 - **Web UI validation:** any frontier ticket that creates or changes user-visible web UI must satisfy **`docs/ai-context.md` → Web UI validation** before **VAL** is marked `done`: scripted frontend checks plus rendered browser inspection using the project’s documented commands, local URL, browser-capable tool, and route/state matrix.
 
-## 0 — Sync the skeleton, then refresh the frontier
+## 0 — Check the skeleton hash, sync only on change, then refresh the frontier
 
 Before the first wave and every later wave:
 
 1. From a clean integration worktree based on the current remote default
-   branch, run **`./sync-skeleton`** (or the script under `.skeleton/scripts/`).
-   Use a separate clean worktree or stop when the active checkout is dirty.
-2. Read `.skeleton/CHANGELOG.md`, reconcile required consumer-manual steps,
-   validate the staged update, and commit/push any sync change to the remote
-   default branch using project policy.
-3. Ensure every affected `feat/FR-NNNN-<slug>` integration branch contains the
-   landed sync commit before creating its child ticket worktrees. Do not launch
-   the wave when update, validation, push, or merge conflicts remain.
-4. Re-read the refreshed canonical `develop-frontier` skill, then run
+   branch, initialize `.skeleton` only if its checkout is missing. Read its
+   tracking branch from `.gitmodules`, fetch only that submodule remote ref,
+   using `git -C .skeleton fetch origin <tracking-branch>`, and compare
+   `git rev-parse HEAD:.skeleton` with
+   `git -C .skeleton rev-parse FETCH_HEAD`.
+   Stop instead of assuming no update when the branch or either hash cannot be
+   resolved.
+2. Equal hashes are a no-op: do **not** run `sync-skeleton`, apply its
+   deprecations/copies, read its changelog, stage, commit, push, or refresh
+   feature branches for a nonexistent update. Continue to frontier discovery.
+3. Different hashes require **`./sync-skeleton`** (or the script under
+   `.skeleton/scripts/`), changelog reconciliation, validation, commit, and push
+   to the remote default branch using project policy.
+4. Only after an actual sync, ensure every affected
+   `feat/FR-NNNN-<slug>` branch contains the landed sync commit before child
+   worktrees launch, then re-read the refreshed canonical skill.
+5. Run
    **`identify-frontier`** or read the latest frontier handoff.
-5. Build the **eligible ∩ incomplete** ticket set. If empty, stop and report.
+6. Build the **eligible ∩ incomplete** ticket set. If empty, stop and report.
 
 ## 1 — Orchestrator setup
 
