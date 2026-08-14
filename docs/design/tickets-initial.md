@@ -23,6 +23,7 @@
 | FR-0004 | `tasks/feature-history/FR-0004-bbd-projection-experience/tickets.md` |
 | FR-0005 | `tasks/feature-history/FR-0005-budget-page-docs-dock/tickets.md` |
 | FR-0006 | `tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md` |
+| FR-0007 | `tasks/feature-history/FR-0007-business-finance-management/tickets.md` |
 
 ---
 
@@ -141,6 +142,65 @@ graph LR
 
   TFR0006_07_TEST["Compose default for allocation auto-template TEST (T-FR-0006-07)"] --> TFR0006_07_DEV["Compose default for allocation auto-template DEV (T-FR-0006-07)"]
   TFR0006_07_DEV --> TFR0006_07_VAL["Compose default for allocation auto-template VAL (T-FR-0006-07)"]
+
+  TFR0007_01_TEST["Define workspace, ledger, and audit contracts TEST (T-FR-0007-01)"] --> TFR0007_01_DEV["Define workspace, ledger, and audit contracts DEV (T-FR-0007-01)"]
+  TFR0007_01_DEV --> TFR0007_01_VAL["Define workspace, ledger, and audit contracts VAL (T-FR-0007-01)"]
+
+  TFR0007_01_VAL --> TFR0007_02_TEST["Install migrations and backfill the Personal workspace TEST (T-FR-0007-02)"]
+  TFR0007_02_TEST --> TFR0007_02_DEV["Install migrations and backfill the Personal workspace DEV (T-FR-0007-02)"]
+  TFR0007_02_DEV --> TFR0007_02_VAL["Install migrations and backfill the Personal workspace VAL (T-FR-0007-02)"]
+
+  TFR0007_02_VAL --> TFR0007_03_TEST["Enforce workspace isolation across existing finance surfaces TEST (T-FR-0007-03)"]
+  TFR0007_03_TEST --> TFR0007_03_DEV["Enforce workspace isolation across existing finance surfaces DEV (T-FR-0007-03)"]
+  TFR0007_03_DEV --> TFR0007_03_VAL["Enforce workspace isolation across existing finance surfaces VAL (T-FR-0007-03)"]
+
+  TFR0007_03_VAL --> TFR0007_04_TEST["Import and reconcile business accounts and cards TEST (T-FR-0007-04)"]
+  TFR0007_04_TEST --> TFR0007_04_DEV["Import and reconcile business accounts and cards DEV (T-FR-0007-04)"]
+  TFR0007_04_DEV --> TFR0007_04_VAL["Import and reconcile business accounts and cards VAL (T-FR-0007-04)"]
+
+  TFR0007_04_VAL --> TFR0007_05_TEST["Classify business income, expenses, and owner activity TEST (T-FR-0007-05)"]
+  TFR0007_05_TEST --> TFR0007_05_DEV["Classify business income, expenses, and owner activity DEV (T-FR-0007-05)"]
+  TFR0007_05_DEV --> TFR0007_05_VAL["Classify business income, expenses, and owner activity VAL (T-FR-0007-05)"]
+
+  TFR0007_05_VAL --> TFR0007_06_TEST["Store receipts and review deduction candidates TEST (T-FR-0007-06)"]
+  TFR0007_06_TEST --> TFR0007_06_DEV["Store receipts and review deduction candidates DEV (T-FR-0007-06)"]
+  TFR0007_06_DEV --> TFR0007_06_VAL["Store receipts and review deduction candidates VAL (T-FR-0007-06)"]
+
+  TFR0007_05_VAL --> TFR0007_07_TEST["Plan tax obligations and reserve targets TEST (T-FR-0007-07)"]
+  TFR0007_07_TEST --> TFR0007_07_DEV["Plan tax obligations and reserve targets DEV (T-FR-0007-07)"]
+  TFR0007_07_DEV --> TFR0007_07_VAL["Plan tax obligations and reserve targets VAL (T-FR-0007-07)"]
+
+  TFR0007_04_VAL --> TFR0007_08_TEST["Track reserved cash and tax payments TEST (T-FR-0007-08)"]
+  TFR0007_07_VAL --> TFR0007_08_TEST
+  TFR0007_08_TEST --> TFR0007_08_DEV["Track reserved cash and tax payments DEV (T-FR-0007-08)"]
+  TFR0007_08_DEV --> TFR0007_08_VAL["Track reserved cash and tax payments VAL (T-FR-0007-08)"]
+
+  TFR0007_05_VAL --> TFR0007_09_TEST["Expose business summaries, reports, and exports TEST (T-FR-0007-09)"]
+  TFR0007_06_VAL --> TFR0007_09_TEST
+  TFR0007_08_VAL --> TFR0007_09_TEST
+  TFR0007_09_TEST --> TFR0007_09_DEV["Expose business summaries, reports, and exports DEV (T-FR-0007-09)"]
+  TFR0007_09_DEV --> TFR0007_09_VAL["Expose business summaries, reports, and exports VAL (T-FR-0007-09)"]
+
+  TFR0007_03_VAL --> TFR0007_10_TEST["Deliver the addressable Business workspace shell TEST (T-FR-0007-10)"]
+  TFR0007_10_TEST --> TFR0007_10_DEV["Deliver the addressable Business workspace shell DEV (T-FR-0007-10)"]
+  TFR0007_10_DEV --> TFR0007_10_VAL["Deliver the addressable Business workspace shell VAL (T-FR-0007-10)"]
+
+  TFR0007_05_VAL --> TFR0007_11_TEST["Deliver business books and deduction workflows TEST (T-FR-0007-11)"]
+  TFR0007_06_VAL --> TFR0007_11_TEST
+  TFR0007_10_VAL --> TFR0007_11_TEST
+  TFR0007_11_TEST --> TFR0007_11_DEV["Deliver business books and deduction workflows DEV (T-FR-0007-11)"]
+  TFR0007_11_DEV --> TFR0007_11_VAL["Deliver business books and deduction workflows VAL (T-FR-0007-11)"]
+
+  TFR0007_08_VAL --> TFR0007_12_TEST["Deliver Tax Center and reports workflows TEST (T-FR-0007-12)"]
+  TFR0007_09_VAL --> TFR0007_12_TEST
+  TFR0007_10_VAL --> TFR0007_12_TEST
+  TFR0007_12_TEST --> TFR0007_12_DEV["Deliver Tax Center and reports workflows DEV (T-FR-0007-12)"]
+  TFR0007_12_DEV --> TFR0007_12_VAL["Deliver Tax Center and reports workflows VAL (T-FR-0007-12)"]
+
+  TFR0007_11_VAL --> TFR0007_13_TEST["Validate the business-finance lifecycle and operator guidance TEST (T-FR-0007-13)"]
+  TFR0007_12_VAL --> TFR0007_13_TEST
+  TFR0007_13_TEST --> TFR0007_13_DEV["Validate the business-finance lifecycle and operator guidance DEV (T-FR-0007-13)"]
+  TFR0007_13_DEV --> TFR0007_13_VAL["Validate the business-finance lifecycle and operator guidance VAL (T-FR-0007-13)"]
 
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone

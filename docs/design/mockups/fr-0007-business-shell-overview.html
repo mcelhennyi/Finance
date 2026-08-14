@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FR-0007 mock — Business shell and overview</title>
+  <style>
+    :root { --teal:#0f766e; --teal-50:#f0fdfa; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --amber:#b45309; --amber-bg:#fffbeb; --red:#b91c1c; --green:#166534; --shadow:0 12px 34px rgba(15,23,42,.08); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; }
+    button { font:inherit; }
+    .skip { position:absolute; left:-999px; top:8px; } .skip:focus { left:8px; z-index:10; background:white; padding:8px 12px; border-radius:8px; }
+    header { height:64px; display:flex; align-items:center; gap:18px; padding:0 22px; background:white; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; white-space:nowrap; }
+    .mark { width:34px; height:34px; border-radius:10px; background:linear-gradient(145deg,#14b8a6,var(--teal)); display:grid; place-items:center; color:white; }
+    .switcher { border:1px solid #99f6e4; background:var(--teal-50); color:#115e59; border-radius:10px; padding:9px 12px; font-weight:750; }
+    .header-note { margin-left:auto; color:var(--muted); font-size:12px; }
+    .layout { min-height:calc(100vh - 64px); display:grid; grid-template-columns:238px minmax(0,1fr); }
+    aside { background:white; border-right:1px solid var(--line); padding:22px 14px; }
+    .entity { padding:0 10px 18px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+    .eyebrow { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.09em; }
+    .entity strong { display:block; font-size:15px; margin-top:4px; }
+    nav h2 { margin:17px 10px 5px; color:#94a3b8; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+    nav a { display:flex; gap:9px; align-items:center; color:#475569; text-decoration:none; padding:9px 10px; border-radius:9px; margin:2px 0; }
+    nav a.active { background:var(--teal-50); color:#115e59; font-weight:800; }
+    main { padding:28px; max-width:1480px; width:100%; }
+    .titlebar { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:22px; }
+    h1 { margin:0 0 5px; font-size:27px; letter-spacing:-.025em; }
+    .sub { color:var(--muted); }
+    .period { background:white; border:1px solid var(--line); border-radius:10px; padding:9px 12px; color:#334155; font-weight:650; }
+    .alert { display:flex; gap:12px; align-items:flex-start; background:var(--amber-bg); border:1px solid #fde68a; border-radius:12px; padding:13px 15px; margin-bottom:18px; color:#78350f; }
+    .alert strong { display:block; }
+    .cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .card { background:white; border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 1px 2px rgba(15,23,42,.025); min-width:0; }
+    .label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:800; }
+    .money { font-size:24px; font-weight:850; letter-spacing:-.03em; margin:7px 0 3px; font-variant-numeric:tabular-nums; }
+    .meta { color:var(--muted); font-size:12px; } .good { color:var(--green); } .warn { color:var(--amber); }
+    .grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(320px,.85fr); gap:16px; margin-top:16px; }
+    h2 { font-size:16px; margin:0; } .section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .link { color:var(--teal); font-weight:750; text-decoration:none; }
+    .flow { display:grid; grid-template-columns:repeat(5,1fr); align-items:center; gap:8px; margin:18px 0 8px; }
+    .flow div { padding:12px 8px; border-radius:10px; background:#f1f5f9; text-align:center; min-width:0; }
+    .flow .focus { background:var(--teal-50); border:1px solid #99f6e4; }
+    .flow b { display:block; font-size:15px; font-variant-numeric:tabular-nums; } .flow span { color:var(--muted); font-size:11px; }
+    .tasks { display:grid; gap:9px; }
+    .task { display:flex; gap:10px; align-items:center; padding:11px; border:1px solid var(--line); border-radius:10px; }
+    .count { min-width:28px; height:28px; border-radius:8px; background:#fff7ed; color:#9a3412; display:grid; place-items:center; font-weight:850; }
+    .task p { margin:0; flex:1; } .task small { color:var(--muted); display:block; }
+    table { width:100%; border-collapse:collapse; } th { color:var(--muted); text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; } th,td { padding:11px 8px; border-bottom:1px solid var(--line); } td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:750; }
+    .badge { display:inline-block; border-radius:999px; padding:3px 7px; background:#f1f5f9; color:#475569; font-size:11px; font-weight:750; }
+    .state-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
+    .state { border:1px dashed #cbd5e1; border-radius:11px; padding:12px; background:rgba(255,255,255,.55); color:var(--muted); }
+    @media (max-width:1050px) { .cards { grid-template-columns:repeat(2,1fr); } .grid { grid-template-columns:1fr; } }
+    @media (max-width:760px) { header { padding:0 14px; } .header-note { display:none; } .layout { grid-template-columns:1fr; } aside { display:none; } main { padding:20px 14px 36px; } .titlebar { flex-direction:column; } .cards { grid-template-columns:1fr 1fr; } .flow { grid-template-columns:1fr 1fr; } .flow div:last-child { grid-column:1/-1; } .state-strip { grid-template-columns:1fr; } }
+    @media (max-width:430px) { .brand span:last-child { display:none; } .cards { grid-template-columns:1fr; } h1 { font-size:23px; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to business overview</a>
+  <header>
+    <div class="brand"><span class="mark">F</span><span>Finance <span style="color:#94a3b8;font-weight:500">Hub</span></span></div>
+    <button class="switcher" aria-label="Current workspace: Business, Northstar Contracting">Business · Northstar ▾</button>
+    <span class="header-note">Last sync 8 minutes ago · Local and private</span>
+    <button class="period" aria-label="Open application settings">⚙</button>
+  </header>
+  <div class="layout">
+    <aside>
+      <div class="entity"><span class="eyebrow">Business workspace</span><strong>Northstar Contracting</strong><span class="meta">Cash basis · USD</span></div>
+      <nav aria-label="Business navigation">
+        <a class="active" href="#">◫ Overview</a>
+        <h2>Money</h2><a href="#">▣ Accounts & cards</a><a href="#">↕ Transactions</a><a href="#">＋ Income</a><a href="#">− Expenses</a>
+        <h2>Tax & records</h2><a href="#">▤ Deductions & receipts</a><a href="#">◇ Tax center</a>
+        <h2>Insights</h2><a href="#">⌁ Reports</a>
+        <h2>Manage</h2><a href="#">⚙ Business settings</a>
+      </nav>
+    </aside>
+    <main id="content">
+      <div class="titlebar"><div><span class="eyebrow">Business</span><h1>Good morning — three things need review</h1><div class="sub">Northstar Contracting · activity through August 14, 2026</div></div><button class="period">August 2026 ▾</button></div>
+      <div class="alert"><span>⚠</span><div><strong>Tax reserve is $1,840 below target</strong><span>Target and cash are separate. Record or match a real transfer before this becomes reserved.</span></div></div>
+      <section class="cards" aria-label="Business finance summary">
+        <div class="card"><div class="label">Operating cash</div><div class="money">$18,420</div><div class="meta">Reconciled Aug 12</div></div>
+        <div class="card"><div class="label">Income received</div><div class="money">$12,800</div><div class="meta good">3 client deposits</div></div>
+        <div class="card"><div class="label">Business expenses</div><div class="money">$3,460</div><div class="meta">Excludes card payments</div></div>
+        <div class="card"><div class="label">Operating net</div><div class="money">$9,340</div><div class="meta">Cash basis · draft</div></div>
+        <div class="card"><div class="label">Estimated obligation</div><div class="money">$4,900</div><div class="meta warn">Planning estimate · review inputs</div></div>
+        <div class="card"><div class="label">Reserve target</div><div class="money">$5,200</div><div class="meta">Policy: 30% of cash profit</div></div>
+        <div class="card"><div class="label">Reserved cash</div><div class="money">$3,360</div><div class="meta">Tax savings · reconciled</div></div>
+        <div class="card"><div class="label">Payments recorded</div><div class="money">$1,200</div><div class="meta good">Q2 federal · settled</div></div>
+      </section>
+      <div class="grid">
+        <section class="card"><div class="section-head"><h2>Cash story</h2><a class="link" href="#">Open report →</a></div><div class="flow"><div class="focus"><b>$12,800</b><span>Income</span></div><div><b>− $3,460</b><span>Operating spend</span></div><div><b>− $2,000</b><span>Reserve transfer</span></div><div><b>− $1,500</b><span>Owner draw</span></div><div class="focus"><b>$5,840</b><span>Net cash change</span></div></div><p class="meta">Reserve transfers and owner draws change cash location/equity, not operating profit.</p></section>
+        <section class="card"><div class="section-head"><h2>Needs attention</h2><a class="link" href="#">Review all</a></div><div class="tasks"><div class="task"><span class="count">7</span><p><b>Categorize activity</b><small>Includes one possible card payment</small></p></div><div class="task"><span class="count">4</span><p><b>Add missing evidence</b><small>$684 in deduction candidates</small></p></div><div class="task"><span class="count">1</span><p><b>Reconcile card statement</b><small>Statement closes Aug 18</small></p></div></div></section>
+        <section class="card"><div class="section-head"><h2>Accounts & cards</h2><a class="link" href="#">Manage accounts →</a></div><table><thead><tr><th>Account</th><th>Status</th><th>Balance</th></tr></thead><tbody><tr><td><b>Operating checking · 4038</b><div class="meta">Imported today</div></td><td><span class="badge">Reconciled</span></td><td>$18,420</td></tr><tr><td><b>Business card · 4412</b><div class="meta">Due Aug 26</div></td><td><span class="badge">Needs review</span></td><td>$2,185 owed</td></tr><tr><td><b>Tax savings · 1180</b><div class="meta">Designated reserve</div></td><td><span class="badge">Reconciled</span></td><td>$3,360</td></tr></tbody></table></section>
+        <section class="card"><div class="section-head"><h2>Tax readiness</h2><a class="link" href="#">Open Tax Center →</a></div><p><b>Q3 planning estimate</b></p><p class="meta">Calculated Aug 14 from reviewed cash books. Other personal income and withholding are not included.</p><div class="alert" style="margin:12px 0 0"><span>i</span><div><strong>Estimate only — not a filed return</strong><span>Confirm obligation and due date with your tax information or adviser.</span></div></div></section>
+      </div>
+      <section class="state-strip" aria-label="Required alternate states"><div class="state"><b>First run</b><br />Create the business profile, then add a checking or card account.</div><div class="state"><b>Loading</b><br />Keep Business identity and the page shape visible while totals load.</div><div class="state"><b>Error</b><br />“Business summary could not load.” Safe retry; no raw payload or stack trace.</div></section>
+    </main>
+  </div>
+</body>
+</html>

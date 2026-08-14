@@ -8,7 +8,7 @@
 | **Active phase** | — |
 | **Branch / worktree** | — |
 | **Session status** | `ready` |
-| **Next agent should** | Push **`FR-0006`** registry stub if not on **`origin/main`**, then **`/identify-frontier`** → **`/develop-frontier`** per **`docs/ai-context.md`**. |
+| **Next agent should** | Continue the active **`FR-0006`** line through **`/identify-frontier`** → **`/develop-frontier`** per **`docs/ai-context.md`**. **`FR-0007`** is design-ready but must not become an active stream until the product owner chooses implementation and its handoff records the FR-0006 integration state. |
 
 ### Parallel streams (optional)
 
@@ -54,6 +54,19 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0006-05 | Cash-flow time scrub and aggregated views | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04` |
 | T-FR-0006-06 | BBD-suggested cash-flow edges | pending | pending | pending | `FR-0006`; deps `T-FR-0006-04`, `T-FR-0003-02` |
 | T-FR-0006-07 | Compose default for allocation auto-template | pending | pending | pending | `FR-0006`; no ticket deps |
+| T-FR-0007-01 | Define workspace, ledger, and audit contracts | pending | pending | pending | `FR-0007`; no ticket deps; record FR-0006 integration state before DEV |
+| T-FR-0007-02 | Install migrations and backfill the Personal workspace | pending | pending | pending | `FR-0007`; deps `T-FR-0007-01` |
+| T-FR-0007-03 | Enforce workspace isolation across existing finance surfaces | pending | pending | pending | `FR-0007`; deps `T-FR-0007-02` |
+| T-FR-0007-04 | Import and reconcile business accounts and cards | pending | pending | pending | `FR-0007`; deps `T-FR-0007-03` |
+| T-FR-0007-05 | Classify business income, expenses, and owner activity | pending | pending | pending | `FR-0007`; deps `T-FR-0007-04` |
+| T-FR-0007-06 | Store receipts and review deduction candidates | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05` |
+| T-FR-0007-07 | Plan tax obligations and reserve targets | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05` |
+| T-FR-0007-08 | Track reserved cash and tax payments | pending | pending | pending | `FR-0007`; deps `T-FR-0007-04`, `T-FR-0007-07` |
+| T-FR-0007-09 | Expose business summaries, reports, and exports | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05`, `T-FR-0007-06`, `T-FR-0007-08` |
+| T-FR-0007-10 | Deliver the addressable Business workspace shell | pending | pending | pending | `FR-0007`; deps `T-FR-0007-03` |
+| T-FR-0007-11 | Deliver business books and deduction workflows | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05`, `T-FR-0007-06`, `T-FR-0007-10` |
+| T-FR-0007-12 | Deliver Tax Center and reports workflows | pending | pending | pending | `FR-0007`; deps `T-FR-0007-08`, `T-FR-0007-09`, `T-FR-0007-10` |
+| T-FR-0007-13 | Validate the business-finance lifecycle and operator guidance | pending | pending | pending | `FR-0007`; deps `T-FR-0007-11`, `T-FR-0007-12` |
 
 ---
 
