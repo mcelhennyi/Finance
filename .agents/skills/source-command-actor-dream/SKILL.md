@@ -1,0 +1,14 @@
+---
+name: "source-command-actor-dream"
+description: "Dream with actors, story graphs, outside forces, and guiding figures to extend traceable user stories into upgrade hypotheses, tests, and growth candidates."
+---
+
+# source-command-actor-dream
+
+Use this skill when the user asks to run the migrated source command `actor-dream`.
+
+## Command Template
+
+# /actor-dream
+
+Follow the Cursor project skill **`.cursor/skills/actor-dream/SKILL.md`**.

@@ -22,6 +22,24 @@ When implementation will be driven by an existing **top-level design doc** under
 close gaps; then start this skill with the **same** design path. Skip audit only
 for greenfield features with no design doc yet.
 
+## Keep the live DAG visible (required)
+
+At the beginning of the workflow, resolve the selected feature before doing
+substantive design or status work. As soon as its directory is known, resolve
+the absolute path to
+**`tasks/feature-history/FR-NNNN-<slug>/20-tickets-dag.md`**.
+
+- If the active client or editor exposes a real open-file capability, use it to
+  open that DAG. If it also exposes a separate safe pin-tab or pin-document
+  capability, pin the opened DAG.
+- Do not shell-launch a GUI, construct an unsupported editor URI, or claim the
+  file was pinned when no such capability is exposed.
+- Opening or pinning is best-effort and never blocks the feature request. In
+  every user-facing pause after the path is known, include an absolute
+  clickable Markdown link to the DAG. If the file does not exist yet, label
+  that path as planned and open/pin it immediately after the ticket stage
+  creates it.
+
 ## User-facing close (required)
 
 Every time work on this workflow **pauses for the human**—after a **stage**, a **checkpoint**, **ticket or design work**, **develop / finish** steps, **`/feature-request-continue`**, or **closeout**—end the reply with a compact block (template in **`reference-templates.md` → User-facing session close**):
@@ -29,6 +47,9 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 1. **Executive summary** — what happened (decisions, files and tickets touched, branch or registry state). Use **ticket titles** with linked **`T-FR-NNNN-xx`** ids per **Human-readable names vs ticket ids** below.
 2. **Suggested next step** — one primary recommendation (concrete command, ticket to open, or owner action).
 3. **Options (when applicable)** — if more than one reasonable path exists, list them (**A**, **B**, …) with a short differentiator ( deps, risk, or time). If only one path is sensible, state that briefly or omit this part.
+4. **Live DAG** — once the feature directory is known, include
+   **`[20-tickets-dag.md](<absolute-path>)`**. If it is not created yet, label
+   the same absolute path as planned.
 
 **Repo alignment:** when you write **`handoffs/`**, **`serial-diary.md`**, **`parallel/…`**, or **`90-closeout.md`**, include the same three elements so the **chat** and the **tree** do not disagree.
 
@@ -39,7 +60,8 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 | Step | Command / skill | Role |
 |------|------------------|------|
 | Pre-ticket design readiness (optional) | `audit-design` / `/audit-design` | Plain-English audit of a top-level **`docs/design/…`** doc before registering **`FR-NNNN`** — **`.cursor/skills/audit-design/SKILL.md`**. |
-| Same-feature expansion | `expand-feature` / `/expand-feature` | Adds a sub-feature/change to an existing **`FR-NNNN`** with process scaled to the ask: simple UI worktree + docs HTML mock, or **`30-expand-*`** addendum + same-FR tickets/tracker/DAG for larger changes — **`.cursor/skills/expand-feature/SKILL.md`**. |
+| Same-feature expansion | `expand-feature` / `/expand-feature` | Adds a sub-feature/change to an existing **`FR-NNNN`** with process scaled to the ask: simple UI worktree + docs HTML mock, or **`30-expand-*`** addendum + same-FR tickets/tracker/DAG for larger changes — **`.cursor/skills/expand-feature/SKILL.md`**. Bug fixes keep one solving ticket/lane per **`/feature-bug`** report. |
+| Continuous pre-PR / manual-test bug lane | `feature-bug` / `/feature-bug` | Assigns each operator report to one subagent lane that writes **`BUG-FR-NNNN-xx`**, expands a same-FR solving ticket, and runs TEST→DEV→VAL while the parent accepts more reports — **`.cursor/skills/feature-bug/SKILL.md`**. |
 | Parallel handoff for **tickets** (`T-FR-NNNN-xx`) | `identify-frontier` / `/identify-frontier` | Recomputes who can run in parallel from **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** (DAG hints in **`tickets-initial.md`**). |
 | Implement parallel set | `develop-frontier` / `/develop-frontier` | One child worktree per ticket under **`.worktrees/FR-NNNN-<slug>/`**; **TEST→DEV→VAL** per ticket. |
 | Merge tickets → feature branch → PR | `finish-feature` / `/finish-feature` | Merges feature-prefixed ticket/stage branches into **`feat/FR-NNNN-<slug>`**, validates, **PR to `main`** for human review; **never** auto-deletes remote branches. |
@@ -54,10 +76,16 @@ Every time work on this workflow **pauses for the human**—after a **stage**, a
 **Stable ids** (`T-FR-NNNN-xx`, branch names, **`ticket-progress.md`**) stay as-is for tools and git. In **anything a human reads first** — prompts to the user, **`serial-diary.md`** / **`handoffs/`** recaps, **`README.md`** bullets, **`90-closeout.md`** narrative, global **`tasks/handoffs/`** pointers — use this order:
 
 1. **Lead with the ticket title** (the **Title:** field in **`tickets.md`**, or the short phrase after **`—`** in the **`### T-FR-NNNN-xx — …`** heading). That is the primary name.
-2. **Then** the ticket id, ideally as a **markdown link** to the canonical section so readers can open details:  
-   `[T-FR-NNNN-xx](tasks/feature-history/FR-NNNN-<slug>/tickets.md#…)`  
+2. **Then** the ticket id, ideally as a **markdown link** to the canonical section so readers can open details:
+   `[T-FR-NNNN-xx](tasks/feature-history/FR-NNNN-<slug>/tickets.md#…)`
    Use the heading anchor your host generates (GitHub/GitLab slugify the full **`###`** line; if the fragment is uncertain, link to **`tickets.md`** without a fragment and name the ticket id once in the same sentence).
-3. **Mermaid DAGs** in **`20-tickets-dag.md`** / **`tickets-initial.md`:** label nodes with **title first**, id second (e.g. `T01["Scaffold Electron shell (T-FR-0002-02)"]`) so graphs stay scannable; keep **Deps** as real ids.
+3. **Mermaid DAGs** in **`20-tickets-dag.md`** / **`tickets-initial.md`:** label nodes with **title first**, id second (e.g. `T01["Scaffold the desktop shell (T-FR-0002-02)"]`) so graphs stay scannable. Phase triads say **Write the checks**, **Build the change**, or **Verify it works**, then retain the stable id and `TEST` / `DEV` / `VAL` code in parentheses. Keep Mermaid node ids and canonical **Deps** as real ids.
+4. **Dependency annotations** in human-facing DAG tables use **title + stable
+   id**; `none` becomes “Nothing — can start immediately.” Immediately below
+   each Mermaid ticket DAG, keep a **Where things stand** explanation of no more
+   than three sentences: overall project status, then the shown feature or
+   combined-graph status. Generate both from canonical sources with
+   **`python3 scripts/refresh_ticket_dags.py --root .`**.
 
 **Filenames** under **`parallel/`** may stay id-prefixed for uniqueness (`parallel/T-FR-0002-02-electron-shell.md`) or use a short title slug plus id; do not drop the id from machine-oriented paths if ambiguity would break parallel streams.
 
@@ -195,6 +223,8 @@ When **`README.md`**, **`90-closeout.md`**, newest **`handoffs/*.md`**, or **`ta
 3. Each stage ends with a **plain-English summary** in **`serial-diary.md`** (or the relevant **`parallel/…`** file).
 4. If the stage touched **`docs/`**, use **`./develop up`** or **`./develop local`** to preview where **`./develop`** is available; note any build warnings in the diary.
 5. **User-visible UI:** before treating a design stage as done for screens, flows, or shell layout, add or update **static HTML mocks** under **`docs/design/mockups/`** and link them from the authoritative **`docs/design/…`** doc. For additions to an existing UI, update the current UI as the example when possible so the proposed change is shown in real context. Mocks are the visual source of truth until amended — **`.cursor/rules/ui-design-mockups.mdc`**. Do not author UI-leaning **`T-FR-NNNN-xx`** DEV tickets without mocks (unless the user documented an explicit waiver in intake/diary).
+6. **Actor-driven seed data / E2E:** when the feature creates or changes seeded users, personas, role fixtures, E2E actors, stakeholders, antagonists, guiding figures, or outside-force actors, add or update the actor-profile design doc under **`docs/design/`** (recommended **`docs/design/seed-actor-profiles.md`**) before ticketing implementation. Each profile needs seed anchors, story keys, UI/backend/time/test traceability, security boundaries, and growth-dream candidates. Cross-actor effects need a story relationship graph and handler story edges per **`docs/design/actor-driven-development.md`**; non-trivial systems should also maintain the app-readable **`docs/design/actors/`** graph and use **`docs/design/profile-server-app.md`** when planning a generic profile viewer.
+7. **Expert review planning:** scan the design tree and planned primary files for **`EXPERT-REVIEW`** / **`EXPERT:<slug>`** and roster Protected paths. Carry likely semantic review surfaces and expert tags into the relevant ticket and finish-feature handoff. Do not request or require approval during design/ticketing, and never block a stage, ticket triad, or frontier on a missing mapping; record it for resolution in the eventual default-branch PR — **`docs/design/expert-review.md`**.
 
 Tag unknowns with **`DESIGN-GAP`** per **`docs/ai-context.md`**.
 
@@ -202,17 +232,59 @@ Tag unknowns with **`DESIGN-GAP`** per **`docs/ai-context.md`**.
 
 ## Stage — Tickets, DAG, mapping to the repo tracker
 
+### Plain-English ticket writing (required)
+
+Tickets are read cold by humans and by agents with no prior chat context. Write them so a skilled outsider can understand **what** and **why** in under a minute, then drill into testable detail.
+
+**Required fields** on every new or not-yet-started **`### T-FR-NNNN-xx`** body (see **`reference-templates.md` → Canonical ticket body**):
+
+| Field | Role |
+| --- | --- |
+| **Title** | Short verb-led name (human-facing everywhere). |
+| **In plain English** | 2–4 short sentences: who/what this helps, what changes in the product or system, what “done” looks like. Everyday words first; if a term is unavoidable, define it once in the same block. |
+| **Why this exists** | One sentence: unlocks a dependency, closes a user gap, or removes a risk. |
+| **Out of scope** | One line or short bullets — what this ticket deliberately does **not** do. |
+| **Done when (plain English)** | 3–7 observable outcomes a non-expert can check. |
+| **Acceptance criteria** | Keep precise/testable bullets for implementers (may stay technical). |
+| **Expert review** | List each likely `EXPERT:<slug>`, semantic review surface, and planned PR reviewer or mapping gap; this is review-routing metadata, never a ticket completion gate. |
+| **Primary files** / **Phases** | Unchanged — ownership and TEST→DEV→VAL. |
+
+**Style rules:**
+
+- Prefer “scientist sees exact candidate counts before the scan starts” over “authoritative per-target/aggregate scan plans.”
+- A bit of context is good; fog is not. Do not pad with process jargon.
+- **`20-tickets-dag.md` Summary of change** column: same plain-English bar (1–2 sentences a cold reader understands).
+- **Do not rewrite** tickets that already have any phase **`done`** or **`in progress`** unless the user explicitly asks. Historical tickets stay as shipped. Apply this style to **new** tickets and to **not-yet-started** tickets (all phases still `—` / empty) when refreshing a live feature.
+
 1. Author **`20-tickets-dag.md`** (draft / planning):
-   - Table: ticket id (**`T-FR-NNNN-xx`**), **title** (required; this is the human-facing name everywhere below), type, **deps** (other full ticket ids or `none`), one-line **summary of change**, optional **order group** (P0, P1). Optional **Link** column: relative URL to **`tickets.md#…`** after sections exist, or “promote first”.
+   - **DAG first:** after the file H1 and a short status legend, the first
+     substantive section is **`## Canonical DAG`** with the Mermaid graph.
+     Ticket tables, wave notes, addenda, and design history follow it; never
+     bury the live graph below those sections.
+   - **Live status colors:** define completed as green
+     (`#dcfce7`/`#16a34a`), in-development as yellow
+     (`#fef3c7`/`#d97706`), and outstanding as red
+     (`#fee2e2`/`#dc2626`). The feature integration owner reconciles node
+     classes from verified TEST/DEV/VAL evidence before dispatch and after
+     every wave transition, then commits/pushes the refreshed feature state.
+   - **Live plain-English status:** directly after the Mermaid block, keep a
+     generated **Where things stand** note of at most three sentences. It states
+     where the project is overall and where this feature is specifically, based
+     on canonical tickets and tracker phases.
+   - Table: ticket id (**`T-FR-NNNN-xx`**), **title** (required; this is the human-facing name everywhere below), type, **needs first** (dependency titles followed by their full ids, or “Nothing — can start immediately”), **plain-English** one- or two-line **summary of change**, optional **order group** (P0, P1). Optional **Link** column: relative URL to **`tickets.md#…`** after sections exist, or “promote first”. Canonical **`Deps:`** in **`tickets.md`** remain full ids.
    - **Mermaid** `flowchart` or `graph` DAG with **edges = dependency** (A must be VAL-done before B starts if `A --> B`). **Node labels:** readable title + id in parentheses (see **Human-readable names vs ticket ids** above); dependency arrows still reference node ids you define.
    - **Maximize parallel width:** split by module boundary and shared files; use shared “facade + interfaces” tickets to unblock parallel work (same spirit as `identify-frontier` eligibility).
 2. **Promote to canonical feature tickets** — in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**:
-   - Add every **`### T-FR-NNNN-xx`** section with **Deps:** and **Phases** tables (this file is the **source of truth** for that feature’s ticket bodies).
+   - Add every **`### T-FR-NNNN-xx`** section with the **plain-English fields** above, **Deps:**, and **Phases** tables (this file is the **source of truth** for that feature’s ticket bodies).
 3. **Register and graph:**
    - Add a row for this feature to **`tasks/feature-history/TICKET-SOURCES.md`** if not already listed.
    - Extend **`docs/design/tickets-initial.md`**: add the feature row to **Per-feature ticket files**, and extend the **global mermaid** (and any cross-feature edges) so the published DAG matches all **Deps:**.
 4. **Progress:** add or update rows in **`tasks/ticket-progress.md`** for each new ticket id.
-5. Append **`serial-diary`**: what was split, what was intentionally serialized, and **why**.
+5. **Refresh the rendered DAG:** run **`python3 scripts/refresh_ticket_dags.py
+   --root .`**, review the generated title/dependency/status/color diff, then
+   run it with **`--check`** to prove the result is current. The command never
+   changes stable Mermaid node ids, canonical ticket ids, or graph edges.
+6. Append **`serial-diary`**: what was split, what was intentionally serialized, and **why**.
 
 If the user forbids direct repo edits, keep a “Proposed patch” section under **`20-tickets-dag.md`** instead, but the **target** layout above is still the contract.
 
@@ -240,6 +312,12 @@ If the user forbids direct repo edits, keep a “Proposed patch” section under
 6. When a ticket or stream creates or changes user-visible web UI, include required **Web UI validation** from **`docs/ai-context.md`** before marking **VAL** `done`: scripted frontend checks plus rendered browser inspection using the project’s documented commands, local URL, browser-capable tool, and route/state matrix.
 7. When a ticket or stream edits **`docs/`** and the project ships **`./develop`**: prefer **`./develop build`** (or **`./develop up`** to manually verify) for doc **VAL** in line with **`docs/ai-context.md`** (run verification in **Docker** / **Dev Container** for consistency).
 8. **CURRENT.md:** on **`feat/FR-NNNN-<slug>`** and each **`feat/FR-NNNN-<slug>/T-…`** ticket branch, create or refresh repo-root **`CURRENT.md`** per **Branch state (`CURRENT.md`)** after phase changes and merges.
+9. **Wave boundary DAG:** before dispatch and after each integrated wave,
+   run **`python3 scripts/refresh_ticket_dags.py --root .`** and review the top
+   Mermaid graph in **`20-tickets-dag.md`** so completed tickets are green,
+   tickets in development are yellow, outstanding tickets are red, and the
+   two-sentence project/feature explanation directly below it is current;
+   commit/push it with the feature controller state.
 
 ---
 
@@ -297,6 +375,10 @@ per **`.cursor/rules/cursor-claude-doc-sync.mdc`**. Otherwise, **no** doc churn.
 - [ ] `FR-NNNN` appears in `REGISTRY.md` (reservation **pushed to `main`** before heavy parallel work) and in **`handoffs/…-closeout.md`** inside the feature folder (optional pointer in `tasks/handoffs/` only).
 - [ ] **`DIARY.md`** updated with newest-first merged diary when work had parallel streams or long serial history.
 - [ ] `20-tickets-dag.md` / **`tickets.md`** DAG has no cycles; every edge matches **`Deps:`** in **`tickets.md`** and the global mermaid in **`docs/design/tickets-initial.md`** (when present).
+- [ ] **`python3 scripts/refresh_ticket_dags.py --root . --check`** passes;
+  visible nodes lead with plain-English titles, dependency annotations pair
+  titles with stable ids, and each DAG's adjacent **Where things stand** note is
+  current and no more than three sentences.
 - [ ] `serial-diary` (and `parallel/…` if used) have a recap per stage.
 - [ ] `90-closeout.md` links to **every** artifact in the feature folder.
 - [ ] If implementation ran: `develop-frontier` preconditions were satisfied; **`finish-feature`** or **`finish-frontier`** was chosen consistently with **§2d**; **VAL** per **`docs/ai-context.md`** (Docker / Dev Container). **Doc changes:** if **`docs/`** or **`mkdocs.yml`** changed, doc **VAL** used **`./develop build`** or equivalent Docker-based check when **`./develop`** exists.

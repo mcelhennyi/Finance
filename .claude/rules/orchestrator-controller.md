@@ -1,0 +1,85 @@
+# Orchestrator controller
+
+Treat the project remote default branch as the controller bus for active work.
+Docs-only process changes on that branch are executable direction: workers must
+refresh and re-read them before new work is dispatched.
+
+## Continuous bug lanes
+
+- Immediately assign each distinct operator-reported bug to its own subagent
+  lane. That lane owns logging, same-FR addendum/ticket/DAG planning, and one
+  serial **TEST -> DEV -> VAL** implementation stream in an isolated child
+  worktree. Do not leave a reported bug at report-only unless the user asks.
+- Keep the parent orchestrator available to ingest and route more reports.
+  Serialize shared report/ticket/DAG integration to prevent id races, but let
+  dependency-safe, file-disjoint bug tickets run in parallel. A running wave
+  does not block intake or planning for the next bug.
+- Name one feature integration owner (normally the parent). A bug lane may
+  draft, commit, and push its report/addendum/ticket branch; only the integration
+  owner verifies and merges shared BUG/T-FR/DAG/tracker allocation, advances
+  canonical next ids, and releases the next allocator.
+- Keep one report, solving ticket, and lane per bug. A shared root cause may use
+  an enabling dependency, but must not erase per-bug ownership or acceptance.
+- Do not close the feature while any bug report or lane is unresolved.
+
+## Requested skeleton changes
+
+For every requested harness/skeleton change:
+
+1. Fetch the project remote default branch and create
+   **`harness-update-<slug>`** from its exact newest commit in an isolated
+   worktree.
+2. Initialize **`.skeleton`**, fetch its configured remote default branch, and
+   create the same harness-update branch from that exact commit.
+3. Make and validate the generic change in the skeleton; update
+   **`CHANGELOG.md`** and all Cursor/Claude/Codex mirrors; commit and push the
+   harness branch, then safely integrate it to the skeleton default branch.
+4. Record the old pinned skeleton SHA, run canonical **`sync-skeleton`** from
+   the project harness worktree, and record the new integrated skeleton SHA.
+   Review `CHANGELOG.md` over exactly `old..new` plus release sections for tags
+   crossed by that range; apply only introduced/changed Consumer manual and
+   Deprecation instructions. Validate copied mirrors.
+5. Commit and push the project harness branch, then safely integrate that exact
+   reviewed commit to the project remote default branch.
+6. Merge the updated project default branch into every affected active feature
+   branch. Never rewrite shared feature history.
+
+Stop on remote drift, validation failure, or unsafe non-fast-forward integration
+instead of bypassing the sequence.
+
+### Safe default-branch integration (compare-and-swap)
+
+Immediately before integrating either repository, refetch the target remote
+default and record its expected tip. Require that tip to remain unchanged and
+to be an ancestor of the exact reviewed harness commit. If it moved or is not
+an ancestor, reconcile the new tip in the isolated harness branch, re-read
+changed authority, revalidate, refetch, and retry the check. Integrate through a
+reviewed PR/project policy, or by an explicitly authorized normal fast-forward
+push only. Never force-push or blindly publish a non-fast-forward update.
+
+## Before every wave or micro-wave
+
+1. Resolve and fetch the project remote default branch from a clean integration
+   worktree. Create or fast-forward that clean worktree so its HEAD equals the
+   freshly fetched tip; verify equality before reading `HEAD:.skeleton`.
+2. If an affected feature does not contain that fetched commit, merge it before
+   dispatch. Resolve conflicts by preserving both intents; do not rebase or
+   force-push a shared feature branch.
+3. Re-read changed authority, rules, skills, design docs, and handoffs. Validate
+   behavior affected by the merge.
+4. Run the skeleton hash gate from **`develop-frontier`**, then run **`python3
+   scripts/refresh_ticket_dags.py --root .`** and require **`--check`** after
+   reviewing plain-English labels/dependencies, stable ids/edges, lifecycle
+   colors, and the no-more-than-three-sentence project/feature explanation
+   directly below each affected DAG. Only then create or refresh child ticket
+   worktrees.
+5. Immediately before child-worktree creation, refetch the project remote
+   default. If its tip differs from the controller commit used by these gates,
+   restart the project merge/reread/validation and skeleton gate; never dispatch
+   from a stale controller tip.
+
+If any step fails, stop that dispatch and report the blocker. Already-running
+lanes must be notified of the new controller commit. At their next TEST/DEV/VAL
+boundary they merge the refreshed feature branch, re-read changed authority,
+and validate before continuing; pause immediately when the new direction
+invalidates current scope.

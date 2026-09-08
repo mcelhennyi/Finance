@@ -10,6 +10,8 @@ When **code and design disagree**, **fix the code**, not the design doc. If the 
 
 **UI look and feel:** For **user-visible** UI design create/update requests, **static HTML mocks** in **`docs/design/mockups/`** (linked from the design doc) are required **before** UI implementation — **`.claude/rules/ui-design-mockups.md`**.
 
+**Named expertise:** Sections and semantic surfaces marked by **`EXPERT-REVIEW`** / **`EXPERT:<slug>`** receive targeted human review in the default-branch PR. Approval is required only immediately before final default-branch merge — see **`.claude/rules/expert-review.md`** and **`docs/design/expert-review.md`**.
+
 ## Escalation tags
 
 | Tag | When to use | What to do |
@@ -19,6 +21,7 @@ When **code and design disagree**, **fix the code**, not the design doc. If the 
 | **`CODE-DEFECT`** | Failure against a **correct** design | Fix the code (transient). |
 | **`REWORK-REQUIRED`** | Design/intent is settled and correct, but **shipped code or another doc is knowingly out of sync** with it | **Durable** flag — record the specific deviating file/spec and the intended end state; track until reworked; remove the tag in the change that lands the rework. Full convention: **`rework-required.md`** (mirrored **`.cursor/rules/rework-required.mdc`**). |
 | **`GROWTH`** | **v0 design is settled and implementable**, but a **named trigger/limit** will require a **design amendment** to an upgrade path | **Durable** flag — record trigger, limitation, upgrade, and v0 until triggered; amend design when the limit is hit; remove when upgrade ships or tag is retired with evidence. Full convention: **`growth-required.md`** (mirrored **`.cursor/rules/growth-required.mdc`**). |
+| **`EXPERT-REVIEW`** | A default-branch PR needs named domain judgment on a semantic surface | During PR preparation, map the final diff by meaning and path, request every targeted reviewer, and record scoped approval. Missing mapping or approval blocks only the final default-branch merge, not ticket work or non-default integration. |
 
 **Numbered ids:** reserve new `DG-`, `DF-`, `RW-`, `GR-`, `R-`, `DEC-`, `TS-`, and traceability ids in **`tasks/TAG-REGISTRY.md`**, **commit and push** before use — **`tag-reservation.md`** / **`.cursor/rules/tag-reservation.mdc`**.
 

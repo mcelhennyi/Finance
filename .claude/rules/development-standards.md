@@ -72,6 +72,7 @@ Applies to **C++, TypeScript, and other implementation files** unless a formatte
 ## Tie backs to documentation
 
 - Escalation tags (**DESIGN-GAP**, **DESIGN-FLAW**, **CODE-DEFECT**) follow **`docs/ai-context.md`**.
+- **Expert review:** preserve **`EXPERT-REVIEW`** / **`EXPERT:<slug>`** during development without blocking ticket triads; map semantic surfaces and request targeted reviewers in the default-branch PR, then check scoped approval only immediately before final merge — **`.claude/rules/expert-review.md`**.
 - **UI design mocks:** when asked to create or update **user-visible** UI design, produce **HTML mocks** under **`docs/design/mockups/`** and link them from **`docs/design/`** **before** implementation — **`.claude/rules/ui-design-mockups.md`** (mirrors **`.cursor/rules/ui-design-mockups.mdc`**).
 
 ## Testing environment
@@ -93,13 +94,23 @@ Applies to **C++, TypeScript, and other implementation files** unless a formatte
 
 - **Ahead of large work:** Prefer delegation before broad exploration or multi-file refactors. Follow **`docs/ai-context.md` §1b**.
 - **Per ticket:** **TEST → DEV → VAL** serially in **one** worktree unless the team directs otherwise.
-- **Parallel tickets:** **`/develop-frontier`** — one subagent per **ticket id**; then **`/finish-feature`** (per **`FR-NNNN`**, **`docs/ai-context.md` §2d**; **mandatory closeout** when gate passes) or **`/finish-frontier`** as the team chose.
+- **Continuous bugs:** each operator report gets one dedicated subagent lane for
+  report, same-FR planning, and serial TEST→DEV→VAL. Keep the parent free for
+  more intake; serialize shared id/DAG integration and parallelize only
+  dependency-safe, file-disjoint ticket workers.
+- **Parallel tickets:** **`/develop-frontier`** — before every wave or bug micro-wave, fetch and merge the project remote default into affected features when absent, re-read changed authority/docs, and validate the impact; then compare the pinned and fetched remote skeleton hashes from a clean default-branch integration worktree. Equal hashes skip sync; different hashes require sync, validation, landing, and affected-feature refresh. Keep each feature-local **`20-tickets-dag.md`** graph at the top and run **`python3 scripts/refresh_ticket_dags.py --root .`** before/after the wave: visible labels/dependencies stay plain English while stable ids remain, completed is green, in-development yellow, outstanding red, and a generated project/feature explanation of no more than three sentences sits directly below the graph. Verify with **`--check`**, then launch one subagent per **ticket id**. After integration, use **`/finish-feature`** (per **`FR-NNNN`**, **`docs/ai-context.md` §2d**; **mandatory closeout** plus **`/explain-feature`** and fresh-context **`/update-manual`** when gate passes) or **`/finish-frontier`** as the team chose.
 
 ## Feature request and frontier (compose)
 
-- **`/feature-request`** / **`.cursor/skills/feature-request/SKILL.md`** — **`FR-NNNN`** design and **`tickets.md`**; **`/expand-feature`** / **`.cursor/skills/expand-feature/SKILL.md`** adds same-**`FR-NNNN`** expansion addenda and tickets when warranted, while simple UI tweaks can use a dedicated worktree plus docs HTML mock; neither replaces **`/identify-frontier`** / **`/develop-frontier`** / **`/finish-feature`** / **`/finish-frontier`**.
+- **`/feature-request`** / **`.cursor/skills/feature-request/SKILL.md`** — **`FR-NNNN`** design and **`tickets.md`**; **`/expand-feature`** / **`.cursor/skills/expand-feature/SKILL.md`** adds same-**`FR-NNNN`** expansion addenda and tickets when warranted, while simple UI tweaks can use a dedicated worktree plus docs HTML mock; **`/feature-bug`** continuously logs, tickets, and fixes each pre-PR issue in its own lane; neither replaces **`/identify-frontier`** / **`/develop-frontier`** / **`/finish-feature`** / **`/finish-frontier`**.
 - **Repo-root `CURRENT.md`:** on **`feat/*`** implementation branches, keep **`CURRENT.md`** current per that skill; remove on **`main`** when integrated.
-- **User-facing close (FR work):** end substantive replies with **Executive summary**, **Suggested next step**, and **Options** when multiple paths apply — **`feature-request`** skill **User-facing close (required)**.
+- **Manual docs and feature explanations:** **`/explain-feature`** writes completed-feature before/after HTML under **`tasks/feature-history/FR-NNNN-<slug>/`** and runs during **`/finish-feature`** closeout; **`/explain-and-document`** is the explicit opt-in workflow for turning an explanation into the static HTML manual under **`docs/manual/`**; **`/update-manual`** refreshes that manual from the last reviewed code hash and also runs during **`/finish-feature`** closeout. Do not convert ordinary explanatory answers into manual pages unless the user invokes or clearly requests the manual workflow.
+- **User-facing response close:** for substantive replies that benefit from
+  structure, prefer **Executive summary**, **Details**, **Suggested next step**,
+  and **Options** when multiple reasonable paths apply. The specialized
+  `/feature-status` BLUF/fractions/status-table format is explicit-invocation
+  only; ordinary progress, allocation, blocker, completion, summary, and
+  next-step questions do not trigger it.
 - **Spoken “identify (FR)”** = registry + intake; **`/identify-frontier`** = parallel **tickets** only **after** canonical **`### T-FR-NNNN-xx`** sections exist.
 - **Registry races:** push **`REGISTRY.md`** + minimal stub to **`main` immediately** after allocating **`FR-NNNN`** (**`docs/ai-context.md` §2b**).
 

@@ -11,3 +11,4 @@ Canonical **`### T-FR-NNNN-xx`** sections live in the **`tickets.md`** files bel
 | `tasks/feature-history/FR-0004-bbd-projection-experience/tickets.md` |
 | `tasks/feature-history/FR-0005-budget-page-docs-dock/tickets.md` |
 | `tasks/feature-history/FR-0006-budget-cash-flow-graph/tickets.md` |
+| `tasks/feature-history/FR-0007-business-finance-management/tickets.md` |

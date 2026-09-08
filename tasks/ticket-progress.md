@@ -8,7 +8,7 @@
 | **Active phase** | _None_ |
 | **Branch / worktree** | **`feat/FR-0006-budget-cash-flow-graph`** / **`.worktrees/FR-0006-budget-cash-flow-graph/feature/`** |
 | **Session status** | `complete` |
-| **Next agent should** | Review refreshed PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) and merge **`feat/FR-0006-budget-cash-flow-graph`** when satisfied. |
+| **Next agent should** | Review refreshed PR [**#9**](https://github.com/mcelhennyi/Finance/pull/9) and merge **`feat/FR-0006-budget-cash-flow-graph`** when satisfied. **`FR-0007`** is design-ready but must not become an active stream until the product owner chooses implementation and its handoff records the FR-0006 integration state. |
 
 ### Parallel streams (optional)
 
@@ -61,6 +61,19 @@ Use when **more than one** ticket id or **`FR-NNNN`** is actively developed in p
 | T-FR-0006-12 | Edge and label deconfliction | done | done | done | `FR-0006` post-closeout expansion; label-aware routing, source/target label avoidance, fixed-width label rendering, and edge-line reservations; Docker frontend gate + browser desktop/390px collision checks passed |
 | T-FR-0006-13 | Allocation controls and graph layout cleanup | done | done | done | `FR-0006` post-closeout expansion; role-aware account/category dropdowns, plan income and Time view removal, starter source seed, source/sink graph stacking, and endpoint-safe route approach; Docker backend focused tests, Docker frontend focused/full gates, docs build, and browser desktop/390px VAL passed |
 | T-FR-0006-14 | Responsive Budget tables and full-screen edit forms | done | done | done | `FR-0006` post-closeout expansion; allocation/account tables and mobile cards fit screen width, lower-priority fields collapse, dense edit forms use wide/full-screen modals with local typing drafts; Docker frontend lint/test/build (71 tests) and browser desktop/390px/modal-typing VAL passed with 0 console errors |
+| T-FR-0007-01 | Define workspace, ledger, and audit contracts | pending | pending | pending | `FR-0007`; no ticket deps; record FR-0006 integration state before DEV |
+| T-FR-0007-02 | Install migrations and backfill the Personal workspace | pending | pending | pending | `FR-0007`; deps `T-FR-0007-01` |
+| T-FR-0007-03 | Enforce workspace isolation across existing finance surfaces | pending | pending | pending | `FR-0007`; deps `T-FR-0007-02` |
+| T-FR-0007-04 | Import and reconcile business accounts and cards | pending | pending | pending | `FR-0007`; deps `T-FR-0007-03` |
+| T-FR-0007-05 | Classify business income, expenses, and owner activity | pending | pending | pending | `FR-0007`; deps `T-FR-0007-04` |
+| T-FR-0007-06 | Store receipts and review deduction candidates | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05` |
+| T-FR-0007-07 | Plan tax obligations and reserve targets | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05` |
+| T-FR-0007-08 | Track reserved cash and tax payments | pending | pending | pending | `FR-0007`; deps `T-FR-0007-04`, `T-FR-0007-07` |
+| T-FR-0007-09 | Expose business summaries, reports, and exports | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05`, `T-FR-0007-06`, `T-FR-0007-08` |
+| T-FR-0007-10 | Deliver the addressable Business workspace shell | pending | pending | pending | `FR-0007`; deps `T-FR-0007-03` |
+| T-FR-0007-11 | Deliver business books and deduction workflows | pending | pending | pending | `FR-0007`; deps `T-FR-0007-05`, `T-FR-0007-06`, `T-FR-0007-10` |
+| T-FR-0007-12 | Deliver Tax Center and reports workflows | pending | pending | pending | `FR-0007`; deps `T-FR-0007-08`, `T-FR-0007-09`, `T-FR-0007-10` |
+| T-FR-0007-13 | Validate the business-finance lifecycle and operator guidance | pending | pending | pending | `FR-0007`; deps `T-FR-0007-11`, `T-FR-0007-12` |
 
 ---
 

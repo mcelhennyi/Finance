@@ -19,7 +19,8 @@ addendum page, deepen the design until a junior engineer can implement it, then
 expand the feature's canonical tickets and global ticket graph.
 
 This command composes with **`feature-request`**. Follow
-**`.cursor/skills/feature-request/SKILL.md`** for ticket format, branch policy,
+**`.cursor/skills/feature-request/SKILL.md`** for ticket format (**plain-English
+ticket writing** required for new/not-yet-started tickets), branch policy,
 `CURRENT.md`, diaries, human-readable ticket names, Docker / VAL rules, and the
 user-facing close.
 
@@ -58,6 +59,10 @@ user-facing close.
   **`/finish-feature`** until every original and expansion ticket in the
   feature's **`tickets.md`** has TEST / DEV / VAL = `done` in
   **`tasks/ticket-progress.md`**.
+- **Bug-fix expansion:** continuously ingest each **`/feature-bug`** report in
+  its own subagent lane; do not wait for all reports or the current wave to
+  finish. Each bug keeps one report, solving ticket, and TEST→DEV→VAL lane (see
+  **Continuous bug-fix lanes** below).
 - **Lightweight work still uses git isolation.** Create a dedicated child
   worktree under **`.worktrees/FR-NNNN-<slug>/`** from the feature branch, for
   example **`stage-expand-<short-slug>/`** on
@@ -81,6 +86,49 @@ If the target feature is `complete`, has a merged integration PR, or its
 Recommend **`/feature-request`** for a new FR unless the user explicitly wants a
 post-closeout expansion recorded against the old feature.
 
+## Continuous bug-fix lanes
+
+Standard pre-PR path is continuous: **manual test** → **`/feature-bug`** lane →
+this command's bug-specific planning → **`/develop-frontier`**
+TEST→DEV→VAL. More bugs may enter while earlier lanes run.
+
+When the expansion is “fix outstanding bugs” (user said so, or **`bugs/`** has
+**Status: open** rows and the ask is to address them):
+
+1. A dedicated subagent lane reads its one report plus **`bugs/README.md`** and
+   the current feature authority. For a pre-existing backlog, create or queue
+   one lane per `open` or unsolved `ticketed` report.
+2. Write a bug-specific **`30-expand-YYYY-MM-DD-BUG-FR-NNNN-xx-<slug>.md`**
+   (add `-b`, `-c`, etc. only on collision).
+3. Create exactly one same-FR solving ticket for the report. Shared root cause
+   work may be a dependency/enabling ticket, but do not collapse bug ownership
+   or acceptance into another report's ticket.
+4. **Immediately update each bug report and the README row:**
+   - **Status:** `ticketed`
+   - **Solving ticket:** **`T-FR-NNNN-xx`** (link to **`tickets.md`**)
+   - Link the addendum
+5. Set status to **`in-progress`** when TEST begins. When that ticket's VAL is
+   marked **`done`**, set the bug **Status** to **`done`**.
+6. **Docs must stay truthful wrt the fix.** For each bug:
+   - **`code-defect` / `layout`:** if code was wrong against a correct spec,
+     leave the spec; fix code. If the mock/manual described the broken UI, update
+     those to the corrected behavior.
+   - **`design-conflict` / `product-follow-up`:** **amend `docs/design/` first**
+     (auditable amendment per **`docs/ai-context.md`**). Do **not** ship code
+     that contradicts the still-authoritative spec. After the amendment, tickets
+     implement the new truth, and mocks/manual/operator docs follow.
+7. Do not implement a `product-follow-up` as if it were a miss against current
+   design.
+8. Serialize planning commits that allocate BUG/T-FR ids or edit shared
+   addendum/DAG/tracker files. Name one feature integration owner (normally the
+   parent): lanes draft/push branches, while only that owner verifies/merges
+   allocations, advances canonical next ids, and releases the next allocator.
+   Once each planning commit is integrated, run dependency-safe,
+   file-disjoint ticket workers in parallel; a running wave does not block the
+   next report's planning.
+9. Before dispatching each new bug micro-wave, apply **`develop-frontier`**'s
+   project remote-default refresh and skeleton hash gates.
+
 ## Read before designing
 
 For the chosen feature, read:
@@ -88,6 +136,8 @@ For the chosen feature, read:
 - **`README.md`**, **`00-intake.md`**, every **`10-design-*.md`**,
   **`20-tickets-dag.md`**, **`tickets.md`**, newest **`handoffs/*.md`**,
   **`serial-diary.md`**, and **`parallel/*.md`** / **`DIARY.md`** when present.
+- **`bugs/README.md`** and every open report it lists (including dated
+  pre-skill filenames) when **`bugs/`** exists.
 - **`tasks/ticket-progress.md`**, **`tasks/feature-history/REGISTRY.md`**,
   **`tasks/feature-history/TICKET-SOURCES.md`**, and
   **`docs/design/tickets-initial.md`**.
@@ -206,9 +256,12 @@ outcome in the addendum and diary instead.
 
 1. Determine the next ticket suffix by scanning the target feature's
    **`tickets.md`** headings.
-2. Update **`20-tickets-dag.md`** with an **Expansion addendum** section:
-   ticket table, dependency notes, and Mermaid DAG nodes labeled with title
-   first and id second.
+2. Update **`20-tickets-dag.md`** while preserving its canonical Mermaid DAG as
+   the first substantive section after the H1/legend. Add the new nodes/edges to
+   that top graph, initially red unless already in development, then put the
+   **Expansion addendum** ticket table and dependency notes below it. The
+   integration owner refreshes green completed, yellow in-development, and red
+   outstanding classes between every wave.
 3. Append canonical **`### T-FR-NNNN-xx - <title>`** sections to
    **`tickets.md`**.
 4. Add or update rows in **`tasks/ticket-progress.md`** for each new ticket.
@@ -222,14 +275,23 @@ outcome in the addendum and diary instead.
 8. If **`tasks/ticket-progress.md -> Current focus`** or the feature handoff says
    "run `/finish-feature`", replace that stale next step with the first
    incomplete expansion ticket or **`/identify-frontier`**.
+9. Run **`python3 scripts/refresh_ticket_dags.py --root .`** and review both the
+   feature-local and global DAGs: visible labels and dependency annotations are
+   plain English, stable ids/edges are unchanged, lifecycle colors reflect the
+   tracker, and the generated project/feature **Where things stand** explanation
+   of no more than three sentences is directly below each graph. Require a
+   second run with **`--check`** to pass.
 
-Each new ticket section must include:
+Each new ticket section must include (plain-English first — same bar as
+**feature-request → Plain-English ticket writing**):
 
 - **Title** and **Deps**.
-- **Purpose** linked back to the expansion addendum.
+- **In plain English**, **Why this exists**, **Out of scope**, and **Done when
+  (plain English)** — link the “why” back to the expansion addendum.
 - **Existing changes required**: original tickets, files, or docs whose behavior
   this ticket must modify.
-- **Phases** table with concrete TEST / DEV / VAL exit criteria.
+- **Acceptance criteria** (precise/testable) plus **Phases** with concrete
+  TEST / DEV / VAL exit criteria.
 - **Implementation notes** detailed enough for a junior engineer.
 - **Verification notes** naming Docker / Compose commands where known; include
   rendered browser inspection for user-visible UI.
@@ -262,6 +324,10 @@ If the user asked to implement immediately and the tickets now exist:
    worktree.
 4. Refresh repo-root **`CURRENT.md`** on active **`feat/*`** branches.
 
+For an operator bug, immediate implementation is the default unless the user
+explicitly requested log-only. Keep the parent orchestrator free to accept more
+reports while each dedicated lane progresses.
+
 If the user did not explicitly ask to implement now, stop after the addendum
 and ticket expansion, then suggest **`/identify-frontier`** or the first ticket
 by title.
@@ -275,7 +341,15 @@ by title.
 - [ ] New ticket ids continue the existing **`T-FR-NNNN-xx`** sequence.
 - [ ] **`20-tickets-dag.md`**, **`tickets.md`**, **`ticket-progress.md`**,
       **`docs/design/tickets-initial.md`**, and **`REGISTRY.md`** agree.
+- [ ] The canonical Mermaid DAG is at the top of **`20-tickets-dag.md`** and
+      its green/yellow/red node classes match current wave evidence; the refresh
+      tool's **`--check`** passes for plain-English labels/dependencies and the
+      directly-below project/feature explanation.
 - [ ] Completed tickets were not rewritten silently.
 - [ ] Feature-complete next steps no longer ignore expansion tickets.
 - [ ] User-facing response ends with **Executive summary**, **Suggested next
       step**, and **Options** when more than one path is reasonable.
+- [ ] Bug-fix expansions: every ingested **`BUG-FR-NNNN-xx`** has **Solving
+      ticket** and a dedicated lane; planning-file/id integration was serialized;
+      design/mocks/manual were amended when the fix would otherwise leave docs
+      untruthful.

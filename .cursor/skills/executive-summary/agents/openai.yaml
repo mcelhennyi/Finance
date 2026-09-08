@@ -1,0 +1,4 @@
+interface:
+  display_name: "Executive Summary"
+  short_description: "Create traceable plain-English summaries"
+  default_prompt: "Use $executive-summary to create a concise project or task summary."

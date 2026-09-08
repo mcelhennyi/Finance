@@ -67,6 +67,7 @@ nav:
   - Design:
     - Philosophy: design/philosophy.md
     - System Overview: design/system-overview.md
+    - Business Finance: design/business-finance.md
     - Technology Decisions: design/technology-decisions.md
     - Services:
       - Ingestion Service:
