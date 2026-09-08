@@ -1,7 +1,19 @@
 import type {
+  AllocationItem,
+  AllocationItemListResponse,
+  AllocationPlan,
+  AllocationPlanListResponse,
+  AllocationSummary,
+  BudgetCategoryCatalogItem,
+  BudgetCategoryInventoryListOut,
+  BudgetCategoryLinkedAllocationItemListOut,
+  BudgetCategoryOptionsOut,
+  BudgetCategoryReassignOut,
   BbdDefaultScenarioResponse,
   BbdRunPayload,
   BbdRunResponse,
+  CashFlowAccountLinkRequest,
+  CashFlowGraphDocument,
   FilterState,
   Filters,
   IngestionResult,
@@ -74,6 +86,14 @@ async function deleteQuery<T>(path: string, params: URLSearchParams): Promise<T>
   return res.json() as Promise<T>
 }
 
+async function delPath(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error((err as { detail?: string }).detail ?? res.statusText)
+  }
+}
+
 export const api = {
   unifiedViewSummary: (monthIsoDate: string, asOf?: string) => {
     const p = new URLSearchParams()
@@ -119,4 +139,67 @@ export const api = {
     postJson<BbdRunResponse>('/bbd-projection/run', payload),
 
   bbdDefaultScenario: () => get<BbdDefaultScenarioResponse>('/bbd-projection/default-scenario'),
+
+  listBudgetAllocationPlans: (monthIsoDate: string) => {
+    const p = new URLSearchParams()
+    p.set('month', monthIsoDate)
+    return get<AllocationPlanListResponse>('/budget-allocation/plans', p)
+  },
+
+  /** All allocation plans (newest months first); omit month filter on the API. */
+  listAllBudgetAllocationPlans: () => get<AllocationPlanListResponse>('/budget-allocation/plans'),
+
+  createBudgetAllocationPlan: (body: Record<string, unknown>) =>
+    postJson<AllocationPlan>('/budget-allocation/plans', body),
+
+  updateBudgetAllocationPlan: (planId: number, body: Record<string, unknown>) =>
+    putJson<AllocationPlan>(`/budget-allocation/plans/${planId}`, body),
+
+  deleteBudgetAllocationPlan: (planId: number) => delPath(`/budget-allocation/plans/${planId}`),
+
+  listBudgetAllocationItems: (planId: number) =>
+    get<AllocationItemListResponse>(`/budget-allocation/plans/${planId}/items`),
+
+  createBudgetAllocationItem: (planId: number, body: Record<string, unknown>) =>
+    postJson<AllocationItem>(`/budget-allocation/plans/${planId}/items`, body),
+
+  updateBudgetAllocationItem: (planId: number, itemId: number, body: Record<string, unknown>) =>
+    putJson<AllocationItem>(`/budget-allocation/plans/${planId}/items/${itemId}`, body),
+
+  deleteBudgetAllocationItem: (planId: number, itemId: number) =>
+    delPath(`/budget-allocation/plans/${planId}/items/${itemId}`),
+
+  budgetAllocationSummary: (planId: number) =>
+    get<AllocationSummary>(`/budget-allocation/plans/${planId}/summary`),
+
+  getBudgetCashFlowGraph: (planId: number) =>
+    get<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`),
+
+  putBudgetCashFlowGraph: (planId: number, body: CashFlowGraphDocument) =>
+    putJson<CashFlowGraphDocument>(`/budget-allocation/plans/${planId}/cash-flow-graph`, body),
+
+  linkBudgetCashFlowAccounts: (planId: number, body: CashFlowAccountLinkRequest) =>
+    postJson<CashFlowGraphDocument>(
+      `/budget-allocation/plans/${planId}/cash-flow-graph/links`,
+      body,
+    ),
+
+  listBudgetCategoryOptions: () => get<BudgetCategoryOptionsOut>('/budget-allocation/category-options'),
+
+  listBudgetCategoryInventory: () => get<BudgetCategoryInventoryListOut>('/budget-allocation/category-inventory'),
+
+  listBudgetCategoryInventoryItems: (label: string) =>
+    get<BudgetCategoryLinkedAllocationItemListOut>(
+      '/budget-allocation/category-inventory/items',
+      new URLSearchParams({ label }),
+    ),
+
+  createBudgetCategoryCatalogEntry: (body: { label: string }) =>
+    postJson<BudgetCategoryCatalogItem>('/budget-allocation/category-catalog', body),
+
+  reassignBudgetCategory: (body: { from_label: string; replacement_label: string }) =>
+    postJson<BudgetCategoryReassignOut>('/budget-allocation/category-reassign', body),
+
+  deleteBudgetCategoryCatalogEntry: (labelId: number) =>
+    delPath(`/budget-allocation/category-catalog/${labelId}`),
 }

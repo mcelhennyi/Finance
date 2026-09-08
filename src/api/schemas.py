@@ -1,7 +1,10 @@
 """Pydantic schemas for the Finance Hub API."""
 
 from datetime import date, datetime
+
 from pydantic import BaseModel, Field
+
+from finance.allocation.schemas import AllocationItemOut, AllocationPlanOut
 
 
 class IngestionResponse(BaseModel):
@@ -192,6 +195,28 @@ class IncomeLiabilityAggregateOut(BaseModel):
     active_liability_count: int
 
 
+# --- Budget allocation (T-FR-0002-02) ---
+
+
+class AllocationSummaryOut(BaseModel):
+    """Derived monthly totals for a plan (Budget page summary)."""
+
+    total_monthly_allocated: float
+    cash_allocated: float
+    credit_allocated: float
+    remaining_income: float | None
+    category_totals: dict[str, float]
+    cadence_totals: dict[str, float]
+
+
+class AllocationPlanListResponse(BaseModel):
+    items: list[AllocationPlanOut]
+
+
+class AllocationItemListResponse(BaseModel):
+    items: list[AllocationItemOut]
+
+
 # --- Unified monthly view (T-FR-0001-04) — stable for Phase 2 dashboard ---
 
 
@@ -271,3 +296,67 @@ class UnifiedViewSummaryOut(BaseModel):
     contracts: ContractAggregateOut
     net_worth: NetWorthBreakdownOut
     reconciliation: ReconciliationOut
+
+
+class BudgetCategoryOptionsOut(BaseModel):
+    """Merged category strings for allocation line pickers."""
+
+    labels: list[str]
+
+
+class BudgetCategoryCatalogItemOut(BaseModel):
+    id: int
+    label: str
+
+
+class BudgetCategoryInventoryItemOut(BaseModel):
+    """One category label with allocation usage and optional saved-catalog id."""
+
+    label: str
+    allocation_item_count: int
+    catalog_id: int | None = None
+
+
+class BudgetCategoryInventoryListOut(BaseModel):
+    items: list[BudgetCategoryInventoryItemOut]
+
+
+class BudgetCategoryLinkedAllocationItemOut(BaseModel):
+    """Allocation line shown under an expanded category inventory row."""
+
+    id: int
+    plan_id: int
+    plan_name: str
+    period_month: date
+    item_name: str
+    category: str
+    planned_amount: float
+    cadence: str
+    monthly_amount: float
+    allocation_role: str
+    from_account_ref: str | None
+    to_account_ref: str | None
+    counterparty: str | None
+    payment_method: str
+    due_day: int | None
+    notes: str
+    sort_order: int
+
+
+class BudgetCategoryLinkedAllocationItemListOut(BaseModel):
+    items: list[BudgetCategoryLinkedAllocationItemOut]
+
+
+class BudgetCategoryLabelCreate(BaseModel):
+    label: str = Field(min_length=1, max_length=100)
+
+
+class BudgetCategoryReassignIn(BaseModel):
+    """Relink all allocation lines from one category string to another."""
+
+    from_label: str = Field(min_length=1, max_length=100)
+    replacement_label: str = Field(min_length=1, max_length=100)
+
+
+class BudgetCategoryReassignOut(BaseModel):
+    items_updated: int

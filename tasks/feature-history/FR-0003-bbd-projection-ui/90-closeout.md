@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-FR-0003 (BBD projection web UI) is **complete** per **`REGISTRY.md`**: packaged **`finance.bbd`** engine, **`POST /api/bbd-projection/run`**, BBD SPA page with disclaimers and schedules/MC output, operator docs in **`scripts/README.md`**, and CLI **`scripts/bbd-projection/`**. A follow-up tranche on **`feat/FR-0003-bbd-ui-followup`** (modal guide, presets, default-scenario **`GET`**, seed YAML, extended tests) is captured in **`planned-vs-actual.md`** and integrated via **PR [#6](https://github.com/mcelhennyi/Finance/pull/6)** to **`master`** per feature **`README.md`**.
+FR-0003 (BBD projection web UI) is **complete** per **`REGISTRY.md`**: packaged **`finance.bbd`** engine, **`POST /api/bbd-projection/run`**, BBD SPA page with disclaimers and schedules/MC output, operator docs in **`scripts/README.md`**, and CLI **`scripts/bbd-projection/`**. A follow-up tranche on **`feat/FR-0003-bbd-ui-followup`** (modal guide, presets, default-scenario **`GET`**, seed YAML, extended tests) is captured in **`planned-vs-actual.md`** and merged via **PR [#6](https://github.com/mcelhennyi/Finance/pull/6)** to **`master`** (**merged 2026-05-10**).
 
 ## Artifact links
 
@@ -17,7 +17,7 @@ FR-0003 (BBD projection web UI) is **complete** per **`REGISTRY.md`**: packaged 
 ## Branch / PR
 
 - Follow-up branch (historical): **`feat/FR-0003-bbd-ui-followup`**
-- Integrated PR: **[#6](https://github.com/mcelhennyi/Finance/pull/6)** → **`master`**
+- Integrated PR: **[#6](https://github.com/mcelhennyi/Finance/pull/6)** → **`master`** (merged **2026-05-10**)
 - Repo-root **`CURRENT.md`**: remove on **`master`** after merge per workflow when present on feature work.
 
 ## Ticket mapping (title first)
@@ -29,7 +29,7 @@ FR-0003 (BBD projection web UI) is **complete** per **`REGISTRY.md`**: packaged 
 
 ## Suggested next step
 
-Continue **`FR-0002`** budget entry implementation (**`tasks/ticket-progress.md` → Current focus**).
+Follow **`tasks/ticket-progress.md` → Current focus** (at closeout time: **`/finish-feature`** for **`FR-0006`** when that branch is ready to integrate).
 
 ## Options
 

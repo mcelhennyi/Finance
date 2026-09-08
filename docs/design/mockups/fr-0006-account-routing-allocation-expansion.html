@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FR-0006 account routing and allocation expansion mock</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7faf9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #617086;
+      --line: #d8e0e7;
+      --teal: #0f766e;
+      --teal-soft: #dff6f2;
+      --blue: #2563eb;
+      --blue-soft: #e8f0ff;
+      --amber: #b7791f;
+      --amber-soft: #fff3d8;
+      --rose: #be123c;
+      --rose-soft: #ffe4eb;
+      --green: #15803d;
+      --shadow: 0 10px 28px rgba(23, 32, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(180deg, #f8fbfb 0%, #eef5f3 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+      padding: 18px 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-weight: 800;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0f766e, #2563eb);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav span {
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .nav .active {
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+
+    main {
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .control {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 7px 10px;
+      color: var(--ink);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdfd;
+    }
+
+    .section-title {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .icon-btn,
+    .seg {
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 6px 9px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .seg.active {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+
+    .graph-area {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 282px;
+      min-height: 640px;
+    }
+
+    .canvas {
+      position: relative;
+      min-height: 640px;
+      overflow: hidden;
+      background:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px),
+        #f4f8f7;
+      background-size: 28px 28px;
+    }
+
+    svg.routes {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .route {
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 3;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+    }
+
+    .route.alt {
+      stroke: var(--blue);
+    }
+
+    .route.warn {
+      stroke: var(--amber);
+    }
+
+    .lane-label {
+      font: 700 11px Inter, ui-sans-serif, system-ui;
+      fill: #254055;
+      paint-order: stroke;
+      stroke: #ffffff;
+      stroke-width: 4px;
+      stroke-linejoin: round;
+    }
+
+    .node {
+      position: absolute;
+      width: 186px;
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 8px 22px rgba(23, 32, 51, 0.11);
+      padding: 10px 12px;
+    }
+
+    .node.source {
+      border-color: #7dd3c7;
+    }
+
+    .node.sink {
+      border-color: #f3bf78;
+    }
+
+    .node.both {
+      border-color: #9bbcfb;
+    }
+
+    .node.expanded {
+      outline: 3px solid rgba(15, 118, 110, 0.16);
+    }
+
+    .handle {
+      position: absolute;
+      top: 42px;
+      width: 13px;
+      height: 26px;
+      border: 2px solid #ffffff;
+      border-radius: 6px;
+      box-shadow: 0 0 0 1px rgba(23, 32, 51, 0.16);
+    }
+
+    .handle.in {
+      left: -8px;
+      background: var(--blue);
+    }
+
+    .handle.out {
+      right: -8px;
+      background: var(--teal);
+    }
+
+    .handle.disabled {
+      background: #cbd5e1;
+    }
+
+    .node-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .node-name {
+      font-weight: 850;
+      line-height: 1.2;
+    }
+
+    .role {
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .role.source {
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+
+    .role.sink {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .role.both {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .meta {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .count {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      width: fit-content;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .linking {
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14), 0 8px 22px rgba(23, 32, 51, 0.11);
+    }
+
+    .alloc-cluster {
+      position: absolute;
+      left: 250px;
+      top: 318px;
+      width: 448px;
+      border: 1px solid #b7e3dc;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.93);
+      box-shadow: 0 10px 24px rgba(15, 118, 110, 0.14);
+      padding: 10px;
+    }
+
+    .cluster-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2ecea;
+    }
+
+    .cluster-title {
+      font-weight: 850;
+    }
+
+    .cluster-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .chip.on {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 10px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .filter {
+      border: 1px solid #e0e7ee;
+      border-radius: 6px;
+      background: #fbfdfd;
+      padding: 7px 8px;
+    }
+
+    .filter strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #344256;
+      font-size: 11px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .alloc {
+      min-height: 78px;
+      border: 1px solid #d7e4ec;
+      border-radius: 7px;
+      background: #ffffff;
+      padding: 8px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .alloc strong {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .alloc span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .alloc .amount {
+      color: #111827;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .alloc-role {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .alloc-role.source {
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+
+    .alloc-role.sink {
+      background: var(--rose-soft);
+      color: var(--rose);
+    }
+
+    .panel {
+      border-left: 1px solid var(--line);
+      background: #ffffff;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .panel-block {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfdfd;
+    }
+
+    .panel-block h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--teal);
+    }
+
+    .swatch.blue {
+      background: var(--blue);
+    }
+
+    .swatch.amber {
+      background: var(--amber);
+    }
+
+    .metric-list {
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid #edf2f5;
+      padding-bottom: 7px;
+    }
+
+    .metric:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .metric b {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      main {
+        padding: 14px;
+      }
+
+      .topbar,
+      .section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .controls,
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .graph-area {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .canvas {
+        min-height: 820px;
+      }
+
+      .node {
+        width: 158px;
+      }
+
+      .alloc-cluster {
+        left: 18px;
+        top: 392px;
+        width: calc(100% - 36px);
+      }
+
+      .mini-grid,
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="logo"></span><span>Finance Hub</span></div>
+      <nav class="nav" aria-label="Primary">
+        <span>Dashboard</span>
+        <span>Unified view</span>
+        <span class="active">Budget</span>
+        <span>BBD</span>
+        <span>Settings</span>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h1>Budget allocation</h1>
+          <div class="sub">June 2026 baseline plan</div>
+        </div>
+        <div class="controls">
+          <span class="control">Jun 2026</span>
+          <span class="control">Baseline plan</span>
+          <span class="control">Save</span>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Cash flow map</div>
+            <div class="sub">Accounts, directional links, allocation detail, and timing.</div>
+          </div>
+          <div class="toolbar" aria-label="Graph controls">
+            <span class="seg active">Accounts</span>
+            <span class="seg">Allocations</span>
+            <span class="icon-btn" title="Relayout">Grid</span>
+            <span class="icon-btn" title="Fit view">Fit</span>
+          </div>
+        </div>
+
+        <div class="graph-area">
+          <div class="canvas">
+            <svg class="routes" viewBox="0 0 920 640" aria-hidden="true">
+              <defs>
+                <marker id="arrow-teal" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                  <path d="M1,1 L11,6 L1,11 Z" fill="#0f766e"></path>
+                </marker>
+                <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                  <path d="M1,1 L11,6 L1,11 Z" fill="#2563eb"></path>
+                </marker>
+                <marker id="arrow-amber" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                  <path d="M1,1 L11,6 L1,11 Z" fill="#b7791f"></path>
+                </marker>
+              </defs>
+              <path class="route" marker-end="url(#arrow-teal)" d="M190 96 H238 V126 H262"></path>
+              <text class="lane-label" x="207" y="88">payroll</text>
+              <path class="route alt" marker-end="url(#arrow-blue)" d="M438 128 H492 V204 H550"></path>
+              <text class="lane-label" x="458" y="122">card pay</text>
+              <path class="route warn" marker-end="url(#arrow-amber)" d="M438 166 H504 V82 H650"></path>
+              <text class="lane-label" x="459" y="177">sweep</text>
+              <path class="route" marker-end="url(#arrow-teal)" d="M438 236 H514 V398 H554"></path>
+              <text class="lane-label" x="462" y="248">invest</text>
+            </svg>
+
+            <div class="node source" style="left: 34px; top: 52px;">
+              <span class="handle in disabled"></span>
+              <span class="handle out"></span>
+              <div class="node-title">
+                <span class="node-name">Payroll</span>
+                <span class="role source">Source</span>
+              </div>
+              <div class="meta">
+                <span>Income source</span>
+                <span class="count">0 allocations</span>
+              </div>
+            </div>
+
+            <div class="node both expanded linking" style="left: 262px; top: 92px;">
+              <span class="handle in"></span>
+              <span class="handle out"></span>
+              <div class="node-title">
+                <span class="node-name">Main Checking</span>
+                <span class="role both">Source + sink</span>
+              </div>
+              <div class="meta">
+                <span>Checking - USD 8,420</span>
+                <span class="count">9 allocations - 6 visible</span>
+              </div>
+            </div>
+
+            <div class="node sink" style="left: 650px; top: 48px;">
+              <span class="handle in"></span>
+              <span class="handle out disabled"></span>
+              <div class="node-title">
+                <span class="node-name">High Yield Savings</span>
+                <span class="role sink">Sink</span>
+              </div>
+              <div class="meta">
+                <span>Savings - USD 18,250</span>
+                <span class="count">2 allocations</span>
+              </div>
+            </div>
+
+            <div class="node sink" style="left: 550px; top: 168px;">
+              <span class="handle in"></span>
+              <span class="handle out disabled"></span>
+              <div class="node-title">
+                <span class="node-name">Chase Card</span>
+                <span class="role sink">Sink</span>
+              </div>
+              <div class="meta">
+                <span>Credit liability - 4412</span>
+                <span class="count">4 allocations</span>
+              </div>
+            </div>
+
+            <div class="node sink" style="left: 554px; top: 362px;">
+              <span class="handle in"></span>
+              <span class="handle out disabled"></span>
+              <div class="node-title">
+                <span class="node-name">Brokerage Cash</span>
+                <span class="role sink">Sink</span>
+              </div>
+              <div class="meta">
+                <span>Brokerage cash</span>
+                <span class="count">1 allocation</span>
+              </div>
+            </div>
+
+            <div class="alloc-cluster">
+              <div class="cluster-head">
+                <div>
+                  <div class="cluster-title">Main Checking allocations</div>
+                  <div class="sub">6 of 9 visible after filters</div>
+                </div>
+                <div class="cluster-actions">
+                  <span class="chip on">$100+</span>
+                  <span class="chip on">Monthly</span>
+                  <span class="chip">Inflow + outflow</span>
+                </div>
+              </div>
+
+              <div class="filter-row">
+                <div class="filter">
+                  <strong>Size</strong>
+                  Minimum monthly: $100
+                </div>
+                <div class="filter">
+                  <strong>Frequency</strong>
+                  Monthly, biweekly
+                </div>
+                <div class="filter">
+                  <strong>Allocation role</strong>
+                  Source and sink
+                </div>
+                <div class="filter">
+                  <strong>Sort</strong>
+                  Largest first, then due date
+                </div>
+              </div>
+
+              <div class="mini-grid">
+                <div class="alloc">
+                  <span class="alloc-role source">Source</span>
+                  <strong>Paycheck deposit</strong>
+                  <span class="amount">+$8,400</span>
+                  <span>funds checking</span>
+                </div>
+                <div class="alloc">
+                  <span class="alloc-role sink">Sink</span>
+                  <strong>Savings sweep</strong>
+                  <span class="amount">$1,500</span>
+                  <span>checking to savings</span>
+                </div>
+                <div class="alloc">
+                  <span class="alloc-role sink">Sink</span>
+                  <strong>Amazon order</strong>
+                  <span class="amount">$86</span>
+                  <span>card to external purchase</span>
+                </div>
+                <div class="alloc">
+                  <span class="alloc-role sink">Sink</span>
+                  <strong>Rent</strong>
+                  <span class="amount">$2,650</span>
+                  <span>checking to housing</span>
+                </div>
+                <div class="alloc">
+                  <span class="alloc-role sink">Sink</span>
+                  <strong>Brokerage buy</strong>
+                  <span class="amount">$700</span>
+                  <span>checking to brokerage</span>
+                </div>
+                <div class="alloc">
+                  <span class="alloc-role sink">Sink</span>
+                  <strong>Groceries</strong>
+                  <span class="amount">$780</span>
+                  <span>checking to food</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="panel">
+            <div class="panel-block">
+              <h2>Expanded account</h2>
+              <div class="metric-list">
+                <div class="metric"><span>Total allocations</span><b>9</b></div>
+                <div class="metric"><span>Visible allocations</span><b>6</b></div>
+                <div class="metric"><span>Visible monthly total</span><b>$14,116</b></div>
+                <div class="metric"><span>Hidden by filters</span><b>3</b></div>
+              </div>
+            </div>
+
+            <div class="panel-block">
+              <h2>Account types</h2>
+              <div class="legend">
+                <span><i class="swatch"></i>Pure source: output only</span>
+                <span><i class="swatch amber"></i>Pure sink: input only</span>
+                <span><i class="swatch blue"></i>Source + sink: both sides</span>
+              </div>
+            </div>
+
+            <div class="panel-block">
+              <h2>Routing lanes</h2>
+              <div class="legend">
+                <span><i class="swatch"></i>Right-side exits reserve parallel lanes</span>
+                <span><i class="swatch blue"></i>Square segments route around nodes</span>
+                <span><i class="swatch amber"></i>Relayout runs after expand, collapse, and filter changes</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

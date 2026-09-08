@@ -10,6 +10,7 @@ import { TransactionTable } from './components/TransactionTable'
 import { SettingsPage } from './pages/SettingsPage'
 import { UnifiedViewPage } from './pages/UnifiedViewPage'
 import { BbdProjectionPage } from './pages/BbdProjectionPage'
+import { BudgetPage } from './pages/BudgetPage'
 import type { FilterState } from './types'
 
 const DEFAULT_FILTER: FilterState = { from: '', to: '', category: '', source: '' }
@@ -50,6 +51,8 @@ export function App() {
         <SettingsPage />
       ) : page === 'unified' ? (
         <UnifiedViewPage />
+      ) : page === 'budget' ? (
+        <BudgetPage />
       ) : page === 'bbd' ? (
         <BbdProjectionPage />
       ) : (

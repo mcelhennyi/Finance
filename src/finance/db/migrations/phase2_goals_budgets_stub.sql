@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS budgets (
   period_month DATE NOT NULL,
   amount_limit NUMERIC(12, 2) NOT NULL,
   currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+  allocation_derived BOOLEAN NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL
 );
 

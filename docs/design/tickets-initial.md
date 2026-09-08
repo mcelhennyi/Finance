@@ -202,6 +202,36 @@ graph LR
   TFR0007_13_TEST --> TFR0007_13_DEV["Validate the business-finance lifecycle and operator guidance — Build the change (T-FR-0007-13, DEV)"]
   TFR0007_13_DEV --> TFR0007_13_VAL["Validate the business-finance lifecycle and operator guidance — Verify it works (T-FR-0007-13, VAL)"]
 
+  TFR0006_03_VAL --> TFR0006_08_TEST["Unified source/sink allocation primitive contracts — Write the checks (T-FR-0006-08, TEST)"]
+  TFR0006_08_TEST --> TFR0006_08_DEV["Unified source/sink allocation primitive contracts — Build the change (T-FR-0006-08, DEV)"]
+  TFR0006_08_DEV --> TFR0006_08_VAL["Unified source/sink allocation primitive contracts — Verify it works (T-FR-0006-08, VAL)"]
+
+  TFR0006_04_VAL --> TFR0006_09_TEST["Directional account handles and double-click linking — Write the checks (T-FR-0006-09, TEST)"]
+  TFR0006_09_TEST --> TFR0006_09_DEV["Directional account handles and double-click linking — Build the change (T-FR-0006-09, DEV)"]
+  TFR0006_09_DEV --> TFR0006_09_VAL["Directional account handles and double-click linking — Verify it works (T-FR-0006-09, VAL)"]
+
+  TFR0006_09_VAL --> TFR0006_10_TEST["Orthogonal routing and obstacle-aware relayout — Write the checks (T-FR-0006-10, TEST)"]
+  TFR0006_10_TEST --> TFR0006_10_DEV["Orthogonal routing and obstacle-aware relayout — Build the change (T-FR-0006-10, DEV)"]
+  TFR0006_10_DEV --> TFR0006_10_VAL["Orthogonal routing and obstacle-aware relayout — Verify it works (T-FR-0006-10, VAL)"]
+
+  TFR0006_08_VAL --> TFR0006_11_TEST["Expandable allocation clusters with filters and counts — Write the checks (T-FR-0006-11, TEST)"]
+  TFR0006_10_VAL --> TFR0006_11_TEST
+  TFR0006_11_TEST --> TFR0006_11_DEV["Expandable allocation clusters with filters and counts — Build the change (T-FR-0006-11, DEV)"]
+  TFR0006_11_DEV --> TFR0006_11_VAL["Expandable allocation clusters with filters and counts — Verify it works (T-FR-0006-11, VAL)"]
+
+  TFR0006_10_VAL --> TFR0006_12_TEST["Edge and label deconfliction — Write the checks (T-FR-0006-12, TEST)"]
+  TFR0006_11_VAL --> TFR0006_12_TEST
+  TFR0006_12_TEST --> TFR0006_12_DEV["Edge and label deconfliction — Build the change (T-FR-0006-12, DEV)"]
+  TFR0006_12_DEV --> TFR0006_12_VAL["Edge and label deconfliction — Verify it works (T-FR-0006-12, VAL)"]
+
+  TFR0006_12_VAL --> TFR0006_13_TEST["Allocation controls and graph layout cleanup — Write the checks (T-FR-0006-13, TEST)"]
+  TFR0006_13_TEST --> TFR0006_13_DEV["Allocation controls and graph layout cleanup — Build the change (T-FR-0006-13, DEV)"]
+  TFR0006_13_DEV --> TFR0006_13_VAL["Allocation controls and graph layout cleanup — Verify it works (T-FR-0006-13, VAL)"]
+
+  TFR0006_13_VAL --> TFR0006_14_TEST["Responsive Budget tables and full-screen edit forms — Write the checks (T-FR-0006-14, TEST)"]
+  TFR0006_14_TEST --> TFR0006_14_DEV["Responsive Budget tables and full-screen edit forms — Build the change (T-FR-0006-14, DEV)"]
+  TFR0006_14_DEV --> TFR0006_14_VAL["Responsive Budget tables and full-screen edit forms — Verify it works (T-FR-0006-14, VAL)"]
+
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
   class TFR0001_01_TEST,TFR0001_01_DEV,TFR0001_01_VAL triadDone
@@ -215,10 +245,13 @@ graph LR
   class TFR0004_01_TEST,TFR0004_01_DEV,TFR0004_01_VAL,TFR0004_02_TEST,TFR0004_02_DEV,TFR0004_02_VAL,TFR0004_03_TEST,TFR0004_03_DEV,TFR0004_03_VAL,TFR0004_04_TEST,TFR0004_04_DEV,TFR0004_04_VAL,TFR0004_05_TEST,TFR0004_05_DEV,TFR0004_05_VAL triadDone
 
   class TFR0005_01_TEST,TFR0005_01_DEV,TFR0005_01_VAL triadDone
+  class TFR0006_01_TEST,TFR0006_01_DEV,TFR0006_01_VAL,TFR0006_02_TEST,TFR0006_02_DEV,TFR0006_02_VAL,TFR0006_03_TEST,TFR0006_03_DEV,TFR0006_03_VAL,TFR0006_04_TEST,TFR0006_04_DEV,TFR0006_04_VAL,TFR0006_05_TEST,TFR0006_05_DEV,TFR0006_05_VAL,TFR0006_06_TEST,TFR0006_06_DEV,TFR0006_06_VAL,TFR0006_07_TEST,TFR0006_07_DEV,TFR0006_07_VAL triadDone
+  class TFR0006_08_TEST,TFR0006_08_DEV,TFR0006_08_VAL,TFR0006_09_TEST,TFR0006_09_DEV,TFR0006_09_VAL,TFR0006_10_TEST,TFR0006_10_DEV,TFR0006_10_VAL,TFR0006_11_TEST,TFR0006_11_DEV,TFR0006_11_VAL triadDone
+  class TFR0006_12_TEST,TFR0006_12_DEV,TFR0006_12_VAL,TFR0006_13_TEST,TFR0006_13_DEV,TFR0006_13_VAL,TFR0006_14_TEST,TFR0006_14_DEV,TFR0006_14_VAL triadDone
 ```
 
 <!-- ticket-dag-status:start -->
-**Where things stand:** Across the project, 21 of 41 defined tickets are fully verified; 20 remain open or are not yet recorded as complete. This combined plan shows 41 tickets across 8 features, with 21 fully verified.
+**Where things stand:** Across the project, 35 of 48 defined tickets are fully verified; 13 remain open or are not yet recorded as complete. Budget cash flow graph (FR-0006) is complete: all 14 tickets are fully verified.
 <!-- ticket-dag-status:end -->
 
 When ticket **`T-FR-NNNN-xx`** is fully complete (TEST/DEV/VAL all `done` in **`ticket-progress.md`**), add:

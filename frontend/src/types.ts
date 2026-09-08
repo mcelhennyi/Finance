@@ -158,6 +158,167 @@ export interface UnifiedViewSummary {
   reconciliation: Reconciliation
 }
 
+/** --- Budget allocation API (`/api/budget-allocation/*`, T-FR-0002-02) --- */
+
+export interface AllocationPlan {
+  id: number
+  name: string
+  period_month: string
+  currency: string
+  income_amount: number | null
+  income_cadence: string | null
+  income_monthly: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AllocationItem {
+  id: number
+  plan_id: number
+  item_name: string
+  category: string
+  planned_amount: number
+  cadence: string
+  monthly_amount: number
+  allocation_role: 'source' | 'sink'
+  from_account_ref: string | null
+  to_account_ref: string | null
+  counterparty: string | null
+  payment_method: string
+  due_day: number | null
+  notes: string
+  sort_order: number
+}
+
+export interface AllocationSummary {
+  total_monthly_allocated: number
+  cash_allocated: number
+  credit_allocated: number
+  remaining_income: number | null
+  category_totals: Record<string, number>
+  cadence_totals: Record<string, number>
+}
+
+export interface AllocationPlanListResponse {
+  items: AllocationPlan[]
+}
+
+export interface AllocationItemListResponse {
+  items: AllocationItem[]
+}
+
+/** Merged category strings for budget line pickers (`/api/budget-allocation/category-options`). */
+export interface BudgetCategoryOptionsOut {
+  labels: string[]
+}
+
+export interface BudgetCategoryCatalogItem {
+  id: number
+  label: string
+}
+
+/** Per-label usage for the Budget categories table (`/api/budget-allocation/category-inventory`). */
+export interface BudgetCategoryInventoryItem {
+  label: string
+  allocation_item_count: number
+  catalog_id: number | null
+}
+
+export interface BudgetCategoryInventoryListOut {
+  items: BudgetCategoryInventoryItem[]
+}
+
+export interface BudgetCategoryLinkedAllocationItem {
+  id: number
+  plan_id: number
+  plan_name: string
+  period_month: string
+  item_name: string
+  category: string
+  planned_amount: number
+  cadence: string
+  monthly_amount: number
+  allocation_role: 'source' | 'sink'
+  from_account_ref: string | null
+  to_account_ref: string | null
+  counterparty: string | null
+  payment_method: string
+  due_day: number | null
+  notes: string
+  sort_order: number
+}
+
+export interface BudgetCategoryLinkedAllocationItemListOut {
+  items: BudgetCategoryLinkedAllocationItem[]
+}
+
+export interface BudgetCategoryReassignOut {
+  items_updated: number
+}
+
+/** Cash-flow graph (`/api/budget-allocation/plans/{id}/cash-flow-graph`, T-FR-0006). */
+
+export type CashNodeKind =
+  | 'checking'
+  | 'savings'
+  | 'brokerage_cash'
+  | 'external_pooled'
+  | 'income_source'
+  | 'liability_surrogate'
+  | 'other'
+
+export type CashFlowAmountRuleType = 'fixed' | 'percent_of_inflow' | 'remainder'
+
+export type CashFlowCadenceType = 'daily' | 'weekly' | 'monthly' | 'on_date'
+
+export interface CashFlowNodeSpec {
+  ref: string
+  display_name: string
+  kind: CashNodeKind
+  institution: string | null
+  /** Parent account node ref within the same plan (e.g. card under a Chase profile). */
+  parent_ref?: string | null
+  layout_x: number | null
+  layout_y: number | null
+  currency?: string
+  current_balance?: string | null
+  balance_as_of?: string | null
+  account_mask?: string | null
+  notes?: string
+  is_active?: boolean
+}
+
+/** API returns decimals as strings in JSON. */
+export interface CashFlowEdgeSpec {
+  ref: string
+  from_ref: string
+  to_ref: string
+  label: string
+  amount_rule: CashFlowAmountRuleType
+  fixed_amount: string | null
+  percent_of_inflow: string | null
+  cadence: CashFlowCadenceType
+  day_of_month: number | null
+}
+
+export interface CashFlowAccountLinkRequest {
+  ref?: string | null
+  from_ref: string
+  to_ref: string
+  label?: string
+  amount_rule?: CashFlowAmountRuleType
+  fixed_amount?: string | null
+  percent_of_inflow?: string | null
+  cadence?: CashFlowCadenceType
+  day_of_month?: number | null
+}
+
+export interface CashFlowGraphDocument {
+  plan_id: number
+  nodes: CashFlowNodeSpec[]
+  edges: CashFlowEdgeSpec[]
+}
+
 /** One simulation year from `/api/bbd-projection/run` (parity with backend `YearStateRow`). */
 export interface BbdScheduleRow {
   year: number

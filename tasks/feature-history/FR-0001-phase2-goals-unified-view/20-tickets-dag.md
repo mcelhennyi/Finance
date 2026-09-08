@@ -27,7 +27,7 @@ flowchart TB
 ```
 
 <!-- ticket-dag-status:start -->
-**Where things stand:** Across the project, 21 of 41 defined tickets are fully verified; 20 remain open or are not yet recorded as complete. Phase2 goals unified view (FR-0001) is complete: all 5 tickets are fully verified.
+**Where things stand:** Across the project, 35 of 48 defined tickets are fully verified; 13 remain open or are not yet recorded as complete. Phase2 goals unified view (FR-0001) is complete: all 5 tickets are fully verified.
 <!-- ticket-dag-status:end -->
 
 ## Ticket table

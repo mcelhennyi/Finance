@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FR-0006 T14 responsive Budget width mock</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-800: #1e293b;
+      --teal-700: #0f766e;
+      --rose-50: #fff1f2;
+      --rose-200: #fecdd3;
+      --emerald-50: #ecfdf5;
+      --emerald-200: #a7f3d0;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--slate-50); color: #0f172a; }
+    main { max-width: 1120px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 14px; font-size: 24px; }
+    h2 { margin: 0 0 10px; font-size: 16px; }
+    .band { margin-bottom: 16px; border: 1px solid var(--slate-200); border-radius: 8px; background: white; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
+    .band-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--slate-100); }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--slate-100); text-align: left; vertical-align: top; }
+    th { color: var(--slate-400); background: var(--slate-50); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    td { color: var(--slate-600); }
+    .item { font-weight: 750; color: var(--slate-800); }
+    .sub { display: block; margin-top: 2px; color: var(--slate-500); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .primary-money { color: #115e59; font-weight: 750; }
+    .row-role { box-shadow: inset 4px 0 0 var(--rose-200); }
+    .row-role.source { background: var(--emerald-50); box-shadow: inset 4px 0 0 var(--emerald-200); }
+    .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5rem; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #9f1239; background: var(--rose-50); }
+    .source .badge { color: #047857; background: var(--emerald-50); }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 999px; background: #10b981; box-shadow: 0 0 0 3px #ecfdf5; }
+    .actions { text-align: right; white-space: nowrap; }
+    button { border: 0; border-radius: 8px; padding: 8px 11px; font-weight: 750; color: white; background: var(--teal-700); }
+    .ghost { color: var(--slate-600); background: var(--slate-100); }
+    .cards { display: none; padding: 12px; gap: 10px; }
+    .card { border: 1px solid var(--slate-100); border-left: 4px solid var(--rose-200); border-radius: 8px; padding: 12px; background: white; }
+    .card.source { border-left-color: var(--emerald-200); background: var(--emerald-50); }
+    .card-row { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    .modal { position: fixed; inset: 0; display: grid; place-items: stretch; padding: 0; background: rgba(15,23,42,.45); }
+    .dialog { display: flex; flex-direction: column; min-height: 100dvh; background: white; }
+    .dialog-head, .dialog-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--slate-100); }
+    .dialog-foot { border-top: 1px solid var(--slate-100); border-bottom: 0; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; overflow: auto; }
+    label { display: grid; gap: 5px; color: var(--slate-500); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+    input, select, textarea { width: 100%; min-width: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font: inherit; color: #0f172a; background: white; }
+    textarea { min-height: 98px; resize: vertical; }
+    .span-2 { grid-column: span 2; }
+    @media (max-width: 760px) {
+      main { padding: 12px; }
+      .desktop-table { display: none; }
+      .cards { display: grid; }
+      .hide-md { display: none; }
+      .band-head { align-items: start; flex-direction: column; }
+      .form-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
+    }
+    @media (min-width: 761px) {
+      .dialog { margin: 18px auto; min-height: 0; max-height: calc(100dvh - 36px); width: min(980px, calc(100vw - 36px)); border: 1px solid var(--slate-200); border-radius: 14px; box-shadow: 0 24px 70px rgba(15,23,42,.25); }
+    }
+    @media (max-width: 980px) {
+      .hide-lg { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Responsive Budget width strategy</h1>
+
+  <section class="band">
+    <div class="band-head">
+      <h2>Allocation lines</h2>
+      <button>Edit opens wide modal</button>
+    </div>
+    <div class="desktop-table">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 34%">Item</th>
+            <th style="width: 18%">Plan</th>
+            <th style="width: 14%">Monthly</th>
+            <th style="width: 14%">Timing</th>
+            <th class="hide-lg" style="width: 12%">Detail</th>
+            <th style="width: 8%; text-align: right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-role source">
+            <td><span class="badge">SRC</span> <span class="item">Paycheck</span><span class="sub">Income</span></td>
+            <td><span class="money">$8,000.00</span><span class="sub">monthly</span></td>
+            <td class="money primary-money">$8,000.00</td>
+            <td><span class="sub">1st</span></td>
+            <td class="hide-lg">Employer</td>
+            <td class="actions"><button class="ghost">Edit</button></td>
+          </tr>
+          <tr class="row-role">
+            <td><span class="badge">SINK</span> <span class="item">Mortgage</span><span class="sub">Housing</span></td>
+            <td><span class="money">$2,650.00</span><span class="sub">monthly</span></td>
+            <td class="money primary-money">$2,650.00</td>
+            <td><span class="sub">5th</span></td>
+            <td class="hide-lg">Linked account hidden here</td>
+            <td class="actions"><button class="ghost">Edit</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cards">
+      <article class="card source">
+        <div class="card-row"><div><span class="badge">SRC</span> <span class="item">Paycheck</span><span class="sub">Income - monthly</span></div><strong class="money primary-money">$8,000.00</strong></div>
+        <span class="sub">Planned $8,000.00 - due 1st - Employer</span>
+      </article>
+      <article class="card">
+        <div class="card-row"><div><span class="badge">SINK</span> <span class="item">Mortgage</span><span class="sub">Housing - monthly</span></div><strong class="money primary-money">$2,650.00</strong></div>
+        <span class="sub">Planned $2,650.00 - due 5th</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="band-head">
+      <h2>Cash-flow accounts</h2>
+      <span class="sub">Notes, masks, and binary labels collapse before names, kind, balance, and actions.</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 32%">Account</th>
+          <th style="width: 16%">Kind</th>
+          <th style="width: 20%">Balance</th>
+          <th class="hide-lg" style="width: 16%">Parent</th>
+          <th class="hide-md" style="width: 8%">State</th>
+          <th style="width: 8%; text-align: right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="item">Checking</span><span class="sub">acct_checking</span></td>
+          <td>Checking</td>
+          <td class="money">$4,250.00<span class="sub">Jun 28</span></td>
+          <td class="hide-lg">None</td>
+          <td class="hide-md"><span class="dot" aria-label="Active"></span></td>
+          <td class="actions"><button class="ghost">Edit</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<div class="modal" aria-label="Full-screen edit modal mock">
+  <section class="dialog">
+    <div class="dialog-head">
+      <h2>Edit allocation line</h2>
+      <button class="ghost">Close</button>
+    </div>
+    <div class="form-grid">
+      <label>Item name<input value="Mortgage"></label>
+      <label>Category<select><option>Housing</option></select></label>
+      <label>Planned amount<input value="2650.00"></label>
+      <label>Cadence<select><option>Monthly</option></select></label>
+      <label>Role<select><option>sink</option></select></label>
+      <label>Account<select><option>Sink from Checking</option></select></label>
+      <label>Due day<input value="5"></label>
+      <label>Counterparty<input value="Mortgage servicer"></label>
+      <label class="span-2">Notes<textarea>Escrow included.</textarea></label>
+    </div>
+    <div class="dialog-foot">
+      <span class="sub">All fields live here, not in a cramped table row.</span>
+      <div><button class="ghost">Cancel</button> <button>Save</button></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

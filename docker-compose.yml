@@ -17,8 +17,11 @@ services:
       # BBD page default scenario (YAML preferred; sibling `ian.toml` used when missing)
       FINANCE_BBD_DEFAULT_YAML: "/seed/ian.yaml"
       # Merchant display overrides (git-tracked); API rewrites this on Save/Clear in Parameters
-      FINANCE_SEED_MERCHANT_DISPLAYS: "/app/data/seed-merchant-displays.json"
+      # Budget page default allocation seed (tracked YAML; see data/budget-default-plan.yaml)
+      FINANCE_BUDGET_DEFAULT_YAML: "/app/data/budget-default-plan.yaml"
       CORS_ORIGINS: "http://localhost:3501,http://localhost:3502"
+      # Opt-in: set "true" to auto-seed "Starter cash-flow template" on first list for an empty month
+      FINANCE_ALLOCATION_AUTO_TEMPLATE: "false"
     # Re-link editable install to mounted tree (fast when unchanged); uvicorn watches /app/src
     command: >
       sh -c "pip install -e /app --no-cache-dir -q &&
@@ -33,12 +36,16 @@ services:
       - "3501:3501" # Vite dev server; see docs/PORTS.md
     volumes:
       - ./frontend:/app
-      - /app/node_modules                 # keep image deps; bind mount hides them otherwise
+      # Named volume so deps survive `docker compose run --rm` (anonymous volumes are removed with the container).
+      - finance-web-node-modules:/app/node_modules
     environment:
       VITE_API_TARGET: "http://api:8000"
+      # Headroom for `npm run build` (Vite + larger SPA chunks) inside the Node container.
+      NODE_OPTIONS: "--max-old-space-size=6144"
     depends_on:
       - api
     restart: unless-stopped
 
 volumes:
   finance-db:
+  finance-web-node-modules:

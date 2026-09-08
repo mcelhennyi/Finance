@@ -49,7 +49,7 @@ flowchart TB
 ```
 
 <!-- ticket-dag-status:start -->
-**Where things stand:** Across the project, 21 of 41 defined tickets are fully verified; 20 remain open or are not yet recorded as complete. For Business finance management (FR-0007), 0 of 13 tickets are fully verified; the next work that can start is Define workspace, ledger, and audit contracts (T-FR-0007-01).
+**Where things stand:** Across the project, 35 of 48 defined tickets are fully verified; 13 remain open or are not yet recorded as complete. For Business finance management (FR-0007), 0 of 13 tickets are fully verified; the next work that can start is Define workspace, ledger, and audit contracts (T-FR-0007-01).
 <!-- ticket-dag-status:end -->
 
 ## Ticket table

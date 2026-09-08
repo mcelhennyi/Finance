@@ -68,6 +68,22 @@ In Docker: `docker compose run --rm api python -m finance.dev_seed --export-merc
 
 Override the path with **`FINANCE_SEED_MERCHANT_DISPLAYS`** (see `docker-compose.yml`).
 
+**Budget default allocation:** the repo ships **`data/budget-default-plan.yaml`** — a purpose-built document matching Budget page fields (`plan` header + `items` with `planned_amount`, `cadence`, `payment_method`, optional `due_day` / `notes`). **`python -m finance.dev_seed`** loads it after CSV ingest (same command as **`./scripts/dev.sh --seed`**). Compose sets **`FINANCE_BUDGET_DEFAULT_YAML`** to **`/app/data/budget-default-plan.yaml`**.
+
+Point **`FINANCE_BUDGET_DEFAULT_YAML`** at another file to customize. **`FINANCE_BUDGET_ALLOCATION_PERIOD_MONTH`** (ISO date) sets the planning month when **`period_month`** is omitted from the YAML. **`FINANCE_BUDGET_DEFAULT_SEED_ENABLED=false`** skips applying the YAML.
+
+To sync DB-backed seed values back to disk after editing them in the UI:
+
+```bash
+./develop seed-sync
+```
+
+This refreshes **`data/seed-merchant-displays.json`** and exports the matching Budget plan back to **`data/budget-default-plan.yaml`**. By default, the budget export selects the plan named in the current YAML for that YAML's **`period_month`**. If you renamed the plan in the UI or want a specific plan, pass its id:
+
+```bash
+./develop seed-sync --plan-id 12
+```
+
 ### What it does
 
 1. Builds and starts the **api** and **web** services from `docker-compose.yml` (FastAPI + Vite, with reload)
@@ -78,6 +94,10 @@ Host ports are defined in **[docs/PORTS.md](../docs/PORTS.md)**.
 ### Environment variables
 
 Compose sets service env vars (see `docker-compose.yml`). For ad-hoc overrides, see `docker compose` documentation.
+
+
+- **`FINANCE_BUDGET_DEFAULT_YAML`** — path to the budget allocation seed document (repo default **`data/budget-default-plan.yaml`**; Compose **`/app/data/budget-default-plan.yaml`**).
+- **`FINANCE_ALLOCATION_AUTO_TEMPLATE`** — when `true` / `1` / `yes`, the first **`GET /api/budget-allocation/plans?month=…`** for a month with no plans inserts **Starter cash-flow template** (illustrative lines). Repo **`docker-compose.yml`** defaults to **`false`** (empty month until the user creates a plan); set **`true`** locally when you want the demo seed. See **`docs/design/budget-plans-roadmap.md`**.
 
 ### Access
 
@@ -121,6 +141,28 @@ Standalone TOML-driven projection (**`scripts/bbd-projection/bbd_projection.py`*
 See **[`bbd-projection/README.md`](bbd-projection/README.md)** for the tutorial, CLI flags, TOML map, CSV/stdout semantics, Hub versus CLI tradeoffs.
 
 The SPA **BBD** page (app nav **BBD**) calls the same engine through the Hub API: **`recharts`** story charts (trajectory, composition, borrowing vs LTV), an optional **three.js** spatial trajectory you can expand below the charts (hidden when the OS requests reduced motion), CSV/JSON export from the bottom control bar, and the narrative guide via **Docs**.
+
+---
+
+## Budget allocation validation (FR-0002)
+
+Use these checks before merging or when validating the **Budget** page and **`/api/budget-allocation/*`** stack.
+
+**Backend (API image, repo mounted at `/app`):**
+
+```bash
+docker compose run --rm -v "$(pwd):/app" -w /app api sh -c "pip install -e /app pytest -q && python -m pytest tests/ -q"
+```
+
+**Frontend (web dev image, `frontend/` mounted at `/app`):**
+
+```bash
+docker compose run --rm -v "$(pwd)/frontend:/app" -w /app web sh -c "npm run lint && npm test && npm run build"
+```
+
+**Manual smoke:** start **`./scripts/dev.sh`**, open **Budget**, create a plan and allocation lines, confirm **Unified view** shows matching category budget after save. For the FR-0006 cash-flow map, inspect desktop and phone viewports: account counts, source/sink allocation endpoints, expand/collapse, filters, mini-node text fit, and graph relayout / routing with no console errors.
+
+---
 
 ## Adding a New Script
 
