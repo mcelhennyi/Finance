@@ -60,6 +60,14 @@ Known divergence, missing test hooks, or **REWORK-REQUIRED** — design is targe
 | --- | --- | --- |
 | … | Ready / Needs design / Unknown | … |
 
+## Required expert review
+
+| Expert tag | Human / role | Semantic review scope | Planned PR reviewer or mapping gap |
+| --- | --- | --- | --- |
+| … | … | … | `@reviewer` / unresolved before final default merge |
+
+*If none:* “No `EXPERT-REVIEW` gates apply to this design tree or its protected paths.”
+
 ## Code vs design (if applicable)
 
 Short bullets only when shipped or stubbed code exists.
@@ -94,6 +102,6 @@ Numbered list; owner optional.
 
 | Verdict | Typical state |
 | --- | --- |
-| **Blocked** | Any unresolved **Fix before tickets** row |
-| **Caution** | Only **Address** / **Defer** rows; human accepts risk |
-| **Ready** | No blockers; deferrals documented |
+| **Blocked** | Any unresolved **Fix before tickets** row that would force implementation guesses |
+| **Caution** | Only **Address** / **Defer** rows or unresolved expert-review mapping; ticket work may continue |
+| **Ready** | No ticket blockers; deferrals documented; expert review surfaces inventoried for the default-branch PR |

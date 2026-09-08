@@ -2,8 +2,8 @@
 name: audit-design
 description: >-
   Pre-ticket design readiness audit for a top-level design doc: plain-English
-  report of gaps, flaws, rework, growth triggers, deferrals, and ticket
-  blockers. Use when the user runs /audit-design, asks to audit a design before
+  report of gaps, flaws, rework, growth triggers, expert-review gates,
+  deferrals, and ticket blockers. Use when the user runs /audit-design, asks to audit a design before
   feature-request, or wants a go/no-go check before FR-NNNN ticketing.
 disable-model-invocation: true
 ---
@@ -45,6 +45,7 @@ Read (as needed, not verbatim dump):
 - **`.cursor/rules/docs-authority-and-escalation.mdc`** — and project mirrors **`REWORK-REQUIRED`**, **`GROWTH`**, **`REFINEMENT`** when present.
 - **`docs/design/documentation-style.md`** — traceability, tag formats, expected doc shape.
 - **`tasks/TAG-REGISTRY.md`** — if the design references numbered ids, verify they appear reserved/allocated (flag **orphan ids** or **missing registry rows**).
+- **`docs/design/EXPERTS.md`**, then **`docs/design/EXPERTS.project.md`** when present — resolve `EXPERT:<slug>` identities and protected paths per **`docs/design/expert-review.md`**.
 
 For **large** design trees, use **subagents** per **`docs/ai-context.md` §1b** (e.g. one subagent per child doc), then **merge** into one report.
 
@@ -67,6 +68,7 @@ Search the mapped docs (and grep the repo for cross-references to those paths) f
 | **`REWORK-REQUIRED`** | **Address** — code/doc diverges from settled design |
 | **`GROWTH`** | **Defer with trigger** — ship v0 per doc; list trigger + upgrade |
 | **`REFINEMENT`** | **Defer** if v0 path is still clear; else **Address** |
+| **`EXPERT-REVIEW`** / **`EXPERT:<slug>`** | **Default-PR review plan** — inventory the semantic scope, likely human/reviewer, and any mapping gap; never classify approval or mapping as **Fix before tickets** |
 | Open **algorithm / scientist questions** (e.g. **`algorithm-questions.md`**) | **Fix** or **Address** per row (unresolved = ticket risk) |
 
 List each hit with: **id** (if any), **one-line plain English**, **owning file**, **recommended action**.
@@ -86,6 +88,7 @@ For each **major component** named in the top-level doc (store, engine, UI shell
 | **Security / privacy** | What must not be logged or sent over IPC? |
 | **Testing** | How would VAL prove compliance (integration points, golden data, diagnostics)? |
 | **Dependencies** | Ordering between subsystems obvious for a ticket DAG? |
+| **Expert review plan** | Which tagged or semantically protected surfaces should the default-branch PR route to each expert, and are mapping gaps recorded for resolution before final merge? |
 | **Traceability** | **`@LZ-…`** or equivalent links present where the project requires them? |
 | **UI look and feel** (visible UI only) | Linked **HTML mocks** under **`docs/design/mockups/`** that match the spec, or documented waiver? For additions to existing UI, do mocks show the change in the current UI context when possible? |
 
@@ -104,9 +107,9 @@ If implementation already exists for this design area:
 
 | Verdict | Meaning |
 | --- | --- |
-| **Ready** | No open **`DESIGN-GAP`** / **`DESIGN-FLAW`**; **`REWORK-REQUIRED`** and unresolved scientist questions are documented with an accepted plan; a ticket DAG is plausible. |
-| **Caution** | Some **Address** or **Defer** items remain; **`/feature-request`** may proceed if the user accepts called-out risks in intake. |
-| **Blocked** | One or more **Fix before tickets** items would force implementation guesses. |
+| **Ready** | No open **`DESIGN-GAP`** / **`DESIGN-FLAW`**; **`REWORK-REQUIRED`** and unresolved scientist questions are documented with an accepted plan; expert review surfaces are inventoried; a ticket DAG is plausible. |
+| **Caution** | Some **Address** / **Defer** items or expert-review mapping gaps remain; **`/feature-request`** may proceed while PR review planning is completed before final default-branch merge. |
+| **Blocked** | One or more **Fix before tickets** items would force implementation guesses. Expert mapping or approval alone never causes this verdict. |
 
 State verdict once at the top of the report and again in **Executive summary**.
 

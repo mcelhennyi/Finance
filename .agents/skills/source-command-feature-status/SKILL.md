@@ -1,12 +1,19 @@
 ---
 name: "source-command-feature-status"
-description: "Give a concise plain-English feature status with a BLUF, tickets-left and waves-left fractions, and a table of done, upcoming, blocked, and skipped work with rough complexity signals."
+description: "Explicit-only /feature-status command wrapper. Use only when the user directly invokes feature-status or explicitly requests its BLUF/progress-table format."
 ---
 
 # source-command-feature-status
 
-Use this skill when the user asks to run the migrated source command
-`feature-status` or asks what is done, what remains, or where a feature stands.
+Use this skill only when the user explicitly invokes `/feature-status`, names
+`$source-command-feature-status` / `$feature-status`, or directly asks to use
+the feature-status command or its BLUF/progress-table format.
+
+Do **not** infer this skill from an ordinary question about progress, completed
+work, remaining work, allocation, blockers, or next steps. For those questions,
+answer directly and, when a structured close is useful, use the project default:
+**Executive summary**, **Details**, **Suggested next step**, and **Options** when
+multiple reasonable paths exist.
 
 ## Command Template
 
@@ -17,6 +24,12 @@ Follow the canonical project skill
 
 ## Required outcome
 
+- Resolve the feature first, then resolve and surface the absolute clickable
+  path to its **`20-tickets-dag.md`**. Open it only through a genuinely exposed
+  active-client/editor open-file capability; pin it only when a separate safe
+  pin capability exists. Do not shell-launch a GUI or invent a URI/tool. Missing
+  open/pin support or a missing DAG is non-blocking; report the expected path
+  and continue.
 - Return a standalone, two-to-four-sentence **BLUF** first.
 - Give **Tickets left / total tickets** and **Waves left / total waves** as
   verified fractions immediately after the BLUF; use `unknown/unknown` rather

@@ -20,8 +20,9 @@ At session start, load in order:
 2. **`docs/ai-context.project.md`** when the file exists — repo-local extension; **never** written by **`./sync-skeleton`** (see **Project-specific overlays** above)
 3. **`tasks/ticket-progress.md`** — queue beacon, optional **Parallel streams**, and **TEST / DEV / VAL** rows
 4. **`docs/design/architecture/overview.md`** when it exists and is populated
-5. **`README.md`**
-6. **`tasks/lessons.md`**
+5. **`docs/design/EXPERTS.md`**, then **`docs/design/EXPERTS.project.md`** when present — expert identities and protected design/code scopes
+6. **`README.md`**
+7. **`tasks/lessons.md`**
 
 Skim **`tasks/handoffs/`**, **`tasks/feature-history/REGISTRY.md`**, and **`tasks/TAG-REGISTRY.md`** for recent decisions and id allocation state.
 
@@ -58,6 +59,7 @@ Skim **`tasks/handoffs/`**, **`tasks/feature-history/REGISTRY.md`**, and **`task
 | `DESIGN-FLAW` | Wrong testable assumption in design |
 | `CODE-DEFECT` | Design correct; implementation wrong |
 | `REWORK-REQUIRED` | Design/intent is settled and correct, but **shipped code or another doc is knowingly out of sync** with it — a **durable** flag that survives until the rework lands (unlike `CODE-DEFECT`, which you just fix now) |
+| `EXPERT-REVIEW` | A default-branch PR needs semantically targeted review and scoped expert approval immediately before final merge |
 | `COMPLETED` | Implementation and design match; all criteria met |
 
 **`REWORK-REQUIRED` vs `CODE-DEFECT`:** `CODE-DEFECT` = code is wrong against a correct design, fix it immediately (transient). `REWORK-REQUIRED` = a deliberate, recorded divergence between settled intent and existing code/docs that is tracked until reworked — it must name the specific file/spec that deviates and the intended end state, and is removed in the same change that lands the rework. Full convention: **`.claude/rules/rework-required.md`** (mirrored **`.cursor/rules/rework-required.mdc`**).
@@ -65,6 +67,28 @@ Skim **`tasks/handoffs/`**, **`tasks/feature-history/REGISTRY.md`**, and **`task
 **Numbered tag ids** (`DG-`, `DF-`, `RW-`, `GR-`, `R-`, `DEC-`, `TS-`, traceability `@…`, amendments): **reserve in `tasks/TAG-REGISTRY.md`**, commit, and **push to the default branch before use** — same deconfliction discipline as **`FR-NNNN`** in **`REGISTRY.md`**. See **`.cursor/rules/tag-reservation.mdc`** (mirrored **`.claude/rules/tag-reservation.md`**).
 
 **Evaluable `GROWTH` (`GR-…`):** when the trigger is measurable at runtime, software **shall** monitor and log **`GROWTH_TRIGGERED`** on fire (self-report need to amend design). Monitors must be **compiled out** by default and **runtime-disableable** when compiled in — **`.cursor/rules/growth-monitoring.mdc`** (mirrored **`.claude/rules/growth-monitoring.md`**).
+
+### Expert review gates
+
+Authoritative design may annotate a section with **`EXPERT-REVIEW:`** followed
+by one or more stable **`EXPERT:<slug>`** tags. The default-branch PR workflow
+loads **`docs/design/EXPERTS.md`** and project-owned
+**`docs/design/EXPERTS.project.md`**, then maps the final diff by both protected
+paths and semantic effects on governed interfaces, invariants, algorithms, data
+flows, risks, and acceptance behavior. This interpretation can request more
+precise review than path-only CODEOWNERS.
+
+Expert review is not an implementation gate. Missing mappings or pending
+approval never block design/ticket authoring, TEST -> DEV -> VAL, `triadDone`,
+frontier dispatch, feature integration/closeout, or non-default-branch merges
+and pushes. Carry likely review tags in tickets/handoffs, then at
+`finish-feature` or other default-PR preparation record each semantic surface
+and request its mapped reviewer. Immediately before the final merge to `main`,
+`master`, or the repository's other default branch, recheck the current PR head
+and require scoped **`EXPERT-APPROVAL`** for every active gate. Expert approval
+and user manual validation are independent; neither authorizes an agent to
+merge or push the default branch. Full protocol:
+**`docs/design/expert-review.md`** and mirrored **`expert-review`** rules.
 
 ### Amendment format
 
@@ -92,7 +116,9 @@ Skim **`tasks/handoffs/`**, **`tasks/feature-history/REGISTRY.md`**, and **`task
 - **File size and cohesion:** Prefer small, cohesive files over broad “god files.” When a file grows to multiple responsibilities or becomes difficult to review, split it into focused modules with clear interfaces.
 - **Runtime efficiency:** Keep hot-path code and I/O efficient by default (avoid unnecessary allocations, repeated network/file calls, and quadratic loops on large inputs). When trade-offs exist, favor correctness first and document notable performance decisions in the ticket diary / handoff.
 - **Security:** Follow your organization’s policies. Do **not** commit secrets; keep `.env*` out of git unless using checked-in **`.env.example`** placeholders only.
+- **Expert review:** Preserve `EXPERT-REVIEW` annotations during development; map the finished default-branch PR by semantic surface, request the targeted reviewers, and assert approval only immediately before final default-branch merge. Never block ticket triads or non-default integration on pending expert review — **`docs/design/expert-review.md`**.
 - **Downstream compliance changelogs:** When a repo publishes templates, shared packages, generated code, or process/tooling that child repos consume, every change that affects those children must include a dense, agent-readable changelog or migration note. It should name who must update, how to detect drift, required edits, verification commands, and any safe fallback so downstream repos can be brought back into compliance without re-auditing the full upstream diff.
+- **Human-readable ticket DAGs:** Keep stable ticket and Mermaid node ids for automation, but write every visible DAG label in plain English with the stable id as secondary context. Translate TEST/DEV/VAL into **Write the checks / Build the change / Verify it works**, spell out dependency annotations as title + stable id, and place a generated **Where things stand** explanation of no more than three sentences directly below the DAG. Run **`python3 scripts/refresh_ticket_dags.py --root .`** whenever ticket titles, dependencies, or tracker phases change, then verify **`python3 scripts/refresh_ticket_dags.py --root . --check`**.
 
 ---
 
@@ -137,13 +163,47 @@ Use planning for multi-step or architectural work.
 - **Prefer subagents before large work** so the main session keeps a **thin context** and does not lose track of goals. Spawn delegated work **early** when the task is likely to span **many files**, **several subsystems**, **broad repo exploration**, or **more than one focused session** of edits.
 - **Orchestrator role:** define success criteria, boundaries, and return format; merge **bounded handoffs** (paths, decisions, short markdown) from subagents instead of inlining huge tool dumps in the parent thread.
 - **Examples:** repo-wide search → delegated exploration; parallel implementation tickets (**`T-FR-NNNN-xx`**) → **`develop-frontier`** (one subagent per ticket); large **`FR-NNNN`** design → subagents per subsystem with one **serial diary** owner; **several `FR-NNNN` in design** → one subagent **per feature directory** so each **`serial-diary.md`** stays coherent.
+- **Continuous operator bugs:** assign every distinct operator-reported bug to
+  its own subagent lane for report → same-FR ticket/DAG planning → serial
+  **TEST → DEV → VAL** in an isolated child worktree. Keep the parent available
+  to ingest more reports while lanes run; serialize shared planning-file
+  integration through one named feature integration owner, but do not wait for
+  the current wave before planning or dispatching a dependency-safe new bug
+  lane. Lanes draft/push; only the owner verifies/merges shared allocation,
+  advances canonical next ids, and releases the next allocator.
 - **Platform:** In Cursor, use the **Task** tool with an appropriate `subagent_type` where available; in Claude Code, use **subagents** per product docs; in Codex, use delegated agents when the current Codex environment exposes them and the user/session policy allows delegation. If subagents are unavailable, **stop and split** the work into smaller user-visible steps rather than monolithic execution.
 
 ### 2. Subagent strategy
 
 - **Per ticket** (id **`T-FR-NNNN-xx`):** phases **TEST → DEV → VAL** serially inside that ticket’s section in the owning feature’s **`tickets.md`**, **one child worktree** under that feature’s **`.worktrees/FR-NNNN-<slug>/`** folder. Development commands inside that worktree still use Docker / Dev Container / CI images where possible.
 - Do **not** parallelize phases for the **same** ticket across subagents.
-- **Parallel tickets:** use **`identify-frontier`** / **`develop-frontier`**. Before the first wave and every later wave, **`develop-frontier`** compares the consumer's pinned `.skeleton` gitlink hash with the fetched remote tracking hash from a clean default-branch integration worktree. Equal hashes skip `sync-skeleton` entirely; different hashes require sync, validation, landing, and affected-feature refresh before ticket worktrees launch. Then merge ticket/stage work into **`feat/FR-NNNN-<slug>`**, and keep iterating on the feature branch until **§2d** **feature-complete gate** is met; use **`finish-feature`** (**`feat/FR-NNNN-<slug>`** → default branch PR) or **`finish-frontier`** (merge straight to the default branch) per policy — the parent should **delegate** implementation streams per **§1b** rather than doing every ticket inline.
+- **Parallel tickets:** use **`identify-frontier`** / **`develop-frontier`**.
+  Before the first wave and every later wave or bug micro-wave, first fetch the
+  project remote default branch and merge its newest commit into affected
+  feature branches when absent (never rewrite shared feature history); re-read
+  changed authority/docs and validate impacted behavior. Then
+  **`develop-frontier`** compares the consumer's pinned `.skeleton` gitlink hash
+  with the fetched remote tracking hash from a clean default-branch integration
+  worktree. Equal hashes skip `sync-skeleton` entirely; different hashes require
+  sync, validation, landing, and affected-feature refresh before ticket
+  worktrees launch. Merge ticket/stage work into
+  **`feat/FR-NNNN-<slug>`**, and keep iterating on the feature branch until
+  **§2d** **feature-complete gate** is met; use **`finish-feature`**
+  (**`feat/FR-NNNN-<slug>`** → default branch PR) or **`finish-frontier`**
+  (merge straight to the default branch) per policy — the parent should
+  **delegate** implementation streams per **§1b** rather than doing every
+  ticket inline.
+
+### 2a. Continuous orchestrator control
+
+The remote project default branch is the controller bus for active feature
+work: a docs-only rule, skill, design, or handoff update can intentionally
+change downstream worker behavior. Follow the mirrored
+**`orchestrator-controller`** rule for continuous per-bug lanes, the ordered
+**`harness-update-*`** skeleton transaction, and the project-default refresh
+that precedes every dispatch. This keeps one operator able to steer many active
+orchestrators through small, early integrations instead of a large conflict at
+closeout.
 
 ### 2b. Feature request lifecycle (product `FR-NNNN`)
 
@@ -154,8 +214,8 @@ Use planning for multi-step or architectural work.
 - **Codex:** **`source-command-feature-request`** under **`.agents/skills/`** (thin wrapper → **`.cursor/skills/feature-request/SKILL.md`**). Matching **`source-command-*`** wrappers cover the other slash commands. Session bootstrap and binding rules: **`.codex/rules/session.md`**; Codex-only overlay: **`.codex/project.md`**.
   **`/finish-feature`** owns **closeout** when the **feature-complete gate** passes (**§2d**, **`.cursor/skills/finish-feature/SKILL.md` §5–§7**), including the **`/explain-feature`** before/after HTML artifact and fresh-context **`/update-manual`** pass for **`docs/manual/`**. **`/feature-request-continue`** must **`git fetch`** and **verify** an integration PR is still **open** before recommending merge when docs still read like a pending PR; if already merged but closeout is missing, run **`/finish-feature`** closeout steps (or apply the same bookkeeping: **`90-closeout.md`**, **`REGISTRY.md`**, **`ticket-progress.md`**, explain-feature artifact, manual update, drop root **`CURRENT.md`**) so the next step is not stale.
 - **Registry and history:** **`tasks/feature-history/REGISTRY.md`**, one directory **`tasks/feature-history/FR-NNNN-<slug>/`** per feature (intake, layered design, **`20-tickets-dag.md`**, **`serial-diary.md`** / **`parallel/`**, optional **`DIARY.md`**, **`handoffs/`**, **`90-closeout.md`**). **Reservation rule:** once **`FR-NNNN`** and **`next_id`** are updated and the minimal feature stub exists, **commit and push to `main` right away** so other parallel features see the assignment and do not pick the same id.
-- **Expanding an existing feature:** **`/expand-feature`** / **`.cursor/skills/expand-feature/SKILL.md`** records a new addition/change as same-**`FR-NNNN`** work without allocating a new **`FR-NNNN`**. Scale the ceremony to the ask: simple UI adjustments use a dedicated child worktree plus focused validation and an HTML mock saved under **`docs/design/mockups/`** (updated from the current UI when possible); larger additions get a **`30-expand-YYYY-MM-DD-<slug>.md`** addendum inside that feature folder, deep design as a natural extension, same-FR **`T-FR-NNNN-xx`** tickets, and updates to **`20-tickets-dag.md`**, **`tickets.md`**, **`tasks/ticket-progress.md`**, **`docs/design/tickets-initial.md`**, and registry notes. Completed ticket scope is not silently rewritten; follow-up tickets capture rework. **Bug-fix expansion:** after pre-PR manual test, ingest **`/feature-bug`** reports under **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**, create same-FR tickets, set each report’s **Solving ticket**, and amend **`docs/design/`** (and mocks/manual) when the fix would leave docs untruthful.
-- **Pre-PR bug log:** **`/feature-bug`** / **`.cursor/skills/feature-bug/SKILL.md`** writes **`BUG-FR-NNNN-xx`** reports (feature-local; not `TAG-REGISTRY`) with enough detail to ticket later. Standard path: **`/feature-request`** → develop to completion → **manual test ahead of the default-branch PR** → **`/feature-bug`** until every issue is ingested → **`/expand-feature`** to ticket/fix. Tell the operator the exact report path. Do not allocate **`T-FR-NNNN-xx`** in **`/feature-bug`**.
+- **Expanding an existing feature:** **`/expand-feature`** / **`.cursor/skills/expand-feature/SKILL.md`** records a new addition/change as same-**`FR-NNNN`** work without allocating a new **`FR-NNNN`**. Scale the ceremony to the ask: simple UI adjustments use a dedicated child worktree plus focused validation and an HTML mock saved under **`docs/design/mockups/`** (updated from the current UI when possible); larger additions get a **`30-expand-YYYY-MM-DD-<slug>.md`** addendum inside that feature folder, deep design as a natural extension, same-FR **`T-FR-NNNN-xx`** tickets, and updates to **`20-tickets-dag.md`**, **`tickets.md`**, **`tasks/ticket-progress.md`**, **`docs/design/tickets-initial.md`**, and registry notes. Completed ticket scope is not silently rewritten; follow-up tickets capture rework. **Bug-fix expansion:** continuously ingest **`/feature-bug`** reports under **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**; keep one report, solving ticket, and subagent lane per bug; set each report’s **Solving ticket**; and amend **`docs/design/`** (and mocks/manual) when the fix would leave docs untruthful.
+- **Pre-PR bug lane:** **`/feature-bug`** / **`.cursor/skills/feature-bug/SKILL.md`** immediately assigns each distinct operator report to a dedicated subagent lane. The lane writes **`BUG-FR-NNNN-xx`** (feature-local; not `TAG-REGISTRY`), expands the same-FR ticket/DAG, and implements **TEST → DEV → VAL** unless the operator explicitly requested log-only. Do not wait for all reports or the current wave to finish; the parent keeps ingesting new bugs while shared planning updates integrate serially and dependency-safe implementation lanes run in parallel. Tell the operator the exact report path and solving ticket.
 - **Composes** with: **`/identify-frontier`**, **`/develop-frontier`**, **`/finish-feature`** (default for product implementation per **§2d**), **`/finish-frontier`** — the feature request flow **produces and lands** tickets with ids **`T-FR-NNNN-xx`**, then those commands run on the ticket graph. It does **not** replace them.
 - **Disambiguation:** *Identify* in the spoken *identify (FR) → develop → finish* product flow = **register `FR-NNNN` and intake**; **`/identify-frontier`** = parallel **tickets** from all **`tasks/feature-history/**/tickets.md`** + **`ticket-progress.md`** and should run **only after** tickets exist.
 
@@ -163,7 +223,22 @@ Use planning for multi-step or architectural work.
 
 - **Parallel product features are allowed:** Several **`FR-NNNN`** efforts may be in **`design`** or **`in-progress`** at the same time. Each keeps its own directory under **`tasks/feature-history/FR-NNNN-<slug>/`** (and its own **`parallel/`** diaries). **`REGISTRY.md`** is the roster of all features and statuses.
 - **One global dependency graph:** Every implementation ticket (**`T-FR-NNNN-xx`**) is **defined** in a feature’s **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**; **`docs/design/tickets-initial.md`** holds the **combined DAG** (mermaid) and links. **`identify-frontier`** computes **eligible ∩ incomplete** over the **entire** graph — tickets belonging to **different** features often run in the **same** frontier batch when **Deps** do not block each other.
-- **Orchestration:** **`develop-frontier`** may therefore mix tickets from multiple features in one wave. Its per-wave skeleton gate must complete first: fetch and compare the pinned/remote skeleton hashes from a clean current default-branch worktree. When equal, skip sync and continue; when different, sync, reconcile the changelog, land the update, and merge that landed base into each affected feature branch before creating child ticket worktrees. Each ticket then gets **one subagent** and **one child worktree** under its owning feature folder (see **§1b** / **§2**). Merge completed ticket/stage branches into each affected **`feat/FR-NNNN-<slug>`**, validate, and push **that feature branch** while work continues. Use **`finish-feature`** only when **§2d** **feature-complete gate** is satisfied for that **`FR-NNNN`** (then **PR** **`feat/FR-NNNN-<slug>`** → default branch), **or** use **`finish-frontier`** when merging **directly** into the default branch in dependency-safe order across **all** merged branches per team policy.
+- **Feature-local DAG is the top live view:** Every
+  **`tasks/feature-history/FR-NNNN-<slug>/20-tickets-dag.md`** places its
+  canonical Mermaid DAG as the first substantive section immediately after the
+  H1 and a short status legend; ticket tables, wave notes, and design history
+  follow it. The feature integration owner reconciles this graph before a wave
+  dispatch and after every wave transition against verified TEST/DEV/VAL
+  evidence: completed tickets are **green**, tickets in development are
+  **yellow**, and outstanding/dependency-waiting tickets are **red**. Visible
+  labels and dependency annotations are plain English with stable ids retained,
+  and a generated **Where things stand** explanation of no more than three
+  sentences sits directly below the DAG to summarize both the project and this
+  feature. The integration owner runs **`python3 scripts/refresh_ticket_dags.py
+  --root .`**, reviews the result, and commits/pushes the refreshed DAG with the
+  feature controller state before starting the next wave; ticket workers do not
+  independently rewrite shared graph status.
+- **Orchestration:** **`develop-frontier`** may therefore mix tickets from multiple features in one wave. Before each wave or bug micro-wave, fetch the project remote default and merge its newest absent commit into every affected feature; resolve conflicts, re-read changed authority/docs, and validate affected behavior. Then complete the skeleton hash gate: fetch and compare the pinned/remote skeleton hashes from a clean current default-branch worktree. When equal, skip sync and continue; when different, sync, reconcile the changelog, land the update, and merge that landed base into each affected feature branch before creating child ticket worktrees. Each ticket then gets **one subagent** and **one child worktree** under its owning feature folder (see **§1b** / **§2**). Expert roster state and approval never block these dispatches or ticket triads. Merge completed ticket/stage branches into each affected **`feat/FR-NNNN-<slug>`**, validate, and push **that feature branch** while work continues. Use **`finish-feature`** only when **§2d** **feature-complete gate** is satisfied for that **`FR-NNNN`** (then **PR** **`feat/FR-NNNN-<slug>`** → default branch), **or** use **`finish-frontier`** when merging **directly** into the default branch in dependency-safe order across **all** merged branches per team policy.
 - **Shared files (`tasks/ticket-progress.md`, per-feature **`tickets.md`**, `docs/design/tickets-initial.md` DAG, `REGISTRY.md`):** Parallel agents must **avoid clobbering** shared tables: update **only** the **Progress** row for the **ticket id you own**; edit **only** your feature’s **`tickets.md`** for **`###`** sections; for **Current focus** / registry / global mermaid **`triadDone`**, **coordinate** (short handoff in **`tasks/handoffs/`**, or a single integration owner). **`triadDone`** unions on merge follow **Finish-frontier merge notes** at the end of this file.
 - **Hot-file contention:** If two parallel streams must edit the **same** files repeatedly, **serialize** via an explicit **dependency** in the relevant **`tickets.md`** or a small **foundation ticket** that lands first.
 
@@ -171,8 +246,8 @@ Use planning for multi-step or architectural work.
 
 - **Feature integration branch + worktree:** For each **`FR-NNNN`** in implementation, maintain a long-lived git branch **`feat/FR-NNNN-<slug>`** (same **`<slug>`** as the feature-history folder) checked out at **`.worktrees/FR-NNNN-<slug>/feature/`**.
 - **Ticket/stage branches:** Every worked ticket or stage branches from the feature branch and includes both names, e.g. **`feat/FR-NNNN-<slug>/T-FR-NNNN-xx-short-name`** (or **`feat/FR-NNNN-<slug>/stage-short-name`** for non-ticket stages). Its worktree lives under **`.worktrees/FR-NNNN-<slug>/<ticket-or-stage-slug>/`** and merges **into the feature branch first** — not directly to the **default branch** — unless an explicit exception is documented for hotfix flows.
-- **Feature-complete gate (default-branch PR):** For a given **`FR-NNNN`**, treat **feature implementation** as **complete** when every **`### T-FR-NNNN-xx`** section in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** has **TEST**, **DEV**, and **VAL** = **`done`** in **`tasks/ticket-progress.md`**. Until then, keep all product implementation on **`feat/FR-NNNN-<slug>`** — merge ticket/stage branches there, revalidate, push the feature branch, update **`CURRENT.md`** / **`handoffs/`**, and run **`/identify-frontier`** / **`/develop-frontier`** for the next tickets — **do not** open a **pull request from `feat/FR-NNNN-<slug>` to the default branch** for partial delivery. **Documented exceptions** (hotfix, agreed slice in **`handoffs/`** or **`90-closeout.md`**, or explicit team decision) may override this default.
-- **`finish-feature`:** After the **feature-complete gate** is met, merges any remaining ticket/stage branches into **`feat/FR-NNNN-<slug>`**, runs validation there, pushes the feature branch, and opens (or updates) a **pull request to the default branch** for **human** review and merge. In the **same run**, when the gate passes, **mandatory feature closeout** per **`.cursor/skills/finish-feature/SKILL.md` §5–§7**: **`90-closeout.md`**, **`REGISTRY.md`** → **`done`**, feature **`README.md`**, **`tasks/ticket-progress.md`** (**Parallel streams** / **Current focus**), **`/explain-feature`** before/after HTML under the feature-history folder, fresh-context **`/update-manual`** for **`docs/manual/`**, and **`handoffs/YYYY-MM-DD-finish-feature.md`** — do **not** defer closeout to the merger or **`/feature-request-continue`**. If the integration PR is **already merged**, skip opening a PR but still run closeout when artifacts are missing or stale. If the gate is **not** met, **do not** open a default-branch PR, write **`90-closeout.md`**, or run the feature-end explain-feature/manual update — keep work on **`feat/FR-NNNN-<slug>`** only. It does **not** replace **`finish-frontier`** for workflows that still integrate straight to the default branch.
+- **Feature-complete gate (default-branch PR):** For a given **`FR-NNNN`**, treat **feature implementation** as **complete** when every **`### T-FR-NNNN-xx`** section in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** has **TEST**, **DEV**, and **VAL** = **`done`** in **`tasks/ticket-progress.md`**, and no operator bug report or dedicated bug lane remains `open`, `ticketed`, or `in-progress`. Until then, keep all product implementation on **`feat/FR-NNNN-<slug>`** — merge ticket/stage branches there, revalidate, push the feature branch, update **`CURRENT.md`** / **`handoffs/`**, and run **`/identify-frontier`** / **`/develop-frontier`** for the next tickets — **do not** open a **pull request from `feat/FR-NNNN-<slug>` to the default branch** for partial delivery. **Documented exceptions** (hotfix, agreed slice in **`handoffs/`** or **`90-closeout.md`**, or explicit team decision) may override this default.
+- **`finish-feature`:** After the **feature-complete gate** is met, merges any remaining ticket/stage branches into **`feat/FR-NNNN-<slug>`**, runs validation there, pushes the feature branch, and opens (or updates) a **pull request to the default branch** for **human** review and merge. During PR preparation it maps changed semantic surfaces to **`EXPERT:<slug>`** reviewers, records the mapping, and requests targeted review; missing mappings or pending approval do not block PR creation or feature closeout, but keep the PR not merge-ready. In the **same run**, when the gate passes, **mandatory feature closeout** per **`.cursor/skills/finish-feature/SKILL.md` §5–§7**: **`90-closeout.md`**, **`REGISTRY.md`** → **`done`**, feature **`README.md`**, **`tasks/ticket-progress.md`** (**Parallel streams** / **Current focus**), **`/explain-feature`** before/after HTML under the feature-history folder, fresh-context **`/update-manual`** for **`docs/manual/`**, and **`handoffs/YYYY-MM-DD-finish-feature.md`** — do **not** defer closeout to the merger or **`/feature-request-continue`**. Immediately before final default-branch merge, the current PR head must have all scoped expert approvals; that check is distinct from user manual validation and never implies authority for the agent to merge. If the gate is **not** met, **do not** open a default-branch PR, write **`90-closeout.md`**, or run the feature-end explain-feature/manual update — keep work on **`feat/FR-NNNN-<slug>`** only. It does **not** replace **`finish-frontier`** for workflows that still integrate straight to the default branch.
 - **`CURRENT.md`:** keep the feature integration branch’s file accurate through **`finish-feature`**; the **PR merge to `main`** should drop **`CURRENT.md`** from **`main`** so the default branch stays neutral (**`feature-request`** skill).
 - **Continue / milestone handoffs** for a feature belong **primarily** under **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`** (e.g. `YYYY-MM-DD-continue.md`, `YYYY-MM-DD-milestone.md`). Optionally mirror a one-line pointer in **`tasks/handoffs/`** if the team wants a global inbox — the **authoritative** narrative for “what’s next on this feature” stays next to that feature’s artifacts.
 - **Diaries:** **`serial-diary.md`** is one append-only chain for serial work; parallel agents write only under **`parallel/<stream>.md`**. Periodically (and at closeout), produce **`DIARY.md`** in the same feature folder: **merge** content from **`serial-diary.md`** and **`parallel/*.md`** into **one** file ordered as a **stack** — **newest entries at the top** — each block labeled with **source file**, **date**, and **git ref** (branch or SHA) when known so git history stays traceable. **Do not delete** the underlying **`serial-diary.md`** / **`parallel/`** files when generating **`DIARY.md`**; they remain the raw audit log.
@@ -194,10 +269,21 @@ For web UI work, required **Web UI validation** in **Implementation standards** 
 - When several features are active, keep **`Parallel streams`** (in **`ticket-progress.md`**) accurate, or add a dated line to **`tasks/handoffs/`** naming each stream’s **ticket id**, **`FR-NNNN`**, branch, and **`.worktrees/…`** path.
 - When a feature is **`complete`** in **`REGISTRY.md`**, **remove** that **`FR-NNNN`** from **`Parallel streams`** (do not leave it as active work); write or refresh **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`**, run or verify the feature-end **`/explain-feature`** artifact and **`/update-manual`** pass, and align **Current focus** with the next incomplete ticket — same contract as **`feature-request`** skill **Closeout** and **`/feature-request-continue`** post-merge hygiene.
 - When a ticket completes, update the **DAG Overview** **`triadDone`** classes in **`docs/design/tickets-initial.md`** (per **`docs/design/documentation-style.md`** — e.g. `TFR0007_01_TEST` … `triadDone`).
+- Pending or missing expert review never changes TEST/DEV/VAL or `triadDone`; it is tracked only on the default-branch PR and checked immediately before that merge.
 
-### 6. Session end
+### 6. User-facing response close
 
-Optional **Suggested next step** for the next worker (from **Current focus** + what you finished).
+- For a substantive answer that benefits from a structured close, use the
+  default order: **Executive summary**, **Details**, **Suggested next step**,
+  and **Options** when more than one reasonable path exists. A short factual
+  answer may stay direct rather than inventing empty sections.
+- The specialized `/feature-status` BLUF, ticket/wave fractions, and
+  Done/Upcoming/Blocked/Skipped table are **explicit-invocation only**. Use that
+  format only when the user invokes `/feature-status`, names its skill, or
+  directly asks for that exact format; never infer it from an ordinary progress,
+  allocation, blocker, completion, summary, or next-step question.
+- Derive **Suggested next step** from **Current focus** and what was completed;
+  keep facts, recommendations, and alternatives distinct.
 
 ### 7. Ticket completion — commit, push, PR
 
@@ -205,7 +291,7 @@ When **TEST/DEV/VAL** are all **`done`**:
 
 1. **Commit** — Conventional message; optional metrics footer per **`.cursor/skills/commit-with-ai-metrics/SKILL.md`** / **`/commit-with-metrics`**.
 2. **Push** — `git push -u origin HEAD` (or as required).
-3. **Open PR** — Prefer `gh pr create`; if unavailable, note what blocked it. Under the **feature-branch workflow** (**§2d**), each completed ticket/stage merges into **`feat/FR-NNNN-<slug>`**; ticket-level PRs (if any) use **base** **`feat/FR-NNNN-<slug>`** and **head** the feature-prefixed ticket/stage branch. The **`feat/FR-NNNN-<slug>`** → default branch PR is opened **only** when **§2d** **feature-complete gate** is met — **`finish-feature`** then opens (or updates) that **PR**; still **no** automated push to the default branch. For **direct-to-main** integration, use the default branch as **base** for ticket PRs per team policy.
+3. **Open PR** — Prefer `gh pr create`; if unavailable, note what blocked it. Under the **feature-branch workflow** (**§2d**), each completed ticket/stage merges into **`feat/FR-NNNN-<slug>`**; ticket-level PRs (if any) use **base** **`feat/FR-NNNN-<slug>`** and **head** the feature-prefixed ticket/stage branch. The **`feat/FR-NNNN-<slug>`** → default branch PR is opened **only** when **§2d** **feature-complete gate** is met — **`finish-feature`** then opens (or updates) that **PR**, records semantic `EXPERT:<slug>` mappings, and requests targeted reviewers; pending review does not affect ticket completion. Immediately before the PR merges to the default branch, require scoped approvals for its current head; still **no** automated push or inferred merge authority. Direct-to-default integration follows the same final gate.
 
 ---
 
@@ -217,16 +303,18 @@ When merging multiple ticket/stage branches (via **`finish-frontier`** into **`m
 
 After merge resolution, run a mandatory full revalidation gate on the **target** branch (**`main`** for **`finish-frontier`**; **`feat/FR-NNNN-<slug>`** when finishing a feature) before pushing **that** branch:
 
-- If all required checks pass: **`finish-frontier`** may push the default branch; **`finish-feature`** pushes only **`feat/FR-NNNN-<slug>`** and relies on the **PR to the default branch** for human merge (opened only after **§2d** **feature-complete gate**) — never push the default branch from automation in the feature workflow.
-- If any check fails or a requirement is unmet, do **not** push the green integration branch; create/update a blocker as the primary ticket in `tasks/ticket-progress.md`, set `Session status` to `blocked`, and for **`finish-frontier`** push the integration state to `broken-main` until the blocker reaches VAL `done`.
+- If validation passes: prepare the default-branch PR/review record, map semantic surfaces to experts, and request targeted review. Pending expert approval leaves the PR open but does not create a blocker ticket, undo `triadDone`, or prevent pushing the same candidate to a non-default integration branch.
+- Immediately before a final default-branch push or merge, re-fetch and require scoped expert approvals for the current head, independently verify any required user manual validation, and confirm explicit merge authority. **`finish-feature`** itself pushes only **`feat/FR-NNNN-<slug>`** and never infers authorization to merge the PR.
+- If validation fails, do **not** push the green integration branch; create/update a blocker as the primary ticket in `tasks/ticket-progress.md`, set `Session status` to `blocked`, and for **`finish-frontier`** push the integration state to `broken-main` until the blocker reaches VAL `done`.
 
 ---
 
 ## Further reading
 
-- **`.skeleton/CHANGELOG.md`** — after **`./sync-skeleton`**, read **After sync: read the changelog** and **`[Unreleased]` → Template** / **Deprecations** for **`Consumer manual:`** / **`[consumer manual]`** follow-ups
+- **`.skeleton/CHANGELOG.md`** — after **`./sync-skeleton`**, review the recorded old-pin..new-integrated diff plus crossed release sections and apply only **`Consumer manual:`** / **`[consumer manual]`** and Deprecation instructions introduced or changed in that range
 - **`docs/skeleton-project-overlays.md`** — **`*.project.*`** companion files for repo-specific rules next to template-synced paths
 - **`INIT.MD`** — clone, **`init-skeleton`**, **`sync-skeleton`**, **`init-project`**
 - **`sync-skeleton`** skill / **`/sync-skeleton`** — run **`./sync-skeleton`** from the project root (see **`INIT.MD` → *Syncing template updates***)
 - **`docs/design/documentation-style.md`** — ticket ids, traceability, writing rules
+- **`docs/design/expert-review.md`** — named domain-expert gates, roster resolution, approval evidence, and PR enforcement
 - **`.cursor/skills/feature-request/SKILL.md`** — full **`FR-NNNN`** stage contract

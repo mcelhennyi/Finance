@@ -5,21 +5,35 @@ alwaysApply: true
 
 All **process** standards for this project live in **`docs/ai-context.md`** and, when present, **`docs/ai-context.project.md`** (load both per **`docs/ai-context.md` → Session bootstrap**). Load and follow them at the start of every session.
 
+**Harness map:** Read **`HARNESS_GUIDE.md`** before taking action. It is a thin map to the live sources, not an authority that overrides them.
+
 **Documentation as source of truth:** **`docs/design/`** (and published docs site, if any) specifies product and system behavior; **`docs/ai-context.md`** specifies AI dev process. Details: **`.cursor/rules/docs-authority-and-escalation.mdc`**.
 
 **UI design mocks:** user-visible UI design create/update → **HTML mocks** in **`docs/design/mockups/`** before implementation — **`.cursor/rules/ui-design-mockups.mdc`**.
+
+**Expert review:** preserve **`EXPERT-REVIEW`** / **`EXPERT:<slug>`** through ticket work; during the default-branch PR, map changed semantic surfaces through **`docs/design/EXPERTS.md`** plus the project overlay and request targeted review. Approval gates only the final default-branch merge, never TEST/DEV/VAL or non-default integration — **`.cursor/rules/expert-review.mdc`**.
 
 **Tag reservation:** numbered ids (`DG-`, `RW-`, `GR-`, `FR-`, …) — **`tasks/TAG-REGISTRY.md`** + **`REGISTRY.md`**; **commit and push before use** — **`.cursor/rules/tag-reservation.mdc`**.
 
 **Covers:** session bootstrap, **git worktrees** under `.worktrees/FR-NNNN-<slug>/` (feature worktree plus feature-prefixed ticket/stage branch worktrees), **`tasks/ticket-progress.md`** beacon, per-feature **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`**, global DAG index **`docs/design/tickets-initial.md`**, documentation authority and escalation tags, **subagents ahead of large work**, ticket phases (**TEST / DEV / VAL**), and git hygiene (commit, push, PR) per team policy.
 
-**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design to **`tickets.md`**), **`expand-feature`** / **`/expand-feature`** for same-**`FR-NNNN`** additions scaled to the ask (simple UI tweak = dedicated worktree + docs HTML mock; involved expansion = addendum + same-FR ticket/DAG expansion; bug-fix expansion ingests **`/feature-bug`** reports), **`feature-bug`** / **`/feature-bug`** for pre-PR manual-test logs under **`bugs/`**, then **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default, **only after** **`docs/ai-context.md` §2d** feature-complete gate; **`finish-feature`** runs **mandatory closeout** — **`90-closeout.md`**, **`REGISTRY`**, **`ticket-progress`** — plus **`/explain-feature`** before/after HTML and a fresh-context **`/update-manual`** pass for **`docs/manual/`**) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. Before every wave, **`develop-frontier`** compares the pinned/fetched remote skeleton hashes from a clean default-branch worktree: equal skips sync; different requires sync, validation, landing, and affected-feature refresh before ticket worktrees launch. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. **`/commit-with-metrics`** is optional for commits.
+**Feature DAG live view:** every feature-local **`20-tickets-dag.md`** keeps its
+canonical Mermaid graph at the top. The feature integration owner refreshes it
+before and after each wave: completed green, in-development yellow, outstanding
+red. Run **`python3 scripts/refresh_ticket_dags.py --root .`** so visible labels
+and dependencies stay plain English with stable ids preserved and a generated
+project/feature **Where things stand** explanation of no more than three
+sentences stays directly below the graph; verify with **`--check`**.
+
+**Feature workflow (compose, do not fork):** **`feature-request`** / **`/feature-request`** (design to **`tickets.md`**), **`expand-feature`** / **`/expand-feature`** for same-**`FR-NNNN`** additions scaled to the ask (simple UI tweak = dedicated worktree + docs HTML mock; involved expansion = addendum + same-FR ticket/DAG expansion), and **`feature-bug`** / **`/feature-bug`** for one continuous report→same-FR-ticket→TEST→DEV→VAL subagent lane per operator bug while the parent keeps accepting new reports. Serialize shared bug-id/DAG integration; parallelize dependency-safe ticket workers. Then use **`identify-frontier`** / **`develop-frontier`** / **`finish-feature`** (default, **only after** **`docs/ai-context.md` §2d** feature-complete gate; **`finish-feature`** runs **mandatory closeout** — **`90-closeout.md`**, **`REGISTRY`**, **`ticket-progress`** — plus **`/explain-feature`** before/after HTML and a fresh-context **`/update-manual`** pass for **`docs/manual/`**) or **`finish-frontier`** on the **global** ticket graph — see **`docs/ai-context.md` §2b–§2d**. Before every wave or bug micro-wave, **`develop-frontier`** first merges the fetched project remote default into affected features when absent, re-reads changed authority/docs, and validates the impact; it then compares pinned/fetched remote skeleton hashes: equal skips sync, different requires sync, validation, landing, and affected-feature refresh before ticket worktrees launch. On **`feat/*`** implementation branches, maintain repo-root **`CURRENT.md`** per that skill. Follow **`.cursor/rules/orchestrator-controller.mdc`** for the ordered harness-update transaction. **`/commit-with-metrics`** is optional for commits.
 
 **Development commands:** Run build/test/lint/format/package-manager/dev-server/doc-build commands inside Docker / Docker Compose / Dev Container / CI images where possible. Prefer **`./develop`**, `docker compose run`, or the configured Dev Container; document host-local exceptions in ticket diaries or handoffs.
 
 **Web UI validation:** Required for any user-visible web UI work. Follow **`docs/ai-context.md` → Web UI validation**: scripted frontend checks plus rendered browser inspection before **VAL**; project overlays or stack conventions provide commands, local URL, browser-capable tool, and route/state matrix.
 
 **Manual docs and feature explanations:** **`/explain-feature`** writes completed-feature before/after HTML under **`tasks/feature-history/FR-NNNN-<slug>/`** and runs during **`/finish-feature`** closeout; **`/explain-and-document`** is the explicit opt-in workflow for turning an explanation into the static HTML manual under **`docs/manual/`**; **`/update-manual`** refreshes that manual from the last reviewed code hash and also runs during **`/finish-feature`** closeout. Do not convert ordinary explanatory answers into manual pages unless the user invokes or clearly requests the manual workflow.
+
+**User-facing response close:** For substantive answers that benefit from structure, prefer **Executive summary**, **Details**, **Suggested next step**, and **Options** when several reasonable paths exist. The `/feature-status` BLUF/fractions/status-table format is **explicit-invocation only**; do not infer it from ordinary progress, allocation, blocker, completion, summary, or next-step questions.
 
 **Doc sync:** When you change Cursor, Claude, or Codex rules/skills/commands, follow **`.cursor/rules/cursor-claude-doc-sync.mdc`**.
 

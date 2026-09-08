@@ -203,28 +203,50 @@ flowchart LR
 
 **Human-facing rule:** The **Title** column is the primary name in prompts, diaries, and handoffs. Use **ID** for deps, branches, and `ticket-progress.md`. When talking to the user, pair **title + linked id** to `tickets.md` (see **`.cursor/skills/feature-request/SKILL.md` → Human-readable names vs ticket ids**).
 
-**Plain-English rule:** Titles, DAG **Summary of change**, and every new/not-yet-started ticket body must pass a cold-read test — see **`.cursor/skills/feature-request/SKILL.md` → Plain-English ticket writing**. Prefer a little clear context over dense jargon.
+**Plain-English rule:** Titles, visible Mermaid labels, dependency annotations,
+DAG **Summary of change**, the short status immediately below the graph, and
+every new/not-yet-started ticket body must pass a cold-read test — see
+**`.cursor/skills/feature-request/SKILL.md` → Plain-English ticket writing**.
+Prefer a little clear context over dense jargon; keep stable ids second for
+tools and traceability.
 
 ```markdown
 # FR-NNNN — Work breakdown and DAG
 
-## Ticket table
+Status colors: **green** = TEST/DEV/VAL complete; **yellow** = in development;
+**red** = outstanding or waiting on dependencies. The feature integration owner
+updates this graph before dispatch and after every wave.
 
-| ID | Title (required — human-facing name) | Type | Deps (ticket IDs) | Summary of change (plain English, 1–2 lines) | Suggested order group | Link (optional) |
-|----|----------------------------------------|------|---------------------|----------------------------------------------|------------------------|-----------------|
-| T-FR-0007-01 | Contract: public API surface | Story/Task | none | Lock the shared request/response shapes so UI and backend agree before either side builds. | P0 foundation | [details](tickets.md#anchor-after-promote) |
-| T-FR-0007-02 | Implement batch ingest path | Story/Task | T-FR-0007-01 | Accept a batch of records, store them safely, and return clear success/failure per item. | P1 | [details](tickets.md#…) |
-
-**Parallelization rule:** Any two tickets with **disjoint** transitive file/code ownership and **all deps in earlier VAL-done** can run in parallel (same rule as `identify-frontier`).
-
-## DAG (Mermaid)
+## Canonical DAG
 
 Use a **second** code fence in the real doc (nesting is invalid inside one template block). **Label nodes with title, then id in parentheses** (ids stay unique as Mermaid node ids):
 
     flowchart TB
-      T01["Contract: public API surface (T-FR-0007-01)"]
-      T02["Implement batch ingest path (T-FR-0007-02)"]
+      T01["Agree on the public request format (T-FR-0007-01)"]
+      T02["Let people submit a batch safely (T-FR-0007-02)"]
       T01 --> T02
+      classDef completed fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
+      classDef inDevelopment fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:2px
+      classDef outstanding fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px
+      class T01,T02 outstanding
+
+<!-- ticket-dag-status:start -->
+**Where things stand:** Across the project, <completed> of <total> defined tickets are fully verified; <plain-English remaining-count clause>. For <plain-English feature name> (FR-NNNN), <completed> of <total> tickets are fully verified; the next work that can start is <ticket title> (T-FR-NNNN-xx).
+<!-- ticket-dag-status:end -->
+
+Keep this note directly below the Mermaid block and to no more than three
+sentences. Generate or refresh it with
+`python3 scripts/refresh_ticket_dags.py --root .` after the canonical ticket and
+tracker rows exist.
+
+## Ticket table
+
+| ID | Title (required — human-facing name) | Type | Needs first (title + stable ID) | Summary of change (plain English, 1–2 lines) | Suggested order group | Link (optional) |
+|----|----------------------------------------|------|---------------------|----------------------------------------------|------------------------|-----------------|
+| T-FR-0007-01 | Agree on the public request format | Story/Task | Nothing — can start immediately | Lock the shared request/response shapes so UI and backend agree before either side builds. | P0 foundation | [details](tickets.md#anchor-after-promote) |
+| T-FR-0007-02 | Let people submit a batch safely | Story/Task | Agree on the public request format (T-FR-0007-01) | Accept a batch of records, store them safely, and return clear success/failure per item. | P1 | [details](tickets.md#…) |
+
+**Parallelization rule:** Any two tickets with **disjoint** transitive file/code ownership and **all deps in earlier VAL-done** can run in parallel (same rule as `identify-frontier`).
 
 ## Map to feature **`tickets.md`** + global index
 
@@ -232,6 +254,9 @@ Use a **second** code fence in the real doc (nesting is invalid inside one templ
 - Register the feature path in **`tasks/feature-history/TICKET-SOURCES.md`**.
 - Extend **`docs/design/tickets-initial.md`**: feature table row + **global mermaid** edges / **`triadDone`** as needed.
 - Add rows to **`tasks/ticket-progress.md`**.
+- Run **`python3 scripts/refresh_ticket_dags.py --root .`** so title-first
+  labels, readable dependency annotations, lifecycle colors, and the two-sentence
+  project/feature status are derived from those canonical sources.
 
 ## Suggested `identify-frontier` check
 
@@ -251,6 +276,7 @@ Use this shape for every **new** ticket and when refreshing a **not-yet-started*
 **Type:** Story/Task/…
 **Deps:** none | T-FR-NNNN-yy, …
 **Order group:** P0 / P1 / …
+**Expert review:** none | `EXPERT:<slug>` — <semantic surface> — planned PR review `@<reviewer>` | mapping pending before final default merge
 
 **In plain English:**
 <2–4 short sentences. Who benefits, what changes, what “done” looks like.

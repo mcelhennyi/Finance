@@ -18,6 +18,12 @@ Follow the Cursor project skill **`.cursor/skills/expand-feature/SKILL.md`**.
   addendum, expand **`tickets.md`** and **`20-tickets-dag.md`**, update
   **`tasks/ticket-progress.md`** and **`docs/design/tickets-initial.md`**, then
   optionally run **`/identify-frontier`** / **`/develop-frontier`**.
+- Preserve the canonical Mermaid graph at the top of **`20-tickets-dag.md`**;
+  after ticket/tracker edits run **`python3 scripts/refresh_ticket_dags.py --root
+  .`**, then **`--check`**. Review plain-English visible labels/dependencies,
+  stable ids/edges, completed green, in-development yellow, outstanding red,
+  and the generated project/feature explanation of no more than three sentences
+  directly below the graph.
 - Scale the process to the ask: simple UI adjustments use a dedicated
   worktree/branch plus focused validation and a docs HTML mock, while involved
   additions expand same-FR tickets and use parallel frontier work when possible.
@@ -27,10 +33,11 @@ Follow the Cursor project skill **`.cursor/skills/expand-feature/SKILL.md`**.
   **`T-FR-0006-08`** after **`T-FR-0006-07`**.
 - Completed tickets are historical: create follow-up tickets for rework instead
   of silently changing done ticket scope.
-- **Bug-fix expansion:** ingest open **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**
-  reports, create same-FR tickets, set each report’s **Solving ticket**, and
-  amend **`docs/design/`** (and mocks/manual) when the fix would leave docs
-  untruthful. See **`.cursor/skills/expand-feature/SKILL.md` → Bug-fix expansion**.
+- **Continuous bug-fix expansion:** assign one subagent lane and one same-FR
+  solving ticket per report; serialize shared id/DAG planning, then run
+  dependency-safe TEST→DEV→VAL lanes in parallel without waiting for all bugs
+  or the current wave. Keep docs/mocks/manual truthful. See
+  **`.cursor/skills/expand-feature/SKILL.md` → Continuous bug-fix lanes**.
 - When mocking an additional UI feature, update the current UI if possible as
   the example and save the HTML under **`docs/design/mockups/`**.
 

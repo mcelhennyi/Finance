@@ -28,6 +28,20 @@ Copy into **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`** when **`/fin
 
 - <command or environment> — <result>
 
+## Expert review
+
+| Expert tag | Semantic surface / paths | Human / role | State | Evidence or requested reviewer |
+|---|---|---|---|---|
+| `EXPERT:<slug>` | <behavior/invariant and paths> | <name or role> | approved / pending / mapping unresolved / changes requested | <URL or `@reviewer`> |
+
+*If none:* “No `EXPERT-REVIEW` gate applied to the delivered paths.”
+
+## User manual validation
+
+**State:** not required / pending / passed / changes requested
+
+<Evidence or operator note. This is independent of expert approval.>
+
 ## Deferred / follow-up
 
 | Item | Tracking |
@@ -49,4 +63,6 @@ Copy into **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`** when **`/fin
 - **Merge commit:** `<sha>` (or *pending*)
 - **Feature branch:** `feat/FR-NNNN-<slug>` (retained on remote)
 - **Handoff:** [`handoffs/YYYY-MM-DD-finish-feature.md`](handoffs/YYYY-MM-DD-finish-feature.md)
+- **Expert enforcement:** semantic policy-only / CODEOWNERS + protected branch verified
+- **Final merge authority:** not inferred; record the separately authorized merger/action when known
 ```

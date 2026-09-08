@@ -1,6 +1,6 @@
 ---
 name: "source-command-finish-frontier"
-description: "Commits and pushes parallel ticket/stage worktrees, rebases each feature branch onto origin/main in sequence, merges them into the integration main checkout, and pushes main only after mandatory post-merge revalidation."
+description: "Commits and pushes parallel ticket/stage worktrees, rebases each feature branch onto origin/main in sequence, merges them into an integration candidate, and prepares validated default integration; applicable expert gates require a pull request."
 ---
 
 # source-command-finish-frontier
@@ -19,6 +19,7 @@ Close out **multi-worktree** feature branches that were valid in parallel (see *
 
 - **Integration checkout** on **`main`** (not per-ticket development worktrees).
 - Ordered branch list in dependency-safe order (shared foundations before dependents).
+- Default-branch integration uses PR-time semantic expert mapping and a final approval check; no expert state is a precondition for ticket/stage branch work.
 - For **heavy** merge/revalidation, delegate per-branch checks via **subagents**; keep the integration thread focused — **`docs/ai-context.md` §1b**.
 
 ## 1 — Clean worktrees: commit and push
@@ -46,15 +47,24 @@ On **`main`**:
 2. For each branch: `git merge --no-ff <branch> -m "merge: <short title> (finish frontier)"`
 3. If conflicts touch `docs/design/tickets-initial.md`, keep a **union** of completed **`triadDone`** `class` lines for all completed tickets. If conflicts touch **`tasks/feature-history/**/tickets.md`**, merge without losing **`###`** ticket sections.
 4. Resolve other conflicts deliberately (shared config, lockfiles, etc.).
-5. Do not push yet.
+5. Run **`python3 scripts/refresh_ticket_dags.py --root .`**. Review
+   plain-English labels/dependencies, preserved ids/edges, lifecycle colors, and
+   each directly-below project/feature **Where things stand** explanation;
+   require **`--check`**.
+6. Do not push yet.
+
+Map affected **`EXPERT-REVIEW`** gates from both changed paths and semantic
+effects on interfaces, invariants, algorithms, data flows, risks, and acceptance
+behavior. Record each surface and request targeted reviewers on a default-branch
+PR. Missing mapping or pending approval does not block candidate assembly,
+revalidation, ticket triads, or a non-default review-branch push.
 
 ## 4 — Post-merge revalidation gate (mandatory)
 
 After union conflict resolution, run full integrated validation:
 
-1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per **`docs/ai-context.md`**) inside Docker / Docker Compose / Dev Container / CI images where possible; document any host-local exception.
-2. If **all checks pass**, `git push origin main`.
-3. If **any check fails** or a requirement is unmet:
+1. Re-run all required verification for the merged state (ticket acceptance checks and project test suite per **`docs/ai-context.md`**) inside Docker / Docker Compose / Dev Container / CI images where possible; document any host-local exception and require the ticket-DAG refresh **`--check`** to pass.
+2. If **any validation check fails**:
    - Create a blocker task as the **primary ticket** (repair ticket id) with explicit failing checks/requirements.
    - Update **`tasks/ticket-progress.md`**:
      - Set `Current focus` **Active ticket** to the blocker.
@@ -64,6 +74,19 @@ After union conflict resolution, run full integrated validation:
    - Commit tracker updates.
    - Push integration state to **`broken-main`** (`git push origin HEAD:broken-main`).
    - Stop; do not continue frontier development until blocker VAL is `done`.
+3. If validation passes, push a non-default integration branch. When any
+   applicable expert gate exists, open/update the default-branch PR; a direct
+   default-branch push is not allowed for that candidate. With no applicable
+   expert gate, follow normal project integration policy.
+4. For an expert-governed candidate, immediately before the final PR merge,
+   re-fetch and inspect the current head; require all scoped expert approvals and
+   verify user manual validation separately. Pending governance leaves the PR
+   open without a blocker ticket or `triadDone` rollback.
+5. Neither expert nor repository-owner approval authorizes the merge. An
+   expert-governed candidate may reach the default branch only through the PR
+   merge and with separate explicit merge authority; never infer it from review.
+   With no applicable expert gate, any default integration still requires
+   explicit authority under normal project policy.
 
 ## 5 — After push
 

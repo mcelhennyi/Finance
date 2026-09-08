@@ -2,16 +2,16 @@
 
 Ids are **feature-local**: **`BUG-FR-NNNN-xx`**. They are **not** a
 `tasks/TAG-REGISTRY.md` family. Tickets stay **`T-FR-NNNN-xx`** and are
-allocated only by **`/expand-feature`**.
+allocated by the report's dedicated lane through **`/expand-feature`**.
 
 ## `bugs/README.md`
 
 ```markdown
 # FR-NNNN bugs
 
-Manual-test and operator reports for this feature. **`/feature-bug`** appends
-rows. **`/expand-feature`** (bug-fix expansion) tickets open rows and writes
-**Solving ticket** back into each report.
+Manual-test and operator reports for this feature. **`/feature-bug`** assigns
+each row to a dedicated report-to-fix lane; that lane uses
+**`/expand-feature`** to write **Solving ticket** before implementation.
 
 **next_id:** `1`
 
@@ -19,8 +19,9 @@ rows. **`/expand-feature`** (bug-fix expansion) tickets open rows and writes
 |----|-------|------|--------|----------------|
 ```
 
-**Status:** `open` → `ticketed` → `done`. **Solving ticket** stays empty until
-expand-feature writes **`T-FR-NNNN-xx`**.
+**Status:** `open` → `ticketed` → `in-progress` → `done`. **Solving ticket**
+stays empty only until the lane's serialized expand-feature planning commit
+writes **`T-FR-NNNN-xx`**.
 
 ## `bugs/BUG-FR-NNNN-xx-<short-slug>.md`
 
@@ -78,8 +79,8 @@ Facts a later **`T-FR-NNNN-xx`** must preserve:
 - **Acceptance sketch:**
 ```
 
-When **`/expand-feature`** tickets the bug, it updates **Status** to `ticketed`,
-sets **Solving ticket** to **`T-FR-NNNN-xx`**, links the **`30-expand-*`**
-addendum, and later sets **Status** to `done` when that ticket’s VAL is `done`.
-It also amends **`docs/design/`** (and mocks/manual as needed) when the fix
-would otherwise leave docs untruthful.
+The dedicated lane updates **Status** to `ticketed`, sets **Solving ticket** to
+**`T-FR-NNNN-xx`**, links the **`30-expand-*`** addendum, changes status to
+`in-progress` at TEST start, and later sets **Status** to `done` only when that
+ticket's VAL is done. It also amends **`docs/design/`** (and mocks/manual as
+needed) when the fix would otherwise leave docs untruthful.
