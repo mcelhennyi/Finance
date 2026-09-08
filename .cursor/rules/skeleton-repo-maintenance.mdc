@@ -28,6 +28,10 @@ alwaysApply: false
 3. **`skeleton.manifest`**: keep in sync with files that should be copied to consumer roots on **`sync-skeleton`** / **`push-skeleton contribute`**.
 4. **`.skeleton/.syncignore`**: when **`skeleton.manifest`** lists a path that is only a **starter copy** and real consumers diverge (registry, ticket graph, lessons, product architecture), add the **consumer-root** path to **`.syncignore`** so **`sync-skeleton`** does not overwrite it; note in **`CHANGELOG.md`**.
 5. **Consumer manual follow-up:** when a change is **not** fully applied by manifest copies (overlays, syncignored merges, local **`develop`**, etc.), add a **`[Unreleased]` → Template** bullet prefixed **`Consumer manual:`** or **`[consumer manual]`** per **`CHANGELOG.md` → Format reference**. Consumers and agents read **`CHANGELOG.md`** after every **`./sync-skeleton`**.
+6. **Safe syncignored migrations:** when an established sync step migrates
+   consumer-owned files in place, make it idempotent, preserve stable identity
+   and semantics, refuse dirty targets before any target write, stage only the
+   files it changed, and ship legacy-fixture coverage plus a check-only mode.
 
 ## Anti-patterns
 

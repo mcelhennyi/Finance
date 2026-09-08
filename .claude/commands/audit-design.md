@@ -1,7 +1,7 @@
 ---
 description: >-
   Pre-ticket design readiness audit for a top-level design doc path: plain-English
-  report of gaps, flaws, rework, growth, and deferrals before /feature-request.
+  report of gaps, flaws, rework, growth, expert-review gates, and deferrals before /feature-request.
 ---
 
 # /audit-design
@@ -16,7 +16,7 @@ One **top-level design doc** path (required), for example:
 
 ## What this is
 
-- **Read-only** design review: map linked docs, scan escalation tags, score ticket-readiness, optional code-vs-design notes.
+- **Read-only** design review: map linked docs, scan escalation tags, inventory `EXPERT-REVIEW` semantic surfaces and planned PR reviewers, score ticket-readiness, optional code-vs-design notes. Expert mapping or approval never blocks ticketing.
 - **Output:** plain-English report with diagrams where helpful; optional save under **`tasks/design-audits/`**.
 - **Does not** register **`FR-NNNN`**, write tickets, or implement code.
 

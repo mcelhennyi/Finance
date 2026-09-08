@@ -1,9 +1,8 @@
 ---
 name: "source-command-feature-bug"
 description: >-
-  Record a manual-test or operator bug against an existing FR-NNNN under
-  tasks/feature-history/FR-NNNN-<slug>/bugs/. Use when the user says
-  /feature-bug, feature bug, or logs pre-PR manual-test issues.
+  Continuously log, same-FR ticket, and TEST→DEV→VAL a manual-test or operator
+  bug in its own subagent lane while the parent remains available.
 ---
 
 # source-command-feature-bug
@@ -19,15 +18,16 @@ Follow the Cursor project skill **`.cursor/skills/feature-bug/SKILL.md`**.
 
 ## What this is
 
-- Logs one or more bug reports in the target feature’s **`bugs/`** directory
-  with enough detail to create a later **`T-FR-NNNN-xx`**.
+- Assigns every distinct report to its own subagent lane: write it under
+  **`bugs/`**, allocate its same-FR solving ticket/DAG through
+  **`/expand-feature`**, then run TEST→DEV→VAL through **`/develop-frontier`**.
 - Resolves **`FR-NNNN`** from an explicit id, the current worktree/branch, or
   **`CURRENT.md`**.
-- Does **not** allocate tickets. After every issue is ingested, use
-  **`/expand-feature`** to ticket and fix outstanding bugs and to point each
-  report at its solving ticket.
+- Keeps the parent free for more intake. Serialize shared id/DAG planning;
+  parallelize dependency-safe, file-disjoint ticket work. Only an explicit
+  log-only request stops before implementation.
 
 ## Required close
 
-Tell the user the **exact repo-relative path** of every report written, plus
-id, feature, and kind.
+Tell the user each exact report path, solving ticket, lane/worktree, and current
+TEST / DEV / VAL state.

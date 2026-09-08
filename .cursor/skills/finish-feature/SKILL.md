@@ -4,7 +4,7 @@ description: >-
   Merges all ticket/stage branches for one FR-NNNN feature into the feature
   integration branch, validates, opens (or updates) a PR to the default branch
   only after the feature-complete gate in docs/ai-context.md §2d, and runs
-  mandatory feature closeout (90-closeout.md, REGISTRY, ticket-progress) plus
+  semantic expert-review routing and mandatory feature closeout (90-closeout.md, REGISTRY, ticket-progress) plus
   explain-feature before a fresh-context update-manual pass for docs/manual. Never deletes remote
   branches automatically. Use when closing a full FR-NNNN implementation on the
   feature branch workflow.
@@ -19,6 +19,7 @@ Close **implementation** for a **single** product feature that used a **feature 
 - **`FR-NNNN`** and **`<slug>`** known; **`tasks/feature-history/FR-NNNN-<slug>/`** exists with **`tickets.md`**, diaries, and **`handoffs/`** as needed.
 - **Feature integration branch** exists on the remote, e.g. **`feat/FR-0007-auth-overhaul`**, and is checked out at **`.worktrees/FR-NNNN-<slug>/feature/`** (or an explicit equivalent path). Ticket/stage branches exist and are pushed.
 - **Integration policy:** Do **not** push to the **default branch** from this skill — only **PR** (or draft PR) for final human review unless the user explicitly overrides.
+- **Expert roster:** During default-branch PR preparation, load **`docs/design/EXPERTS.md`** and **`docs/design/EXPERTS.project.md`** when present; follow **`docs/design/expert-review.md`**.
 
 ## 1 — Ensure ticket work is merged into the feature branch
 
@@ -37,12 +38,42 @@ Run the full verification required for all merged **`T-FR-NNNN-xx`** tickets usi
 ## 3 — Feature-complete gate (before PR and closeout)
 
 1. Verify every **`### T-FR-NNNN-xx`** in **`tasks/feature-history/FR-NNNN-<slug>/tickets.md`** has **TEST**, **DEV**, and **VAL** = **`done`** in **`tasks/ticket-progress.md`** for that **`FR-NNNN`**.
-2. If **not** all **`done`**: `git push -u origin feat/FR-NNNN-<slug>`; append or refresh **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`** with the next frontier — **stop**. Do **not** open a default-branch PR or write **`90-closeout.md`** until the gate passes.
-3. If all **`done`**: proceed to **§4** and **§5** (closeout is **required**, not optional).
-4. If **`bugs/README.md`** still has **Status: open** rows, **do not** open the
-   default-branch PR. Tell the operator to finish **`/feature-bug`** ingest (if
-   testing continues) then **`/expand-feature`** for a bug-fix expansion. Open
-   reports are outstanding feature work, not closeout.
+2. Verify the canonical Mermaid DAG is the first substantive section of
+   **`20-tickets-dag.md`**. Run **`python3 scripts/refresh_ticket_dags.py --root
+   .`**, review the plain-English visible labels/dependencies, stable ids/edges,
+   all-green ticket state, and the generated project/feature **Where things
+   stand** explanation of no more than three sentences directly below the DAG;
+   require **`--check`** to pass. Any yellow or red node contradicts closeout
+   until reconciled against the tracker and evidence.
+3. If **not** all **`done`**: `git push -u origin feat/FR-NNNN-<slug>`; append or refresh **`tasks/feature-history/FR-NNNN-<slug>/handoffs/`** with the next frontier — **stop**. Do **not** open a default-branch PR or write **`90-closeout.md`** until the gate passes.
+4. If all **`done`**: proceed to **§4** and **§5** (closeout is **required**, not optional).
+5. If **`bugs/README.md`** still has `open`, `ticketed`, or `in-progress` rows,
+   or a dedicated bug lane is still running/queued, **do not** open the
+   default-branch PR. Continuous **`/feature-bug`** lanes are outstanding
+   feature work, not closeout; resume their **`/expand-feature`** /
+   **`/develop-frontier`** TEST→DEV→VAL flow.
+
+### Expert-review inventory (required during PR preparation)
+
+1. Diff the feature branch against the fetched remote default branch and list
+   every changed design/code path.
+2. Scan the affected design tree for **`EXPERT-REVIEW`** /
+   **`EXPERT:<slug>`** annotations and match changed paths against roster
+   **Protected paths**.
+3. Interpret affected interfaces, invariants, algorithms, data flows, risk
+   decisions, and acceptance behavior. Map each semantic surface to the expert
+   whose scope covers it, including cross-file effects that path-only
+   CODEOWNERS would miss.
+4. Resolve every tag to the display name/role and GitHub reviewer. Record each
+   semantic surface, path set, reason, and reviewer in the PR/closeout.
+5. For each gate, find scoped **`EXPERT-APPROVAL`** evidence that covers the
+   current PR head or mark it **pending PR review**. Missing, ambiguous, or
+   inactive mappings remain visible PR governance gaps; they never block PR
+   creation or reopen completed ticket triads. An agent cannot substitute an
+   expert.
+5. If the feature is already merged but approval evidence is absent, report the
+   governance failure and obtain/document the expert's retrospective decision;
+   never infer approval from the merge.
 
 ### Already merged to the default branch
 
@@ -57,9 +88,19 @@ If **`git fetch`** shows the feature integration PR is **already merged** (no op
 Skip this section when **§3** “Already merged” applies.
 
 1. `git push -u origin feat/FR-NNNN-<slug>`
-2. Prefer **`gh pr create`** (base = default branch, head **`feat/FR-NNNN-<slug>`**) with a summary linking **`tasks/feature-history/FR-NNNN-<slug>/`**, ticket ids, and a pointer to **`90-closeout.md`** (created in **§5**).
+2. Prefer **`gh pr create`** (base = default branch, head **`feat/FR-NNNN-<slug>`**) with a summary linking **`tasks/feature-history/FR-NNNN-<slug>/`**, ticket ids, applicable `EXPERT:<slug>` semantic surfaces/approval state, and a pointer to **`90-closeout.md`** (created in **§5**). Use a **draft PR** or otherwise mark it not merge-ready while mappings or approvals are pending.
 3. If a PR already exists, push branch updates and ensure the PR description lists merged tickets and links **`90-closeout.md`**.
 4. PR description must remind the merger to **delete** repo-root **`CURRENT.md`** when the PR lands on the default branch (unless the repo documents otherwise) — **`feature-request`** skill **Branch state (`CURRENT.md`)**.
+5. Request every pending mapped reviewer, for example **`gh pr edit <pr> --add-reviewer <login>`** when authorized. Inspect current reviews/requests before reporting status; do not claim approval from a request.
+6. Pending expert review does not block this section, feature closeout, or
+   further pushes to the feature branch. Update the semantic map and review
+   requests when later commits materially change the scope.
+7. Put the final default-merge gate in the PR/handoff: immediately before merge,
+   re-fetch the base, inspect the current PR head, and require scoped approval
+   from every applicable expert with no applicable changes-requested review.
+   Verify user manual validation separately; neither gate substitutes for the
+   other. Expert or repository-owner approval never authorizes the merge, so do
+   not merge or push the default branch without separate explicit authority.
 
 ## 5 — Feature closeout (required when gate passes)
 
@@ -69,7 +110,7 @@ Use **[`closeout-template.md`](closeout-template.md)** for **`90-closeout.md`** 
 
 | Artifact | Action |
 |----------|--------|
-| **`90-closeout.md`** | Create or refresh at **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`**: executive summary, delivered surfaces, tickets table, validation, deferred items, suggested next step, options, audit (PR link + merge SHA when known). If PR not merged yet, mark **PR pending** and refresh the merge line after merge. |
+| **`90-closeout.md`** | Create or refresh at **`tasks/feature-history/FR-NNNN-<slug>/90-closeout.md`**: executive summary, delivered surfaces, tickets table, validation, expert-review table (tag, semantic surface, human/role, approval state, evidence/reviewer), separate user manual-validation state, deferred items, suggested next step, options, audit (PR link + merge SHA when known). If PR or expert approval is pending, say so and refresh after merge. |
 | **`REGISTRY.md`** | Set this **`FR-NNNN`** row **Status** to **`done`** (or team **`complete`** alias). Notes: PR link, merge date/SHA when known, link to **`90-closeout.md`**. |
 | **`README.md`** (feature folder) | **Status** `done`; link **PR** and **`90-closeout.md`**. |
 | **`tasks/ticket-progress.md`** | Remove this feature from **`### Parallel streams`** (or mark **done on `main`** with PR link). Update **Progress** notes for its tickets if needed. If no other active work, point **Current focus** at the next open ticket (or state explicitly that focus is clear). |
@@ -125,7 +166,7 @@ After **§3** passes and before considering closeout complete, run
 
 ## 8 — Feature history bookkeeping (integration audit)
 
-1. Ensure **§5** artifacts exist before considering **`/finish-feature`** complete.
+1. Ensure **§5** artifacts exist and every expert gate is recorded as approved, pending PR review, or an unresolved mapping before considering **`/finish-feature`** handoff complete. Pending governance blocks only the final default-branch merge, not closeout or ticket completion.
 2. Ensure **§6** explain-feature and **§7** manual-update results are linked or
    summarized in closeout artifacts.
 3. Run **diary consolidation** (**`DIARY.md`**) if not already done for this milestone.
@@ -137,7 +178,7 @@ After **§3** passes and before considering closeout complete, run
 
 ## User-facing close (required)
 
-End the **`/finish-feature`** reply with **Executive summary**, **Suggested next step**, and **Options** (merge PR vs. request changes vs. resume next FR), whether or not the default-branch PR is already merged.
+End the **`/finish-feature`** reply with **Executive summary**, **Suggested next step**, and **Options** (request expert review, satisfy manual validation, seek separately authorized merge after both gates, request changes, or resume next FR), whether or not the default-branch PR is already merged. Name every required expert, semantic surface, and approval state.
 
 ## Relationship to **`finish-frontier`**
 

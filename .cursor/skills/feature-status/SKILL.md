@@ -1,13 +1,10 @@
 ---
 name: feature-status
 description: >-
-  Give a concise, plain-English status update for a project feature, including
-  a BLUF, tickets-left and waves-left fractions, verified completed outcomes,
-  remaining work, blockers, intentionally skipped work, and a rough complexity
-  signal for each item. Use when the user asks for feature status, a progress
-  update, what is done, what is left, where a feature stands, or what comes
-  next. Return the update in the conversation unless the user asks for a saved
-  artifact.
+  Explicit-only /feature-status command. Use only when the user directly
+  invokes feature-status or explicitly requests its BLUF, ticket/wave
+  fractions, and Done/Upcoming/Blocked/Skipped table. Do not infer it from an
+  ordinary progress, allocation, blocker, completion, or next-step question.
 ---
 
 # Feature Status
@@ -15,24 +12,51 @@ description: >-
 Explain the feature's current state so a reader can understand it without
 knowing the repository, ticket system, or internal vocabulary.
 
+## Invocation boundary
+
+Run this skill only when the user explicitly invokes `/feature-status`, names
+`$feature-status` / `$source-command-feature-status`, or directly asks for the
+feature-status command or its exact BLUF/progress-table format.
+
+Do **not** auto-select this skill for ordinary questions such as “what is
+done?”, “what remains?”, “do we have work allocated?”, “what is blocked?”, or
+“what should happen next?”. Answer those directly. When they benefit from a
+structured close, use the project default: **Executive summary**, **Details**,
+**Suggested next step**, and **Options** when multiple reasonable paths exist.
+
+## Keep the live DAG visible (required)
+
+After resolving the feature, resolve the absolute path to its
+**`tasks/feature-history/FR-NNNN-<slug>/20-tickets-dag.md`**. If the active
+client or editor exposes a real open-file capability, open the DAG before or
+while gathering status evidence. If it also exposes a separate safe pin-tab or
+pin-document capability, pin it.
+
+Opening and pinning are best-effort: do not shell-launch a GUI, invent an editor
+URI or unsupported tool, claim a pin succeeded without evidence, or fail the
+status command when either capability is absent. Always surface the absolute
+clickable DAG link in the response; if the file is missing, report the expected
+absolute path instead and continue with the remaining evidence.
+
 ## Workflow
 
-1. Resolve the feature from the user's name or id. If none is supplied, infer
+1. After explicit invocation, resolve the feature from the user's name or id. If none is supplied, infer
    it from `CURRENT.md`, `tasks/ticket-progress.md`, and
    `tasks/feature-history/REGISTRY.md`. Ask only when more than one feature is
    plausibly in scope.
-2. Inspect direct evidence before describing status. Prefer the feature's
+2. Apply **Keep the live DAG visible** to the resolved feature.
+3. Inspect direct evidence before describing status. Prefer the feature's
    `README.md`, `tickets.md`, `90-closeout.md`, current handoff, tracker rows,
    relevant code and tests, and Git state. Verify remote or pull-request state
    when it changes whether work is actually delivered.
-3. Reconcile plans with implementation and validation. Treat work as done only
+4. Reconcile plans with implementation and validation. Treat work as done only
    when the available evidence supports it. Classify implemented-but-unverified
    or unmerged work as **Upcoming**, work that cannot proceed as **Blocked**,
    and intentionally deferred or excluded work as **Skipped**.
-4. Group related technical tickets into user-visible outcomes. Keep useful ids
+5. Group related technical tickets into user-visible outcomes. Keep useful ids
    in parentheses after the plain-English description rather than making the
    reader decode them.
-5. Calculate both progress fractions from the same verified evidence:
+6. Calculate both progress fractions from the same verified evidence:
    - **Tickets left / total tickets:** Count canonical `### T-FR-NNNN-xx`
      tickets for the feature. A ticket remains until TEST, DEV, and VAL are all
      `done` in `tasks/ticket-progress.md`.
@@ -43,7 +67,7 @@ knowing the repository, ticket system, or internal vocabulary.
    Reconcile duplicate or stale tracker rows against canonical `tickets.md`.
    If either fraction cannot be established from consistent evidence, show
    `unknown/unknown` for that fraction and explain the missing evidence briefly.
-6. Return the compact structure below. Do not create or modify a project file
+7. Return the compact structure below. Do not create or modify a project file
    unless the user explicitly requests a saved artifact.
 
 ## Output contract
@@ -57,6 +81,8 @@ knowing the repository, ticket system, or internal vocabulary.
 left, and any material blocker or decision.>
 
 **Progress:** Tickets left **<remaining>/<total>** · Waves left **<remaining>/<total>**
+
+**Live DAG:** [20-tickets-dag.md](<absolute-path>)
 
 ## Status
 
@@ -120,6 +146,8 @@ production-sized dataset is available, while support for obsolete browsers was
 intentionally excluded from this release.
 
 **Progress:** Tickets left **2/8** · Waves left **1/3**
+
+**Live DAG:** [20-tickets-dag.md](/workspace/tasks/feature-history/FR-0008-saved-searches/20-tickets-dag.md)
 
 ## Status
 

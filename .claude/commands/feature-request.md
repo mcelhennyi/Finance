@@ -9,6 +9,16 @@ description: >-
 
 Follow the Cursor project skill **`.cursor/skills/feature-request/SKILL.md`**.
 
+## Keep the live DAG visible
+
+At the start, resolve the feature and the absolute path to its
+**`20-tickets-dag.md`**. Open it through the active client/editor only when a
+real open-file capability is exposed, and pin it only when a separate safe pin
+capability is exposed. Never shell-launch a GUI or invent a tool/URI. Failure or
+missing capability is non-blocking: include the absolute clickable DAG link in
+each user-facing pause after the path is known, label it planned if it does not
+exist yet, and open/pin it after creation.
+
 ## End every turn for the user
 
 End each response with **Executive summary**, **Suggested next step**, and **Options** when more than one reasonable path exists — see **User-facing close (required)** and **`reference-templates.md` → User-facing session close** in that skill.
@@ -21,11 +31,19 @@ When a **top-level design doc** under **`docs/design/`** already exists, run **`
 
 - **Not** a replacement for `identify-frontier` / `develop-frontier` / `finish-feature` / `finish-frontier`.
 - A **product-sized** flow: **intake** → **interface-first design** (skeleton, then depth as needed) → **`20-tickets-dag.md`** (Jira/Asana-friendly markdown, Mermaid DAG) → **prompt** to implement → **`/develop-frontier`** when tickets (**`T-FR-NNNN-xx`**) are in the tracker → **prompt** to **`/finish-feature`** when **`docs/ai-context.md` §2d** **feature-complete gate** is met (or **`/finish-frontier`** if integrating straight to the default branch).
+- The canonical Mermaid graph is the first substantive section of every
+  **`20-tickets-dag.md`**. Run **`python3 scripts/refresh_ticket_dags.py --root
+  .`** after ticket/dependency/tracker edits and between waves, then require
+  **`--check`**: visible labels/dependencies are plain English with stable ids
+  preserved, completed is green, in-development yellow, outstanding red, and a
+  generated project/feature explanation of no more than three sentences sits
+  directly below the graph.
 - For additions to an already selected **`FR-NNNN`**, use **`/expand-feature`** instead of allocating a new feature id; simple UI tweaks use a worktree plus docs HTML mock, while larger additions write a **`30-expand-*`** addendum and append same-FR tickets.
 - For **large** features, use **subagents early** per **`docs/ai-context.md` §1b** (e.g. per subsystem design or codebase survey) before consolidating artifacts.
 - **Parallel features:** several **`FR-NNNN`** may be in flight; each has its own **`tasks/feature-history/FR-…/`** directory. **`/develop-frontier`** still batches tickets (**`T-FR-NNNN-xx`**) from the **global** graph — see **`docs/ai-context.md` §2c** and **`tasks/ticket-progress.md` → Parallel streams**.
 - **Human-readable naming:** In prompts, diaries, and handoffs, lead with each ticket’s **title** from **`tickets.md`**; use the **`T-FR-NNNN-xx`** id with a **link** to the canonical **`###`** section for detail (full rule in **`.cursor/skills/feature-request/SKILL.md` → Human-readable names vs ticket ids**).
 - **Plain-English ticket bodies:** New and not-yet-started tickets must include **In plain English**, **Why this exists**, **Out of scope**, and **Done when (plain English)** before technical acceptance criteria — **`.cursor/skills/feature-request/SKILL.md` → Plain-English ticket writing**.
+- **Expert review planning:** carry `EXPERT-REVIEW` / `EXPERT:<slug>` plus likely semantic surfaces and planned PR reviewers into affected tickets and handoffs. Missing mappings or approval never block ticketing, TEST→DEV→VAL, `triadDone`, or frontier dispatch; the default-branch PR resolves them.
 
 ## Compose with existing commands (do not fork behavior)
 

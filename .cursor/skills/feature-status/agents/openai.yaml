@@ -1,4 +1,4 @@
 interface:
   display_name: "Feature Status"
-  short_description: "Summarize ticket and wave progress"
-  default_prompt: "Use $feature-status to explain what is done, what remains, and the ticket and wave fractions for this feature."
+  short_description: "Explicit ticket and wave status report"
+  default_prompt: "Explicitly use $feature-status to report the ticket and wave fractions plus Done, Upcoming, Blocked, and Skipped work for this feature."

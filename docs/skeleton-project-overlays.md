@@ -15,6 +15,7 @@ Examples:
 | Base file (from template; may be overwritten on sync) | Project-owned companion (never touched by **`sync-skeleton`**) |
 |------------------------------------------------------|-------------------------------------------------------------------|
 | **`docs/ai-context.md`** | **`docs/ai-context.project.md`** |
+| **`docs/design/EXPERTS.md`** | **`docs/design/EXPERTS.project.md`** |
 | **`CLAUDE.md`** | *(prefer **`docs/ai-context.project.md`** for shared rules)* |
 | **`AGENTS.md`** | *(prefer **`docs/ai-context.project.md`** + **`.codex/project.md`**)* |
 
@@ -33,11 +34,20 @@ Rules:
 2. **`./sync-skeleton`** does **not** read, write, merge, or delete **`*.project.*`** files; they follow normal git workflow only.
 3. Put durable **project-only** content in overlays. Keep the base file aligned with upstream skeleton changes; resolve conflicts by editing overlays, not by freezing the base file in **`.syncignore`** unless you intentionally opt out of template updates for that path.
 
-The same **`NAME.project.EXT`** pattern applies to other single-file roots when useful, as long as the companion name is exactly **`NAME.project.EXT`** (insert **`.project.`** before the final extension).
+The same **`NAME.project.EXT`** pattern applies to other single-file roots when useful, as long as the companion name is exactly **`NAME.project.EXT`** (insert **`.project.`** before the final extension). Expert-review rules explicitly load **`docs/design/EXPERTS.md`** and then **`docs/design/EXPERTS.project.md`** so project identities survive Skeleton sync.
 
 ## After every `sync-skeleton`
 
-**`./sync-skeleton`** does not merge template text into **`*.project.*`** or **syncignored** paths. After each run, **read** **`.skeleton/CHANGELOG.md`**: use **After sync: read the changelog (consumers and agents)** at the top of that file, then **`[Unreleased]` → Template** for **`Consumer manual:`** / **`[consumer manual]`** bullets that tell you what to port into overlays (or into other repo-specific files). Maintainers add those bullets when template changes are only partially automated.
+**`./sync-skeleton`** does not merge template text into **`*.project.*`** or
+overwrite **syncignored** paths. The only narrow exception is an explicitly
+documented in-place schema migration such as the idempotent ticket-DAG
+readability/status refresh; it uses the consumer's own ticket data and preserves
+stable ids/edges. After each run, use the script's recorded old and new
+skeleton SHAs to review **`.skeleton/CHANGELOG.md`** over exactly `old..new`
+plus crossed release sections. Apply only **`Consumer manual:`** /
+**`[consumer manual]`** and Deprecation instructions introduced or changed in
+that range. Maintainers add those bullets when template changes are only
+partially automated.
 
 ## Agent behavior
 

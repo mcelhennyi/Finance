@@ -1,28 +1,47 @@
 ---
 name: feature-bug
 description: >-
-  Record a manual-test or operator bug against an existing FR-NNNN in
-  tasks/feature-history/FR-NNNN-<slug>/bugs/ with enough detail to ticket later.
+  Ingest and continuously develop a manual-test or operator bug against an
+  existing FR-NNNN through a dedicated subagent lane: report, same-FR
+  addendum/ticket/DAG planning, and TEST→DEV→VAL in an isolated worktree.
   Use when the user says /feature-bug, feature bug, log a bug, report a bug
   against this feature, or files issues found in pre-PR manual testing.
 ---
 
-# Feature bug (log, do not ticket yet)
+# Feature bug (continuous report-to-fix lane)
 
-Capture one or more bugs against an existing **`FR-NNNN`** so they can later
-become same-feature tickets. **Do not** allocate a new **`FR-NNNN`**, **do not**
-append **`T-FR-NNNN-xx`** yet, and **do not** start a fix in this command.
+Capture each bug against an existing **`FR-NNNN`** and immediately route it to
+its own same-feature fixing lane. **Do not** allocate a new **`FR-NNNN`**.
+Do not stop at report-only unless the user explicitly asks to log without
+implementation.
 
-## Standard flow (verbatim)
+## Orchestrator dispatch first
 
-Feature request, develop the feature to completion, then manual test ahead of PR merge. If there are issues, Feature-bug report and once all bugs are reported and ingested then we will feature-expand to bug fix all outstanding bugs.
+- The parent orchestrator creates or queues **one subagent lane per distinct
+  operator report** and stays available for more intake. The lane owns the
+  report, one bug-specific same-FR solving ticket, and serial
+  **TEST → DEV → VAL** in its ticket worktree.
+- Serialize bug-id, ticket-id, addendum, DAG, and tracker integration on the
+  feature branch so concurrent lanes cannot allocate the same id. After that
+  planning commit lands, dependency-safe, file-disjoint ticket lanes may run in
+  parallel. A running wave does not block new bug intake or planning.
+- Name one feature integration owner (normally the parent). The lane may draft,
+  commit, and push its report/addendum/ticket branch; only that owner verifies
+  and merges shared allocation, advances the canonical BUG/T-FR next ids, and
+  releases the next allocator.
+- Preserve one report, solving ticket, and lane per bug. When bugs share a root
+  cause, model a shared enabling dependency if needed; do not collapse their
+  ownership or acceptance criteria.
+- Before each implementation dispatch, apply **`develop-frontier`**'s project
+  remote-default refresh and skeleton hash gates.
 
-Once feature expand addresses all bugs it shall update the bug report to point to the ticket that solves this bug. This whole process shall also ensure that the docs are updated if they conflict with the bug and its fix such that they are truthful wrt the new fix.
+## Standard flow
 
-Compose: **`/feature-request`** → **`/develop-frontier`** (to completion) →
-**manual test before the default-branch PR** → **`/feature-bug`** (repeat until
-every issue is ingested) → **`/expand-feature`** to ticket and fix outstanding
-bugs → **`/identify-frontier`** / **`/develop-frontier`** as usual.
+Compose continuously: **manual test** → **`/feature-bug`** dedicated lane →
+bug-specific **`/expand-feature`** planning → **`/develop-frontier`**
+TEST→DEV→VAL. Repeat while other lanes run; do not wait for a final ingest
+batch. The lane updates the report with its solving ticket and keeps design,
+mocks, manual, and code truthful about the fix.
 
 ## Resolve the target feature
 
@@ -52,7 +71,7 @@ Correct the operator when the “bug” is specified behavior. Still log it when
 want a change — mark **`product-follow-up`**, quote the spec, and do not pretend
 it is a miss.
 
-## Write the report
+## Write the report and reserve its solving work
 
 Directory: **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**.
 
@@ -68,16 +87,22 @@ Directory: **`tasks/feature-history/FR-NNNN-<slug>/bugs/`**.
    expected vs actual, design notes, likely files, environment, evidence). Ask
    only for facts that would block a later ticket (missing repro or expected
    result).
-
-**`BUG-FR-NNNN-xx`** is enough for later ticketing. Do **not** reserve a
-**`T-FR-NNNN-xx`** here.
+7. In the same dedicated lane, follow **`/expand-feature` → Continuous bug-fix
+   lanes** to write the bug-specific addendum, reserve the next
+   **`T-FR-NNNN-xx`**, update the canonical DAG/tracker, and set **Solving
+   ticket** on the report. Integrate this shared planning commit serially before
+   implementation begins.
+8. Unless the user requested log-only, run the ticket through
+   **`/develop-frontier`** in its isolated child worktree and set the report to
+   `done` only after VAL is green.
 
 ## Persist
 
-On a **`feat/FR-NNNN-<slug>`** (or child) branch: **commit** the bug files and
-**push** that feature branch when it tracks a remote, unless the user forbade
-commits. Do not include unrelated dirty work. If the working tree is not the
-feature branch, still write the files and say which branch they landed on.
+Commit and push the lane's report/planning work without unrelated changes. The
+named integration owner alone verifies and merges that commit into
+**`feat/FR-NNNN-<slug>`**, advances canonical ids, and releases the next
+allocator. Implement only from the refreshed feature branch in the bug ticket's
+child worktree. Keep remote branches as the audit trail.
 
 ## Required user-facing close
 
@@ -89,24 +114,26 @@ Bug report landed at:
 Id: BUG-FR-NNNN-xx
 Feature: FR-NNNN (<slug>)
 Kind: code-defect | layout | design-conflict | product-follow-up
+Solving ticket: T-FR-NNNN-xx
+Lane: <branch and worktree>
 ```
 
 If several issues were logged, list **every** path. Then:
 
 - **Executive summary** — what was recorded vs corrected as spec-as-designed.
-- **Suggested next step** — more **`/feature-bug`** if testing continues;
-  **`/expand-feature`** only when the operator says all outstanding bugs are
-  ingested.
+- **Suggested next step** — continue testing and submit more
+  **`/feature-bug`** reports while this lane runs; report the lane's current
+  TEST / DEV / VAL state.
 - **Options** when more than one path is reasonable.
 
-Do **not** start **`/expand-feature`** from this command unless the user
-explicitly asked to ticket/fix now after ingesting.
+Do not wait for the operator to declare bug intake complete before ticketing or
+fixing. Only an explicit log-only request suppresses implementation.
 
 ## Compose (do not fork)
 
 | Need | Use |
 |------|-----|
-| Log a pre-PR / manual-test issue | **`/feature-bug`** (this skill) |
-| Ticket and fix outstanding **`bugs/`** | **`/expand-feature`** (bug-fix expansion) |
+| Report and continuously fix a pre-PR / manual-test issue | **`/feature-bug`** (this skill) |
+| Ticket/fix an existing backlog of **`bugs/`** | **`/expand-feature`** (one lane per bug) |
 | New product feature | **`/feature-request`** |
 | Lightweight non-feature chore | **`/add-todo`** |

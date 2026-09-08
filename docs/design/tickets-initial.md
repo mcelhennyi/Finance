@@ -33,174 +33,174 @@ Extend this diagram when new **`FR-NNNN`** lines add tickets that chain to exist
 
 ```mermaid
 graph LR
-  TFR0000_01_TEST[TFR0000_01_TEST] --> TFR0000_01_DEV[TFR0000_01_DEV]
-  TFR0000_01_DEV --> TFR0000_01_VAL[TFR0000_01_VAL]
+  TFR0000_01_TEST["Choose stack and scaffold repository — Write the checks (T-FR-0000-01, TEST)"] --> TFR0000_01_DEV["Choose stack and scaffold repository — Build the change (T-FR-0000-01, DEV)"]
+  TFR0000_01_DEV --> TFR0000_01_VAL["Choose stack and scaffold repository — Verify it works (T-FR-0000-01, VAL)"]
 
-  TFR0001_01_TEST["Define goals and budgets data contracts TEST (T-FR-0001-01)"] --> TFR0001_01_DEV["Define goals and budgets data contracts DEV (T-FR-0001-01)"]
-  TFR0001_01_DEV --> TFR0001_01_VAL["Define goals and budgets data contracts VAL (T-FR-0001-01)"]
-  TFR0001_01_VAL --> TFR0001_02_TEST["Build goals and budget actuals engine TEST (T-FR-0001-02)"]
-  TFR0001_02_TEST --> TFR0001_02_DEV["Build goals and budget actuals engine DEV (T-FR-0001-02)"]
-  TFR0001_02_DEV --> TFR0001_02_VAL["Build goals and budget actuals engine VAL (T-FR-0001-02)"]
+  TFR0001_01_TEST["Define goals and budgets data contracts — Write the checks (T-FR-0001-01, TEST)"] --> TFR0001_01_DEV["Define goals and budgets data contracts — Build the change (T-FR-0001-01, DEV)"]
+  TFR0001_01_DEV --> TFR0001_01_VAL["Define goals and budgets data contracts — Verify it works (T-FR-0001-01, VAL)"]
+  TFR0001_01_VAL --> TFR0001_02_TEST["Build goals and budget actuals engine — Write the checks (T-FR-0001-02, TEST)"]
+  TFR0001_02_TEST --> TFR0001_02_DEV["Build goals and budget actuals engine — Build the change (T-FR-0001-02, DEV)"]
+  TFR0001_02_DEV --> TFR0001_02_VAL["Build goals and budget actuals engine — Verify it works (T-FR-0001-02, VAL)"]
 
-  TFR0001_01_VAL --> TFR0001_03_TEST["Add income and liabilities ingestion contracts TEST (T-FR-0001-03)"]
-  TFR0001_03_TEST --> TFR0001_03_DEV["Add income and liabilities ingestion contracts DEV (T-FR-0001-03)"]
-  TFR0001_03_DEV --> TFR0001_03_VAL["Add income and liabilities ingestion contracts VAL (T-FR-0001-03)"]
+  TFR0001_01_VAL --> TFR0001_03_TEST["Add income and liabilities ingestion contracts — Write the checks (T-FR-0001-03, TEST)"]
+  TFR0001_03_TEST --> TFR0001_03_DEV["Add income and liabilities ingestion contracts — Build the change (T-FR-0001-03, DEV)"]
+  TFR0001_03_DEV --> TFR0001_03_VAL["Add income and liabilities ingestion contracts — Verify it works (T-FR-0001-03, VAL)"]
 
-  TFR0001_02_VAL --> TFR0001_04_TEST["Expose unified monthly financial summary API TEST (T-FR-0001-04)"]
+  TFR0001_02_VAL --> TFR0001_04_TEST["Expose unified monthly financial summary API — Write the checks (T-FR-0001-04, TEST)"]
   TFR0001_03_VAL --> TFR0001_04_TEST
-  TFR0001_04_TEST --> TFR0001_04_DEV["Expose unified monthly financial summary API DEV (T-FR-0001-04)"]
-  TFR0001_04_DEV --> TFR0001_04_VAL["Expose unified monthly financial summary API VAL (T-FR-0001-04)"]
+  TFR0001_04_TEST --> TFR0001_04_DEV["Expose unified monthly financial summary API — Build the change (T-FR-0001-04, DEV)"]
+  TFR0001_04_DEV --> TFR0001_04_VAL["Expose unified monthly financial summary API — Verify it works (T-FR-0001-04, VAL)"]
 
-  TFR0001_04_VAL --> TFR0001_05_TEST["Deliver Phase 2 unified dashboard view TEST (T-FR-0001-05)"]
-  TFR0001_05_TEST --> TFR0001_05_DEV["Deliver Phase 2 unified dashboard view DEV (T-FR-0001-05)"]
-  TFR0001_05_DEV --> TFR0001_05_VAL["Deliver Phase 2 unified dashboard view VAL (T-FR-0001-05)"]
+  TFR0001_04_VAL --> TFR0001_05_TEST["Deliver Phase 2 unified dashboard view — Write the checks (T-FR-0001-05, TEST)"]
+  TFR0001_05_TEST --> TFR0001_05_DEV["Deliver Phase 2 unified dashboard view — Build the change (T-FR-0001-05, DEV)"]
+  TFR0001_05_DEV --> TFR0001_05_VAL["Deliver Phase 2 unified dashboard view — Verify it works (T-FR-0001-05, VAL)"]
 
-  TFR0001_05_VAL --> TFR0002_01_TEST["Define budget allocation contracts TEST (T-FR-0002-01)"]
-  TFR0002_01_TEST --> TFR0002_01_DEV["Define budget allocation contracts DEV (T-FR-0002-01)"]
-  TFR0002_01_DEV --> TFR0002_01_VAL["Define budget allocation contracts VAL (T-FR-0002-01)"]
+  TFR0001_05_VAL --> TFR0002_01_TEST["Define budget allocation contracts — Write the checks (T-FR-0002-01, TEST)"]
+  TFR0002_01_TEST --> TFR0002_01_DEV["Define budget allocation contracts — Build the change (T-FR-0002-01, DEV)"]
+  TFR0002_01_DEV --> TFR0002_01_VAL["Define budget allocation contracts — Verify it works (T-FR-0002-01, VAL)"]
 
-  TFR0002_01_VAL --> TFR0002_02_TEST["Expose budget allocation API TEST (T-FR-0002-02)"]
-  TFR0002_02_TEST --> TFR0002_02_DEV["Expose budget allocation API DEV (T-FR-0002-02)"]
-  TFR0002_02_DEV --> TFR0002_02_VAL["Expose budget allocation API VAL (T-FR-0002-02)"]
+  TFR0002_01_VAL --> TFR0002_02_TEST["Expose budget allocation API — Write the checks (T-FR-0002-02, TEST)"]
+  TFR0002_02_TEST --> TFR0002_02_DEV["Expose budget allocation API — Build the change (T-FR-0002-02, DEV)"]
+  TFR0002_02_DEV --> TFR0002_02_VAL["Expose budget allocation API — Verify it works (T-FR-0002-02, VAL)"]
 
-  TFR0002_02_VAL --> TFR0002_03_TEST["Sync allocation totals into unified budgets TEST (T-FR-0002-03)"]
-  TFR0002_03_TEST --> TFR0002_03_DEV["Sync allocation totals into unified budgets DEV (T-FR-0002-03)"]
-  TFR0002_03_DEV --> TFR0002_03_VAL["Sync allocation totals into unified budgets VAL (T-FR-0002-03)"]
+  TFR0002_02_VAL --> TFR0002_03_TEST["Sync allocation totals into unified budgets — Write the checks (T-FR-0002-03, TEST)"]
+  TFR0002_03_TEST --> TFR0002_03_DEV["Sync allocation totals into unified budgets — Build the change (T-FR-0002-03, DEV)"]
+  TFR0002_03_DEV --> TFR0002_03_VAL["Sync allocation totals into unified budgets — Verify it works (T-FR-0002-03, VAL)"]
 
-  TFR0002_02_VAL --> TFR0002_04_TEST["Deliver budget entry page TEST (T-FR-0002-04)"]
-  TFR0002_04_TEST --> TFR0002_04_DEV["Deliver budget entry page DEV (T-FR-0002-04)"]
-  TFR0002_04_DEV --> TFR0002_04_VAL["Deliver budget entry page VAL (T-FR-0002-04)"]
+  TFR0002_02_VAL --> TFR0002_04_TEST["Deliver budget entry page — Write the checks (T-FR-0002-04, TEST)"]
+  TFR0002_04_TEST --> TFR0002_04_DEV["Deliver budget entry page — Build the change (T-FR-0002-04, DEV)"]
+  TFR0002_04_DEV --> TFR0002_04_VAL["Deliver budget entry page — Verify it works (T-FR-0002-04, VAL)"]
 
-  TFR0002_03_VAL --> TFR0002_05_TEST["Validate and document budget entry workflow TEST (T-FR-0002-05)"]
+  TFR0002_03_VAL --> TFR0002_05_TEST["Validate and document budget entry workflow — Write the checks (T-FR-0002-05, TEST)"]
   TFR0002_04_VAL --> TFR0002_05_TEST
-  TFR0002_05_TEST --> TFR0002_05_DEV["Validate and document budget entry workflow DEV (T-FR-0002-05)"]
-  TFR0002_05_DEV --> TFR0002_05_VAL["Validate and document budget entry workflow VAL (T-FR-0002-05)"]
+  TFR0002_05_TEST --> TFR0002_05_DEV["Validate and document budget entry workflow — Build the change (T-FR-0002-05, DEV)"]
+  TFR0002_05_DEV --> TFR0002_05_VAL["Validate and document budget entry workflow — Verify it works (T-FR-0002-05, VAL)"]
 
-  TFR0003_01_TEST["Extract BBD projection as importable module TEST (T-FR-0003-01)"] --> TFR0003_01_DEV["Extract BBD projection as importable module DEV (T-FR-0003-01)"]
-  TFR0003_01_DEV --> TFR0003_01_VAL["Extract BBD projection as importable module VAL (T-FR-0003-01)"]
+  TFR0003_01_TEST["Extract BBD projection as importable module — Write the checks (T-FR-0003-01, TEST)"] --> TFR0003_01_DEV["Extract BBD projection as importable module — Build the change (T-FR-0003-01, DEV)"]
+  TFR0003_01_DEV --> TFR0003_01_VAL["Extract BBD projection as importable module — Verify it works (T-FR-0003-01, VAL)"]
 
-  TFR0003_01_VAL --> TFR0003_02_TEST["Add BBD projection REST API TEST (T-FR-0003-02)"]
-  TFR0003_02_TEST --> TFR0003_02_DEV["Add BBD projection REST API DEV (T-FR-0003-02)"]
-  TFR0003_02_DEV --> TFR0003_02_VAL["Add BBD projection REST API VAL (T-FR-0003-02)"]
+  TFR0003_01_VAL --> TFR0003_02_TEST["Add BBD projection REST API — Write the checks (T-FR-0003-02, TEST)"]
+  TFR0003_02_TEST --> TFR0003_02_DEV["Add BBD projection REST API — Build the change (T-FR-0003-02, DEV)"]
+  TFR0003_02_DEV --> TFR0003_02_VAL["Add BBD projection REST API — Verify it works (T-FR-0003-02, VAL)"]
 
-  TFR0003_02_VAL --> TFR0003_03_TEST["Deliver BBD projection page TEST (T-FR-0003-03)"]
-  TFR0003_03_TEST --> TFR0003_03_DEV["Deliver BBD projection page DEV (T-FR-0003-03)"]
-  TFR0003_03_DEV --> TFR0003_03_VAL["Deliver BBD projection page VAL (T-FR-0003-03)"]
+  TFR0003_02_VAL --> TFR0003_03_TEST["Deliver BBD projection page — Write the checks (T-FR-0003-03, TEST)"]
+  TFR0003_03_TEST --> TFR0003_03_DEV["Deliver BBD projection page — Build the change (T-FR-0003-03, DEV)"]
+  TFR0003_03_DEV --> TFR0003_03_VAL["Deliver BBD projection page — Verify it works (T-FR-0003-03, VAL)"]
 
-  TFR0003_02_VAL --> TFR0003_04_TEST["Validate BBD UX and document operator workflow TEST (T-FR-0003-04)"]
+  TFR0003_02_VAL --> TFR0003_04_TEST["Validate BBD UX and document operator workflow — Write the checks (T-FR-0003-04, TEST)"]
   TFR0003_03_VAL --> TFR0003_04_TEST
-  TFR0003_04_TEST --> TFR0003_04_DEV["Validate BBD UX and document operator workflow DEV (T-FR-0003-04)"]
-  TFR0003_04_DEV --> TFR0003_04_VAL["Validate BBD UX and document operator workflow VAL (T-FR-0003-04)"]
+  TFR0003_04_TEST --> TFR0003_04_DEV["Validate BBD UX and document operator workflow — Build the change (T-FR-0003-04, DEV)"]
+  TFR0003_04_DEV --> TFR0003_04_VAL["Validate BBD UX and document operator workflow — Verify it works (T-FR-0003-04, VAL)"]
 
-  TFR0004_01_TEST["BBD bottom control dock and relocated actions TEST (T-FR-0004-01)"] --> TFR0004_01_DEV["BBD bottom control dock and relocated actions DEV (T-FR-0004-01)"]
-  TFR0004_01_DEV --> TFR0004_01_VAL["BBD bottom control dock and relocated actions VAL (T-FR-0004-01)"]
+  TFR0004_01_TEST["BBD bottom control dock and relocated actions — Write the checks (T-FR-0004-01, TEST)"] --> TFR0004_01_DEV["BBD bottom control dock and relocated actions — Build the change (T-FR-0004-01, DEV)"]
+  TFR0004_01_DEV --> TFR0004_01_VAL["BBD bottom control dock and relocated actions — Verify it works (T-FR-0004-01, VAL)"]
 
-  TFR0004_02_TEST["BBD visualization view-model and chart-ready series TEST (T-FR-0004-02)"] --> TFR0004_02_DEV["BBD visualization view-model and chart-ready series DEV (T-FR-0004-02)"]
-  TFR0004_02_DEV --> TFR0004_02_VAL["BBD visualization view-model and chart-ready series VAL (T-FR-0004-02)"]
+  TFR0004_02_TEST["BBD visualization view-model and chart-ready series — Write the checks (T-FR-0004-02, TEST)"] --> TFR0004_02_DEV["BBD visualization view-model and chart-ready series — Build the change (T-FR-0004-02, DEV)"]
+  TFR0004_02_DEV --> TFR0004_02_VAL["BBD visualization view-model and chart-ready series — Verify it works (T-FR-0004-02, VAL)"]
 
-  TFR0004_01_VAL --> TFR0004_03_TEST["BBD 2D story dashboard and educational callouts TEST (T-FR-0004-03)"]
+  TFR0004_01_VAL --> TFR0004_03_TEST["BBD 2D story dashboard and educational callouts — Write the checks (T-FR-0004-03, TEST)"]
   TFR0004_02_VAL --> TFR0004_03_TEST
-  TFR0004_03_TEST --> TFR0004_03_DEV["BBD 2D story dashboard and educational callouts DEV (T-FR-0004-03)"]
-  TFR0004_03_DEV --> TFR0004_03_VAL["BBD 2D story dashboard and educational callouts VAL (T-FR-0004-03)"]
+  TFR0004_03_TEST --> TFR0004_03_DEV["BBD 2D story dashboard and educational callouts — Build the change (T-FR-0004-03, DEV)"]
+  TFR0004_03_DEV --> TFR0004_03_VAL["BBD 2D story dashboard and educational callouts — Verify it works (T-FR-0004-03, VAL)"]
 
-  TFR0004_02_VAL --> TFR0004_04_TEST["BBD spatial / 3D-time experience (lazy WebGL) TEST (T-FR-0004-04)"]
+  TFR0004_02_VAL --> TFR0004_04_TEST["BBD spatial / 3D–time experience (lazy WebGL) — Write the checks (T-FR-0004-04, TEST)"]
   TFR0004_03_VAL --> TFR0004_04_TEST
-  TFR0004_04_TEST --> TFR0004_04_DEV["BBD spatial / 3D-time experience (lazy WebGL) DEV (T-FR-0004-04)"]
-  TFR0004_04_DEV --> TFR0004_04_VAL["BBD spatial / 3D-time experience (lazy WebGL) VAL (T-FR-0004-04)"]
+  TFR0004_04_TEST --> TFR0004_04_DEV["BBD spatial / 3D–time experience (lazy WebGL) — Build the change (T-FR-0004-04, DEV)"]
+  TFR0004_04_DEV --> TFR0004_04_VAL["BBD spatial / 3D–time experience (lazy WebGL) — Verify it works (T-FR-0004-04, VAL)"]
 
-  TFR0004_04_VAL --> TFR0004_05_TEST["BBD experience integration VAL and operator docs TEST (T-FR-0004-05)"]
-  TFR0004_05_TEST --> TFR0004_05_DEV["BBD experience integration VAL and operator docs DEV (T-FR-0004-05)"]
-  TFR0004_05_DEV --> TFR0004_05_VAL["BBD experience integration VAL and operator docs VAL (T-FR-0004-05)"]
+  TFR0004_04_VAL --> TFR0004_05_TEST["BBD experience integration VAL and operator docs — Write the checks (T-FR-0004-05, TEST)"]
+  TFR0004_05_TEST --> TFR0004_05_DEV["BBD experience integration VAL and operator docs — Build the change (T-FR-0004-05, DEV)"]
+  TFR0004_05_DEV --> TFR0004_05_VAL["BBD experience integration VAL and operator docs — Verify it works (T-FR-0004-05, VAL)"]
 
-  TFR0005_01_TEST["Budget page guide, annotations, and dock TEST (T-FR-0005-01)"] --> TFR0005_01_DEV["Budget page guide, annotations, and dock DEV (T-FR-0005-01)"]
-  TFR0005_01_DEV --> TFR0005_01_VAL["Budget page guide, annotations, and dock VAL (T-FR-0005-01)"]
+  TFR0005_01_TEST["Budget page in-app guide, field annotations, and floating dock — Write the checks (T-FR-0005-01, TEST)"] --> TFR0005_01_DEV["Budget page in-app guide, field annotations, and floating dock — Build the change (T-FR-0005-01, DEV)"]
+  TFR0005_01_DEV --> TFR0005_01_VAL["Budget page in-app guide, field annotations, and floating dock — Verify it works (T-FR-0005-01, VAL)"]
 
-  TFR0002_02_VAL --> TFR0006_01_TEST["Define cash-flow graph persistence contracts TEST (T-FR-0006-01)"]
-  TFR0006_01_TEST --> TFR0006_01_DEV["Define cash-flow graph persistence contracts DEV (T-FR-0006-01)"]
-  TFR0006_01_DEV --> TFR0006_01_VAL["Define cash-flow graph persistence contracts VAL (T-FR-0006-01)"]
+  TFR0002_02_VAL --> TFR0006_01_TEST["Define cash-flow graph persistence contracts — Write the checks (T-FR-0006-01, TEST)"]
+  TFR0006_01_TEST --> TFR0006_01_DEV["Define cash-flow graph persistence contracts — Build the change (T-FR-0006-01, DEV)"]
+  TFR0006_01_DEV --> TFR0006_01_VAL["Define cash-flow graph persistence contracts — Verify it works (T-FR-0006-01, VAL)"]
 
-  TFR0006_01_VAL --> TFR0006_02_TEST["Add cash-flow graph migration and ORM models TEST (T-FR-0006-02)"]
-  TFR0006_02_TEST --> TFR0006_02_DEV["Add cash-flow graph migration and ORM models DEV (T-FR-0006-02)"]
-  TFR0006_02_DEV --> TFR0006_02_VAL["Add cash-flow graph migration and ORM models VAL (T-FR-0006-02)"]
+  TFR0006_01_VAL --> TFR0006_02_TEST["Add cash-flow graph migration and ORM models — Write the checks (T-FR-0006-02, TEST)"]
+  TFR0006_02_TEST --> TFR0006_02_DEV["Add cash-flow graph migration and ORM models — Build the change (T-FR-0006-02, DEV)"]
+  TFR0006_02_DEV --> TFR0006_02_VAL["Add cash-flow graph migration and ORM models — Verify it works (T-FR-0006-02, VAL)"]
 
-  TFR0006_02_VAL --> TFR0006_03_TEST["Expose cash-flow graph CRUD API TEST (T-FR-0006-03)"]
-  TFR0006_03_TEST --> TFR0006_03_DEV["Expose cash-flow graph CRUD API DEV (T-FR-0006-03)"]
-  TFR0006_03_DEV --> TFR0006_03_VAL["Expose cash-flow graph CRUD API VAL (T-FR-0006-03)"]
+  TFR0006_02_VAL --> TFR0006_03_TEST["Expose cash-flow graph CRUD API — Write the checks (T-FR-0006-03, TEST)"]
+  TFR0006_03_TEST --> TFR0006_03_DEV["Expose cash-flow graph CRUD API — Build the change (T-FR-0006-03, DEV)"]
+  TFR0006_03_DEV --> TFR0006_03_VAL["Expose cash-flow graph CRUD API — Verify it works (T-FR-0006-03, VAL)"]
 
-  TFR0006_03_VAL --> TFR0006_04_TEST["Budget React Flow panel wired to graph API TEST (T-FR-0006-04)"]
-  TFR0006_04_TEST --> TFR0006_04_DEV["Budget React Flow panel wired to graph API DEV (T-FR-0006-04)"]
-  TFR0006_04_DEV --> TFR0006_04_VAL["Budget React Flow panel wired to graph API VAL (T-FR-0006-04)"]
+  TFR0006_03_VAL --> TFR0006_04_TEST["Budget React Flow panel wired to graph API — Write the checks (T-FR-0006-04, TEST)"]
+  TFR0006_04_TEST --> TFR0006_04_DEV["Budget React Flow panel wired to graph API — Build the change (T-FR-0006-04, DEV)"]
+  TFR0006_04_DEV --> TFR0006_04_VAL["Budget React Flow panel wired to graph API — Verify it works (T-FR-0006-04, VAL)"]
 
-  TFR0006_04_VAL --> TFR0006_05_TEST["Cash-flow time scrub and aggregated views TEST (T-FR-0006-05)"]
-  TFR0006_05_TEST --> TFR0006_05_DEV["Cash-flow time scrub and aggregated views DEV (T-FR-0006-05)"]
-  TFR0006_05_DEV --> TFR0006_05_VAL["Cash-flow time scrub and aggregated views VAL (T-FR-0006-05)"]
+  TFR0006_04_VAL --> TFR0006_05_TEST["Cash-flow time scrub and aggregated views — Write the checks (T-FR-0006-05, TEST)"]
+  TFR0006_05_TEST --> TFR0006_05_DEV["Cash-flow time scrub and aggregated views — Build the change (T-FR-0006-05, DEV)"]
+  TFR0006_05_DEV --> TFR0006_05_VAL["Cash-flow time scrub and aggregated views — Verify it works (T-FR-0006-05, VAL)"]
 
-  TFR0003_02_VAL --> TFR0006_06_TEST["BBD-suggested cash-flow edges TEST (T-FR-0006-06)"]
+  TFR0003_02_VAL --> TFR0006_06_TEST["BBD-suggested cash-flow edges — Write the checks (T-FR-0006-06, TEST)"]
   TFR0006_04_VAL --> TFR0006_06_TEST
-  TFR0006_06_TEST --> TFR0006_06_DEV["BBD-suggested cash-flow edges DEV (T-FR-0006-06)"]
-  TFR0006_06_DEV --> TFR0006_06_VAL["BBD-suggested cash-flow edges VAL (T-FR-0006-06)"]
+  TFR0006_06_TEST --> TFR0006_06_DEV["BBD-suggested cash-flow edges — Build the change (T-FR-0006-06, DEV)"]
+  TFR0006_06_DEV --> TFR0006_06_VAL["BBD-suggested cash-flow edges — Verify it works (T-FR-0006-06, VAL)"]
 
-  TFR0006_07_TEST["Compose default for allocation auto-template TEST (T-FR-0006-07)"] --> TFR0006_07_DEV["Compose default for allocation auto-template DEV (T-FR-0006-07)"]
-  TFR0006_07_DEV --> TFR0006_07_VAL["Compose default for allocation auto-template VAL (T-FR-0006-07)"]
+  TFR0006_07_TEST["Compose default for allocation auto-template — Write the checks (T-FR-0006-07, TEST)"] --> TFR0006_07_DEV["Compose default for allocation auto-template — Build the change (T-FR-0006-07, DEV)"]
+  TFR0006_07_DEV --> TFR0006_07_VAL["Compose default for allocation auto-template — Verify it works (T-FR-0006-07, VAL)"]
 
-  TFR0007_01_TEST["Define workspace, ledger, and audit contracts TEST (T-FR-0007-01)"] --> TFR0007_01_DEV["Define workspace, ledger, and audit contracts DEV (T-FR-0007-01)"]
-  TFR0007_01_DEV --> TFR0007_01_VAL["Define workspace, ledger, and audit contracts VAL (T-FR-0007-01)"]
+  TFR0007_01_TEST["Define workspace, ledger, and audit contracts — Write the checks (T-FR-0007-01, TEST)"] --> TFR0007_01_DEV["Define workspace, ledger, and audit contracts — Build the change (T-FR-0007-01, DEV)"]
+  TFR0007_01_DEV --> TFR0007_01_VAL["Define workspace, ledger, and audit contracts — Verify it works (T-FR-0007-01, VAL)"]
 
-  TFR0007_01_VAL --> TFR0007_02_TEST["Install migrations and backfill the Personal workspace TEST (T-FR-0007-02)"]
-  TFR0007_02_TEST --> TFR0007_02_DEV["Install migrations and backfill the Personal workspace DEV (T-FR-0007-02)"]
-  TFR0007_02_DEV --> TFR0007_02_VAL["Install migrations and backfill the Personal workspace VAL (T-FR-0007-02)"]
+  TFR0007_01_VAL --> TFR0007_02_TEST["Install migrations and backfill the Personal workspace — Write the checks (T-FR-0007-02, TEST)"]
+  TFR0007_02_TEST --> TFR0007_02_DEV["Install migrations and backfill the Personal workspace — Build the change (T-FR-0007-02, DEV)"]
+  TFR0007_02_DEV --> TFR0007_02_VAL["Install migrations and backfill the Personal workspace — Verify it works (T-FR-0007-02, VAL)"]
 
-  TFR0007_02_VAL --> TFR0007_03_TEST["Enforce workspace isolation across existing finance surfaces TEST (T-FR-0007-03)"]
-  TFR0007_03_TEST --> TFR0007_03_DEV["Enforce workspace isolation across existing finance surfaces DEV (T-FR-0007-03)"]
-  TFR0007_03_DEV --> TFR0007_03_VAL["Enforce workspace isolation across existing finance surfaces VAL (T-FR-0007-03)"]
+  TFR0007_02_VAL --> TFR0007_03_TEST["Enforce workspace isolation across existing finance surfaces — Write the checks (T-FR-0007-03, TEST)"]
+  TFR0007_03_TEST --> TFR0007_03_DEV["Enforce workspace isolation across existing finance surfaces — Build the change (T-FR-0007-03, DEV)"]
+  TFR0007_03_DEV --> TFR0007_03_VAL["Enforce workspace isolation across existing finance surfaces — Verify it works (T-FR-0007-03, VAL)"]
 
-  TFR0007_03_VAL --> TFR0007_04_TEST["Import and reconcile business accounts and cards TEST (T-FR-0007-04)"]
-  TFR0007_04_TEST --> TFR0007_04_DEV["Import and reconcile business accounts and cards DEV (T-FR-0007-04)"]
-  TFR0007_04_DEV --> TFR0007_04_VAL["Import and reconcile business accounts and cards VAL (T-FR-0007-04)"]
+  TFR0007_03_VAL --> TFR0007_04_TEST["Import and reconcile business accounts and cards — Write the checks (T-FR-0007-04, TEST)"]
+  TFR0007_04_TEST --> TFR0007_04_DEV["Import and reconcile business accounts and cards — Build the change (T-FR-0007-04, DEV)"]
+  TFR0007_04_DEV --> TFR0007_04_VAL["Import and reconcile business accounts and cards — Verify it works (T-FR-0007-04, VAL)"]
 
-  TFR0007_04_VAL --> TFR0007_05_TEST["Classify business income, expenses, and owner activity TEST (T-FR-0007-05)"]
-  TFR0007_05_TEST --> TFR0007_05_DEV["Classify business income, expenses, and owner activity DEV (T-FR-0007-05)"]
-  TFR0007_05_DEV --> TFR0007_05_VAL["Classify business income, expenses, and owner activity VAL (T-FR-0007-05)"]
+  TFR0007_04_VAL --> TFR0007_05_TEST["Classify business income, expenses, and owner activity — Write the checks (T-FR-0007-05, TEST)"]
+  TFR0007_05_TEST --> TFR0007_05_DEV["Classify business income, expenses, and owner activity — Build the change (T-FR-0007-05, DEV)"]
+  TFR0007_05_DEV --> TFR0007_05_VAL["Classify business income, expenses, and owner activity — Verify it works (T-FR-0007-05, VAL)"]
 
-  TFR0007_05_VAL --> TFR0007_06_TEST["Store receipts and review deduction candidates TEST (T-FR-0007-06)"]
-  TFR0007_06_TEST --> TFR0007_06_DEV["Store receipts and review deduction candidates DEV (T-FR-0007-06)"]
-  TFR0007_06_DEV --> TFR0007_06_VAL["Store receipts and review deduction candidates VAL (T-FR-0007-06)"]
+  TFR0007_05_VAL --> TFR0007_06_TEST["Store receipts and review deduction candidates — Write the checks (T-FR-0007-06, TEST)"]
+  TFR0007_06_TEST --> TFR0007_06_DEV["Store receipts and review deduction candidates — Build the change (T-FR-0007-06, DEV)"]
+  TFR0007_06_DEV --> TFR0007_06_VAL["Store receipts and review deduction candidates — Verify it works (T-FR-0007-06, VAL)"]
 
-  TFR0007_05_VAL --> TFR0007_07_TEST["Plan tax obligations and reserve targets TEST (T-FR-0007-07)"]
-  TFR0007_07_TEST --> TFR0007_07_DEV["Plan tax obligations and reserve targets DEV (T-FR-0007-07)"]
-  TFR0007_07_DEV --> TFR0007_07_VAL["Plan tax obligations and reserve targets VAL (T-FR-0007-07)"]
+  TFR0007_05_VAL --> TFR0007_07_TEST["Plan tax obligations and reserve targets — Write the checks (T-FR-0007-07, TEST)"]
+  TFR0007_07_TEST --> TFR0007_07_DEV["Plan tax obligations and reserve targets — Build the change (T-FR-0007-07, DEV)"]
+  TFR0007_07_DEV --> TFR0007_07_VAL["Plan tax obligations and reserve targets — Verify it works (T-FR-0007-07, VAL)"]
 
-  TFR0007_04_VAL --> TFR0007_08_TEST["Track reserved cash and tax payments TEST (T-FR-0007-08)"]
+  TFR0007_04_VAL --> TFR0007_08_TEST["Track reserved cash and tax payments — Write the checks (T-FR-0007-08, TEST)"]
   TFR0007_07_VAL --> TFR0007_08_TEST
-  TFR0007_08_TEST --> TFR0007_08_DEV["Track reserved cash and tax payments DEV (T-FR-0007-08)"]
-  TFR0007_08_DEV --> TFR0007_08_VAL["Track reserved cash and tax payments VAL (T-FR-0007-08)"]
+  TFR0007_08_TEST --> TFR0007_08_DEV["Track reserved cash and tax payments — Build the change (T-FR-0007-08, DEV)"]
+  TFR0007_08_DEV --> TFR0007_08_VAL["Track reserved cash and tax payments — Verify it works (T-FR-0007-08, VAL)"]
 
-  TFR0007_05_VAL --> TFR0007_09_TEST["Expose business summaries, reports, and exports TEST (T-FR-0007-09)"]
+  TFR0007_05_VAL --> TFR0007_09_TEST["Expose business summaries, reports, and exports — Write the checks (T-FR-0007-09, TEST)"]
   TFR0007_06_VAL --> TFR0007_09_TEST
   TFR0007_08_VAL --> TFR0007_09_TEST
-  TFR0007_09_TEST --> TFR0007_09_DEV["Expose business summaries, reports, and exports DEV (T-FR-0007-09)"]
-  TFR0007_09_DEV --> TFR0007_09_VAL["Expose business summaries, reports, and exports VAL (T-FR-0007-09)"]
+  TFR0007_09_TEST --> TFR0007_09_DEV["Expose business summaries, reports, and exports — Build the change (T-FR-0007-09, DEV)"]
+  TFR0007_09_DEV --> TFR0007_09_VAL["Expose business summaries, reports, and exports — Verify it works (T-FR-0007-09, VAL)"]
 
-  TFR0007_03_VAL --> TFR0007_10_TEST["Deliver the addressable Business workspace shell TEST (T-FR-0007-10)"]
-  TFR0007_10_TEST --> TFR0007_10_DEV["Deliver the addressable Business workspace shell DEV (T-FR-0007-10)"]
-  TFR0007_10_DEV --> TFR0007_10_VAL["Deliver the addressable Business workspace shell VAL (T-FR-0007-10)"]
+  TFR0007_03_VAL --> TFR0007_10_TEST["Deliver the addressable Business workspace shell — Write the checks (T-FR-0007-10, TEST)"]
+  TFR0007_10_TEST --> TFR0007_10_DEV["Deliver the addressable Business workspace shell — Build the change (T-FR-0007-10, DEV)"]
+  TFR0007_10_DEV --> TFR0007_10_VAL["Deliver the addressable Business workspace shell — Verify it works (T-FR-0007-10, VAL)"]
 
-  TFR0007_05_VAL --> TFR0007_11_TEST["Deliver business books and deduction workflows TEST (T-FR-0007-11)"]
+  TFR0007_05_VAL --> TFR0007_11_TEST["Deliver business books and deduction workflows — Write the checks (T-FR-0007-11, TEST)"]
   TFR0007_06_VAL --> TFR0007_11_TEST
   TFR0007_10_VAL --> TFR0007_11_TEST
-  TFR0007_11_TEST --> TFR0007_11_DEV["Deliver business books and deduction workflows DEV (T-FR-0007-11)"]
-  TFR0007_11_DEV --> TFR0007_11_VAL["Deliver business books and deduction workflows VAL (T-FR-0007-11)"]
+  TFR0007_11_TEST --> TFR0007_11_DEV["Deliver business books and deduction workflows — Build the change (T-FR-0007-11, DEV)"]
+  TFR0007_11_DEV --> TFR0007_11_VAL["Deliver business books and deduction workflows — Verify it works (T-FR-0007-11, VAL)"]
 
-  TFR0007_08_VAL --> TFR0007_12_TEST["Deliver Tax Center and reports workflows TEST (T-FR-0007-12)"]
+  TFR0007_08_VAL --> TFR0007_12_TEST["Deliver Tax Center and reports workflows — Write the checks (T-FR-0007-12, TEST)"]
   TFR0007_09_VAL --> TFR0007_12_TEST
   TFR0007_10_VAL --> TFR0007_12_TEST
-  TFR0007_12_TEST --> TFR0007_12_DEV["Deliver Tax Center and reports workflows DEV (T-FR-0007-12)"]
-  TFR0007_12_DEV --> TFR0007_12_VAL["Deliver Tax Center and reports workflows VAL (T-FR-0007-12)"]
+  TFR0007_12_TEST --> TFR0007_12_DEV["Deliver Tax Center and reports workflows — Build the change (T-FR-0007-12, DEV)"]
+  TFR0007_12_DEV --> TFR0007_12_VAL["Deliver Tax Center and reports workflows — Verify it works (T-FR-0007-12, VAL)"]
 
-  TFR0007_11_VAL --> TFR0007_13_TEST["Validate the business-finance lifecycle and operator guidance TEST (T-FR-0007-13)"]
+  TFR0007_11_VAL --> TFR0007_13_TEST["Validate the business-finance lifecycle and operator guidance — Write the checks (T-FR-0007-13, TEST)"]
   TFR0007_12_VAL --> TFR0007_13_TEST
-  TFR0007_13_TEST --> TFR0007_13_DEV["Validate the business-finance lifecycle and operator guidance DEV (T-FR-0007-13)"]
-  TFR0007_13_DEV --> TFR0007_13_VAL["Validate the business-finance lifecycle and operator guidance VAL (T-FR-0007-13)"]
+  TFR0007_13_TEST --> TFR0007_13_DEV["Validate the business-finance lifecycle and operator guidance — Build the change (T-FR-0007-13, DEV)"]
+  TFR0007_13_DEV --> TFR0007_13_VAL["Validate the business-finance lifecycle and operator guidance — Verify it works (T-FR-0007-13, VAL)"]
 
   classDef triadDone fill:#2e7d32,color:#fff
   class TFR0000_01_TEST,TFR0000_01_DEV,TFR0000_01_VAL triadDone
@@ -216,6 +216,10 @@ graph LR
 
   class TFR0005_01_TEST,TFR0005_01_DEV,TFR0005_01_VAL triadDone
 ```
+
+<!-- ticket-dag-status:start -->
+**Where things stand:** Across the project, 21 of 41 defined tickets are fully verified; 20 remain open or are not yet recorded as complete. This combined plan shows 41 tickets across 8 features, with 21 fully verified.
+<!-- ticket-dag-status:end -->
 
 When ticket **`T-FR-NNNN-xx`** is fully complete (TEST/DEV/VAL all `done` in **`ticket-progress.md`**), add:
 
